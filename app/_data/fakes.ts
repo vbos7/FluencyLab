@@ -1,4 +1,4 @@
-const FRASES = [
+export const FRASES = [
     [
         { id: 1, pt: "Eu sou bonito", en: "I'm beautiful", difficulty: "easy", category: "Cotidiano" },
         { id: 2, pt: "Eu estou feliz", en: "I am happy", difficulty: "easy", category: "Cotidiano" },
