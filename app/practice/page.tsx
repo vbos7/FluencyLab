@@ -1,10 +1,17 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Star, ArrowRight, Sparkles } from "lucide-react"
+import { ArrowRight, Sparkles, BookmarkIcon, BadgeCheck, StarIcon} from "lucide-react"
 import { Button } from "@/app/_components/ui/button"
 import { cn } from "@/app/_lib/utils"
 import { FRASES } from "@/app/_data/fakes"
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from "@/app/_components/ui/tabs"
+import { Badge } from "@/app/_components/ui/badge"
 
 // FRASES é um array de arrays — .flat() achata para um único array indexável
 const PHRASES = FRASES.flat()
@@ -116,6 +123,8 @@ export default function Practice() {
     const [earnedXp, setEarnedXp] = useState(0)
     // lista de ids de frases favoritadas pelo usuário
     const [favorites, setFavorites] = useState<number[]>([])
+    // dispara a animação de pop ao favoritar (reset automático em 300ms)
+    const [justFavorited, setJustFavorited] = useState(false)
     // referência direta ao textarea para dar foco programaticamente
     const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -148,6 +157,11 @@ export default function Practice() {
 
     // Alterna o favorito: remove se já existe, adiciona se não existe
     const toggleFavorite = (id: number) => {
+        if (!favorites.includes(id)) {
+            // aciona a animação de pop apenas ao favoritar (não ao desfavoritar)
+            setJustFavorited(true)
+            setTimeout(() => setJustFavorited(false), 300)
+        }
         setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id])
     }
 
@@ -165,17 +179,43 @@ export default function Practice() {
 
             {/* Header: título + botão de favorito da frase atual */}
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-[22px] font-bold text-slate-900 tracking-tight">Traduzir</h1>
+                {/*<h1 className="text-[22px] font-bold text-slate-900 tracking-tight">Traduzir</h1>*/}
+                {/*<Select>*/}
+                {/*    <SelectTrigger className="w-full max-w-48">*/}
+                {/*        <SelectValue placeholder="Select a fruit" />*/}
+                {/*    </SelectTrigger>*/}
+                {/*    <SelectContent>*/}
+                {/*        <SelectGroup>*/}
+                {/*            <SelectLabel>Fruits</SelectLabel>*/}
+                {/*            <SelectItem value="apple">Apple</SelectItem>*/}
+                {/*            <SelectItem value="banana">Banana</SelectItem>*/}
+                {/*            <SelectItem value="blueberry">Blueberry</SelectItem>*/}
+                {/*            <SelectItem value="grapes">Grapes</SelectItem>*/}
+                {/*            <SelectItem value="pineapple">Pineapple</SelectItem>*/}
+                {/*        </SelectGroup>*/}
+                {/*    </SelectContent>*/}
+                {/*</Select>*/}
+                <Tabs defaultValue="overview" className="w-100">
+                    <TabsList>
+                        <TabsTrigger value="overview" className="px-5">Fácil</TabsTrigger>
+                        <TabsTrigger value="analytics" className="px-5">Médio</TabsTrigger>
+                        <TabsTrigger value="reports" className="px-5">Difícil</TabsTrigger>
+                        {/*<TabsTrigger value="settings">Settings</TabsTrigger>*/}
+                    </TabsList>
+                </Tabs>
+                {/* badge clicável que alterna entre "Favoritar" e "Favoritada" */}
                 <button
                     onClick={() => toggleFavorite(phrase.id)}
-                    className="p-1 bg-transparent border-none cursor-pointer"
+                    className={cn(
+                        "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border cursor-pointer select-none transition-all duration-200",
+                        isFav
+                            ? "bg-blue-600 text-white border-blue-600 shadow-[0_2px_8px_rgba(37,99,235,0.3)]"
+                            : "bg-white text-slate-500 border-slate-300 hover:border-blue-400 hover:text-blue-500",
+                        justFavorited && "scale-125",
+                    )}
                 >
-                    {/* estrela preenchida (azul) se favoritada, contorno cinza se não */}
-                    <Star
-                        className="size-5"
-                        fill={isFav ? "#3B82F6" : "none"}
-                        stroke={isFav ? "#3B82F6" : "#94A3B8"}
-                    />
+                    <StarIcon className={cn("size-4 transition-all duration-200", isFav && "fill-white")} />
+                    {isFav ? "Favoritada" : "Favoritar"}
                 </button>
             </div>
 
