@@ -1,4 +1,5 @@
 "use client";
+import router from "next/router";
 import { useEffect, useState } from "react";
 
 
@@ -73,19 +74,39 @@ export default function Home() {
 
 
       {/* bem-vindo */}
-      <div className="mb-2 transition-all duration-500  mt-[5%]"
+      <div className="mb-2 transition-all duration-500 mt-[5%]"
         style={{ opacity: 1, transform: "translateY(0)" }}>
         <p className="text-sm text-slate-400 font-medium mb-1">👋 Olá de volta,</p>
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
-          Bem-vindo, <span className="text-blue-600">{user.name}!</span>
+          Bem-vindo,{" "}
+          <span className="text-blue-600 inline-flex overflow-hidden">
+            {(user.name + "!").split("").map((char, i) => (
+              <span
+                key={i}
+                className="inline-block"
+                style={{
+                  animation: `letterBounce 1.8s ${i * 0.08}s ease-in-out infinite`,
+                }}
+              >
+                {char === " " ? "\u00A0" : char}
+              </span>
+            ))}
+          </span>
         </h1>
+
+        <style>{`
+    @keyframes letterBounce {
+      0%,  60%, 100% { transform: translateY(0);    }
+      30%             { transform: translateY(-10px); }
+    }
+  `}</style>
       </div>
 
 
       <div className="flex flex-col m-5">
-        {/* Nível Atual */}
 
-        <div className="relative overflow-hidden rounded-2xl p-7 mb-5 bg-gradient-to-br from-blue-600 to-blue-300 shadow-xl shadow-blue-400 transition-all duration-500 delay-75 opacity-100 translate-y-0 text-white">
+        {/* Nível Atual */}
+        <div className="relative overflow-hidden rounded-2xl p-7 mb-1 bg-gradient-to-br from-blue-600 to-blue-300 shadow-xl shadow-blue-400 transition-all duration-500 delay-75 opacity-100 translate-y-0 text-white">
 
           <div className="absolute -top-14 -right-14 w-52 h-52 rounded-full bg-white/[0.06] pointer-events-none" />
 
@@ -103,10 +124,150 @@ export default function Home() {
                   {String(user.level).padStart(2, "0")}
                 </p>
               </div>
+
+
               <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-bold
-                          bg-white/15 border border-white/20 backdrop-blur-sm">
-                🔥 {user.streak} dias streak
+                bg-white/15 border border-white/20 backdrop-blur-sm">
+
+                <span className="relative inline-flex items-center justify-center w-8 h-8">
+                  <svg viewBox="0 0 32 38" fill="none" xmlns="http://www.w3.org/2000/svg"
+                    className="w-8 h-8 drop-shadow-[0_0_6px_rgba(251,146,60,0.9)]"
+                    style={{
+                      animation: "flameSway 1.8s ease-in-out infinite alternate",
+                      transformOrigin: "50% 95%"
+                    }}>
+                    <defs>
+                      {/* gradiente externo laranja/vermelho */}
+                      <linearGradient id="flameOuter" x1="16" y1="38" x2="16" y2="0" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#ea580c" />
+                        <stop offset="40%" stopColor="#f97316" />
+                        <stop offset="75%" stopColor="#fb923c" />
+                        <stop offset="100%" stopColor="#fde68a" />
+                      </linearGradient>
+
+                      {/* gradiente interno amarelo/branco */}
+                      <linearGradient id="flameInner" x1="16" y1="38" x2="16" y2="4" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#f97316" />
+                        <stop offset="35%" stopColor="#fbbf24" />
+                        <stop offset="70%" stopColor="#fef08a" />
+                        <stop offset="100%" stopColor="#ffffff" />
+                      </linearGradient>
+
+                      {/* gradiente núcleo branco */}
+                      <linearGradient id="flameCore" x1="16" y1="38" x2="16" y2="12" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#fbbf24" />
+                        <stop offset="50%" stopColor="#fef9c3" />
+                        <stop offset="100%" stopColor="#ffffff" stopOpacity="0.9" />
+                      </linearGradient>
+
+                      {/* filtro glow */}
+                      <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="2" result="blur" />
+                        <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                      </filter>
+                    </defs>
+
+                    {/* chama externa — forma principal */}
+                    <path
+                      d="M16 2
+           C16 2 22 8 23 14
+           C24.5 11 24 7 22 4
+           C26 7 28 12 27.5 18
+           C28.5 16 29 13 28 10
+           C31 15 31 21 29 26
+           C27.5 30 23.5 34 16 36
+           C8.5 34 4.5 30 3 26
+           C1 21 1 15 4 10
+           C3 13 3.5 16 4.5 18
+           C4 12 6 7 10 4
+           C8 7 7.5 11 9 14
+           C10 8 12 2 16 2Z"
+                      fill="url(#flameOuter)"
+                      filter="url(#glow)"
+                      style={{
+                        animation: "flameBreath 0.9s ease-in-out infinite alternate",
+                        transformOrigin: "16px 36px"
+                      }}
+                    />
+
+                    {/* chama intermediária */}
+                    <path
+                      d="M16 8
+           C16 8 20 13 20.5 18
+           C21.5 15.5 21 12 19.5 10
+           C22 13 23 17.5 22 22
+           C22.5 20.5 23 18 22.5 16
+           C24.5 19.5 24 24 22 28
+           C20.5 31 18.5 33 16 34
+           C13.5 33 11.5 31 10 28
+           C8 24 7.5 19.5 9.5 16
+           C9 18 9.5 20.5 10 22
+           C9 17.5 10 13 12.5 10
+           C11 12 10.5 15.5 11.5 18
+           C12 13 13.5 8 16 8Z"
+                      fill="url(#flameInner)"
+                      style={{
+                        animation: "flameBreath 0.7s 0.1s ease-in-out infinite alternate",
+                        transformOrigin: "16px 34px"
+                      }}
+                    />
+
+                    {/* núcleo central brilhante */}
+                    <path
+                      d="M16 14
+           C16 14 18.5 17.5 18.5 21
+           C19 19.5 18.5 17.5 17.5 16
+           C19 18 19.5 21 18.5 24
+           C18 26.5 17 28.5 16 29.5
+           C15 28.5 14 26.5 13.5 24
+           C12.5 21 13 18 14.5 16
+           C13.5 17.5 13 19.5 13.5 21
+           C13.5 17.5 14.5 14 16 14Z"
+                      fill="url(#flameCore)"
+                      style={{
+                        animation: "coreFlicker 0.5s 0.05s ease-in-out infinite alternate",
+                        transformOrigin: "16px 29px"
+                      }}
+                    />
+
+                    {/* faíscas */}
+                    <circle cx="9" cy="10" r="1" fill="#fb923c"
+                      style={{ animation: "sparkFloat 1.4s 0s ease-out infinite", opacity: 0 }} />
+                    <circle cx="23" cy="8" r="0.8" fill="#fbbf24"
+                      style={{ animation: "sparkFloat 1.2s 0.3s ease-out infinite", opacity: 0 }} />
+                    <circle cx="7" cy="15" r="0.7" fill="#f97316"
+                      style={{ animation: "sparkFloat 1.6s 0.6s ease-out infinite", opacity: 0 }} />
+                    <circle cx="25" cy="13" r="1" fill="#fde68a"
+                      style={{ animation: "sparkFloat 1.1s 0.9s ease-out infinite", opacity: 0 }} />
+                    <circle cx="13" cy="6" r="0.6" fill="#fb923c"
+                      style={{ animation: "sparkFloat 1.3s 0.2s ease-out infinite", opacity: 0 }} />
+                  </svg>
+
+                  <style>{`
+      @keyframes flameSway {
+        from { transform: rotate(-4deg) scaleX(0.96); }
+        to   { transform: rotate(4deg)  scaleX(1.04); }
+      }
+      @keyframes flameBreath {
+        from { transform: scaleY(1)    scaleX(1); }
+        to   { transform: scaleY(1.07) scaleX(0.94); }
+      }
+      @keyframes coreFlicker {
+        from { transform: scaleY(1)    scaleX(1);    opacity: 0.9; }
+        to   { transform: scaleY(1.12) scaleX(0.9);  opacity: 1;   }
+      }
+      @keyframes sparkFloat {
+        0%   { transform: translate(0, 0)    scale(1);   opacity: 1; }
+        70%  { opacity: 0.6; }
+        100% { transform: translate(0, -14px) scale(0);  opacity: 0; }
+      }
+    `}</style>
+                </span>
+
+                {user.streak} dias streak
               </div>
+
+
             </div>
           </div>
 
@@ -133,103 +294,197 @@ export default function Home() {
           </p>
         </div>
 
+        {/* Estatísticas */}
+        <div className="flex flex-row gap-4 mt-[8%] mb-[5%] w-full">
 
+          {/* card traduções */}
+          <a href="/progress" className="group bg-white rounded-2xl p-5 text-center border shadow-sm
+                  hover:-translate-y-1 hover:shadow-md hover:border-emerald-200
+                  hover:bg-emerald-50/40 transition-all duration-300 cursor-default w-full">
 
+            <div className="bg-emerald-100 p-3 rounded-full mb-3 mt-4 w-fit mx-auto
+                    group-hover:bg-emerald-200 transition-all duration-300"
+              style={{ animation: "iconFloat 3s ease-in-out infinite" }}>
+              ✅
+            </div>
 
-        {/* Conteúdo Recomendado */}
-        <div className="mt-4 flex flex-row gap-4 mt-[10%] mb-[10%] h-50 w-full">
+            <p className="text-3xl font-bold text-emerald-500 tabular-nums"
+              style={{ animation: "countUp 1.4s ease-out forwards" }}>
+              20
+            </p>
 
-          <div className="bg-gray-200 p-4 rounded-lg w-[50%] flex flex-col justify-center items-center">
+            <p className="text-sm font-mono font-medium text-gray-400 mt-2">Traduções</p>
+          </a>
 
-            <div className=" bg-green-300 p-3 rounded-full mb-2">✔️</div>
+          {/* card precisão */}
+          <a href="/progress" className="group bg-white rounded-2xl p-5 text-center border shadow-sm
+                  hover:-translate-y-1 hover:shadow-md hover:border-red-200
+                  hover:bg-red-50/40 transition-all duration-300 cursor-default w-full">
 
-            <p className="text-3xl text-olive-900">20</p>
+            <div className="bg-red-100 p-3 rounded-full mb-3 mt-4 w-fit mx-auto
+                    group-hover:bg-red-200 transition-all duration-300"
+              style={{ animation: "iconFloat 3s 0.4s ease-in-out infinite" }}>
+              🎯
+            </div>
 
-            <p className="text-gray-500 text-sm m-2">Traduções</p>
-          </div>
+            <p className="text-3xl font-bold text-red-500 tabular-nums"
+              style={{ animation: "countUp 1.4s 0.2s ease-out forwards" }}>
+              70%
+            </p>
 
-          <div className="bg-gray-200 p-4 rounded-lg w-[50%] flex flex-col justify-center items-center">
+            <p className="text-sm font-mono font-medium text-gray-400 mt-2">Precisão</p>
+          </a>
 
-            <div className=" bg-red-300 p-3 rounded-full mb-2">🔥</div>
+          <style>{`
+    @keyframes countUp {
+      0%   { opacity: 0; transform: scale(0.4) translateY(10px); }
+      60%  { transform: scale(1.2) translateY(-4px);              }
+      80%  { transform: scale(0.95);                              }
+      100% { opacity: 1; transform: scale(1) translateY(0);      }
+    }
 
-            <p className="text-3xl text-olive-900">70%</p>
-
-            <p className="text-gray-500 text-sm m-2">Precisão</p>
-          </div>
+    @keyframes iconFloat {
+      0%   { transform: translateY(0)    scale(1);    }
+      30%  { transform: translateY(-5px) scale(1.08); }
+      60%  { transform: translateY(-3px) scale(1.04); }
+      100% { transform: translateY(0)    scale(1);    }
+    }
+  `}</style>
 
         </div>
 
         {/* Pratica */}
-
-        <div className=
-          "relative overflow-hidden bg-white rounded-2xl p-6 mb-7 flex items-center justify-between gap-5 border border-blue-100 shadow-sm transition-all duration-500 delay-200 mounted ? opacity-100 translate-y-0 opacity-0 translate-y-4">
-
+        <div className="relative overflow-hidden bg-white rounded-2xl border border-blue-100 shadow-sm
+                flex items-center justify-between
+                p-4 md:p-7
+                gap-3 md:gap-6
+                h-28 md:h-44
+                mb-7">
 
           {/* left accent bar */}
-          <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl bg-gradient-to-b from-blue-300 to-blue-600" />
+          <div className="absolute left-0 top-0 bottom-0 w-1 md:w-2 rounded-l-2xl bg-gradient-to-b from-blue-300 to-blue-600" />
 
-          <div className="pl-2">
-            <h3 className="text-sm font-extrabold text-slate-900 mb-1">Pronto para praticar e subir seu nivel?</h3>
-            <p className="text-xs text-slate-500 leading-relaxed max-w-xs">
+          {/* texto */}
+          <div className="pl-3 md:pl-4 flex-1">
+            <h3 className="font-extrabold text-slate-900
+                   text-sm md:text-base  mb-1 md:mb-2">
+              Pronto para praticar e subir seu nível?
+            </h3>
+            <p className="text-slate-500 leading-relaxed
+                  text-[0.7rem] md:text-sm
+                  max-w-[160px] md:max-w-sm">
               Você está a {user.xpNeeded - user.xp} XP do nível {user.level + 1}. Um pouquinho mais e você chega lá!
             </p>
           </div>
 
-          <button className="flex-shrink-0 px-8 py-3 rounded-xl text-sm font-bold text-white
-                         bg-gradient-to-br from-blue-500 to-blue-800
-                         shadow-md shadow-blue-400/35
-                         hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-400/45
-                         active:scale-95 transition-all duration-200">
-            Ir Praticar
-          </button>
+          {/* botão */}
+          <a href="/practice"
+            className="flex-shrink-0 flex items-center justify-center gap-2
+                text-white font-bold
+                bg-gradient-to-br from-blue-500 to-blue-800
+                shadow-md shadow-blue-400/35
+                hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-400/45
+                active:scale-95 transition-all duration-200
+                rounded-lg md:rounded-xl
+                text-[0.7rem] md:text-base
+                px-3 py-2 md:px-10 md:py-4
+                w-20 md:w-48">
+
+            <svg className="w-3 h-3 md:w-5 md:h-5 flex-shrink-0"
+              fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+            </svg>
+
+            <span className="hidden md:inline">Ir Praticar</span>
+            <span className="md:hidden">Praticar</span>
+          </a>
 
         </div>
-
-
-
-        <div className="mt-2 bg-[#26658C] p-4 rounded-xl w-full flex flex-col justify-center items-center">
-
-          <p className="text-lg text-white p-4 text-center">O FluencyLab é um aplicativo de aprendizado de idiomas que utiliza inteligência artificial para ajudar os usuários a praticarem suas habilidades linguísticas de forma eficaz e personalizada.</p>
-
-          <button className="mt-2 bg-white text-[#0D1B2A] hover:bg-gray-200 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 py-2 px-4 rounded-md mt-3 w-full transition-colors duration-300">
-
-            Ir Praticar!
-          </button>
-        </div>
-
         {/* ranking top3 */}
-
-        <div className="flex flex-col ">
-          <div className="ms-4">
-            <h2 className="text-xl font-bold mt-4 mb-2">Ranking Top 3</h2>
+        <div className="mt-7 duration-500 delay-300 opacity-100 translate-y-0">
+          {/* header */}
+          <div className="flex items-center justify-between mb-3.5">
+            <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              🏆 Ranking Top 3
+            </h2>
+            <a href="/ranking" className="text-xs font-bold text-blue-500 hover:text-blue-700 transition-colors">
+              Ver todos →
+            </a>
           </div>
 
-          <div className="flex flex-row gap-4 mt-2 justify-between ms-2">
+          {/* lista */}
+          <div className="flex flex-col gap-2.5">
 
-            <div className="bg-gray-200  p-[8%] rounded-lg   hover:bg-gray-300 transition-colors duration-300 ">
-              <h1 className="text-lg">1. João</h1>
-              <p className="text-sm text-gray-500">500xp</p>
+            {/* 1º lugar - ouro */}
+            <div className="flex items-center gap-3.5 bg-amber-50 rounded-2xl px-5 py-4
+                    border border-amber-300/40 shadow-sm
+                    hover:translate-x-1.5 hover:shadow-md transition-all duration-200">
+              <span className="font-mono text-base font-semibold w-6 text-center text-amber-500">1</span>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center
+                      text-sm font-bold text-white flex-shrink-0
+                      bg-gradient-to-br from-blue-600 to-blue-800">
+                J
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-900 mb-1.5">João</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full w-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400" />
+                  </div>
+                  <span className="text-[0.68rem] text-slate-400 font-mono whitespace-nowrap">500 XP</span>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-gray-200  p-[8%] rounded-lg hover:bg-gray-300 transition-colors duration-300 ">
-              <h1 className="text-lg">2. Maria</h1>
-              <p className="text-sm text-gray-500">450xp</p>
+            {/* 2º lugar - prata */}
+            <div className="flex items-center gap-3.5 bg-white rounded-2xl px-5 py-4
+                    border border-slate-300/40 shadow-sm
+                    hover:translate-x-1.5 hover:shadow-md transition-all duration-200">
+              <span className="font-mono text-base font-semibold w-6 text-center text-slate-400">2</span>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center
+                      text-sm font-bold text-white flex-shrink-0
+                      bg-gradient-to-br from-emerald-500 to-cyan-600">
+                M
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-900 mb-1.5">Maria</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full w-[90%] rounded-full bg-gradient-to-r from-slate-400 to-slate-500" />
+                  </div>
+                  <span className="text-[0.68rem] text-slate-400 font-mono whitespace-nowrap">450 XP</span>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-gray-200  p-[8%] rounded-lg hover:bg-gray-300 transition-colors duration-300 ">
-              <h1 className="text-lg">3. Pedro</h1>
-              <p className="text-sm text-gray-500">400xp</p>
+            {/* 3º lugar - bronze */}
+            <div className="flex items-center gap-3.5 bg-white rounded-2xl px-5 py-4
+                    border border-orange-300/40 shadow-sm
+                    hover:translate-x-1.5 hover:shadow-md transition-all duration-200">
+              <span className="font-mono text-base font-semibold w-6 text-center text-orange-700">3</span>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center
+                      text-sm font-bold text-white flex-shrink-0
+                      bg-gradient-to-br from-orange-500 to-red-500">
+                P
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-900 mb-1.5">Pedro</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full w-[80%] rounded-full bg-gradient-to-r from-orange-700 to-orange-500" />
+                  </div>
+                  <span className="text-[0.68rem] text-slate-400 font-mono whitespace-nowrap">400 XP</span>
+                </div>
+              </div>
             </div>
 
           </div>
+
         </div>
-
-
-
-
-
 
       </div>
+
     </div>
   )
 }
