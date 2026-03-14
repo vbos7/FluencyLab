@@ -1,3 +1,107 @@
+// ─── Tipos ───────────────────────────────────────────────────────────────────
+
+export type Phrase = {
+    id: number
+    pt: string
+    en: string
+    difficulty: string
+    category: string
+}
+
+// Formato do objeto de feedback retornado após a verificação
+export type Feedback = {
+    status: "perfect" | "good" | "partial" | "needs_work"
+    title: string
+    message: string
+    corrections: { wrong: string; correct: string; explanation: string }[]
+    xp: number
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+// Calcula a distância de edição (Levenshtein) entre duas strings:
+// quantas operações (inserção, deleção, substituição) são necessárias
+// para transformar 'a' em 'b'. Usa programação dinâmica com matriz dp[m+1][n+1].
+export function levenshtein(a: string, b: string): number {
+    const m = a.length, n = b.length
+    const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0))
+    for (let i = 0; i <= m; i++) dp[i][0] = i
+    for (let j = 0; j <= n; j++) dp[0][j] = j
+    for (let i = 1; i <= m; i++)
+        for (let j = 1; j <= n; j++)
+            dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
+    return dp[m][n]
+}
+
+// Normaliza as duas respostas e converte a distância de edição num score de 0 a 100.
+// Fórmula: score = (1 - distância / tamanho_da_maior_string) × 100
+export function scoreAnswer(userAns: string, correctAns: string): number {
+    const u = userAns.toLowerCase().trim().replace(/[.,!?]/g, "")
+    const c = correctAns.toLowerCase().trim().replace(/[.,!?]/g, "")
+    if (u === c) return 100
+    const dist = levenshtein(u, c)
+    return Math.max(0, Math.round((1 - dist / Math.max(u.length, c.length)) * 100))
+}
+
+// Transforma o score numérico em feedback qualitativo com XP e correções:
+//   ≥ 95 → perfeito     (+25 XP)
+//   ≥ 70 → bom          (+15 XP)
+//   ≥ 40 → parcial      (+8 XP)
+//   < 40 → insuficiente (+3 XP)
+export function generateFeedback(userAns: string, phraseEn: string, score: number): Feedback {
+    if (score >= 95) {
+        return { status: "perfect", title: "Perfeito! 🎉", message: "Sua tradução está excelente!", corrections: [], xp: 25 }
+    }
+    if (score >= 70) {
+        return {
+            status: "good", title: "Quase lá! 👏",
+            message: "Sua tradução está boa, mas pode melhorar em alguns pontos.",
+            corrections: [{ wrong: userAns, correct: phraseEn, explanation: "A tradução esperada usa uma estrutura ligeiramente diferente." }],
+            xp: 15,
+        }
+    }
+    if (score >= 40) {
+        return {
+            status: "partial", title: "Bom esforço! 💪",
+            message: "Você captou a ideia principal, mas há diferenças significativas.",
+            corrections: [{ wrong: userAns, correct: phraseEn, explanation: "Revise a estrutura gramatical e o vocabulário utilizado." }],
+            xp: 8,
+        }
+    }
+    return {
+        status: "needs_work", title: "Continue praticando! 📖",
+        message: "A tradução precisa de mais atenção. Veja a resposta correta abaixo.",
+        corrections: [{ wrong: userAns, correct: phraseEn, explanation: "Tente prestar atenção na estrutura da frase e nas palavras-chave." }],
+        xp: 3,
+    }
+}
+
+// ─── Constantes de estilo ─────────────────────────────────────────────────────
+
+// Classes Tailwind do card de feedback indexadas pelo status
+export const FEEDBACK_STYLES: Record<string, string> = {
+    perfect:    "bg-green-100 border border-[#86EFAC]",
+    good:       "bg-blue-100 border border-blue-200",
+    partial:    "bg-amber-100 border border-[#FCD34D]",
+    needs_work: "bg-red-100 border border-[#FCA5A5]",
+}
+
+// Classes Tailwind do badge de dificuldade indexadas pelo nível
+export const DIFFICULTY_STYLES: Record<string, string> = {
+    easy:   "bg-green-100 text-green-700",
+    medium: "bg-amber-100 text-amber-600",
+    hard:   "bg-red-100 text-red-600",
+}
+
+// Rótulos em português para cada nível de dificuldade
+export const DIFFICULTY_LABELS: Record<string, string> = {
+    easy:   "Fácil",
+    medium: "Médio",
+    hard:   "Difícil",
+}
+
+// ─── Dados ───────────────────────────────────────────────────────────────────
+
 export const FRASES = [
     [
         { id: 1, pt: "Eu sou bonito", en: "I'm beautiful", difficulty: "easy", category: "Cotidiano" },
