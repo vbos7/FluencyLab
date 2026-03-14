@@ -42,3 +42,5 @@ next-env.d.ts
 
 # example/reference pages
 /app/example
+/app/example/page.tsx
+/app/_example

@@ -95,7 +95,7 @@ export function PracticeController({ phrases }: Props) {
     }
 
     return (
-        <div className="mx-auto min-h-dvh bg-white px-5 pt-10 pb-28">
+        <div className="mx-auto bg-white px-5 pt-10 pb-28">
             <XpToast earnedXp={earnedXp} visible={showXpToast} />
 
             <PracticeHeader
