@@ -1,17 +1,15 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { ArrowRight, Sparkles, BookmarkIcon, BadgeCheck, StarIcon} from "lucide-react"
+import { ArrowRight, Sparkles, StarIcon} from "lucide-react"
 import { Button } from "@/app/_components/ui/button"
 import { cn } from "@/app/_lib/utils"
-import { FRASES } from "@/app/_data/fakes"
+import { FRASES } from "@/app/_lib/practice"
 import {
     Tabs,
-    TabsContent,
     TabsList,
     TabsTrigger,
 } from "@/app/_components/ui/tabs"
-import { Badge } from "@/app/_components/ui/badge"
 
 // FRASES é um array de arrays — .flat() achata para um único array indexável
 const PHRASES = FRASES.flat()
@@ -111,8 +109,24 @@ const DIFFICULTY_LABELS: Record<string, string> = {
 
 // ─── PAGE ─────────────────────────────────────────────────────────────────
 export default function Practice() {
-    // índice da frase atual — inicializado aleatoriamente para variar a cada visita
-    const [currentIndex, setCurrentIndex] = useState(() => Math.floor(Math.random() * PHRASES.length))
+    // dificuldade ativa — lida do localStorage na inicialização (padrão: "medium")
+    const [difficulty, setDifficulty] = useState<string>(() => {
+        if (typeof window === "undefined") return "medium"
+        return localStorage.getItem("fluency-lab:difficulty") ?? "medium"
+    })
+
+    // frases filtradas pela dificuldade ativa
+    const filteredPhrases = PHRASES.filter(p => p.difficulty === difficulty)
+
+    // índice da frase atual dentro de filteredPhrases
+    // inicializado aleatoriamente considerando a dificuldade salva
+    const [currentIndex, setCurrentIndex] = useState(() => {
+        const saved = typeof window !== "undefined"
+            ? localStorage.getItem("fluency-lab:difficulty") ?? "medium"
+            : "medium"
+        const initial = PHRASES.filter(p => p.difficulty === saved)
+        return Math.floor(Math.random() * initial.length)
+    })
     // texto digitado pelo usuário no textarea
     const [answer, setAnswer] = useState("")
     // resultado da verificação; null enquanto o usuário ainda não verificou
@@ -129,7 +143,7 @@ export default function Practice() {
     const inputRef = useRef<HTMLTextAreaElement>(null)
 
     // atalhos derivados do state atual
-    const phrase = PHRASES[currentIndex]
+    const phrase = filteredPhrases[currentIndex]
     const isFav = favorites.includes(phrase.id)
 
     // Verifica a resposta: calcula score → gera feedback → exibe toast por 2s
@@ -143,16 +157,26 @@ export default function Practice() {
         setTimeout(() => setShowXpToast(false), 2000)
     }
 
-    // Avança para uma frase aleatória diferente da atual e reseta o estado
+    // Avança para uma frase aleatória diferente da atual (dentro da dificuldade ativa)
     const handleNext = () => {
         let next
-        // garante que a próxima frase seja diferente da atual
-        do { next = Math.floor(Math.random() * PHRASES.length) } while (next === currentIndex)
+        // garante que a próxima frase seja diferente da atual (só se houver mais de uma)
+        do { next = Math.floor(Math.random() * filteredPhrases.length) } while (next === currentIndex && filteredPhrases.length > 1)
         setCurrentIndex(next)
         setAnswer("")
         setFeedback(null)
         // pequeno delay para o textarea já estar visível antes de focar
         setTimeout(() => inputRef.current?.focus(), 100)
+    }
+
+    // Troca a dificuldade ativa, persiste no localStorage e sorteia nova frase
+    const handleChangeDifficulty = (newDifficulty: string) => {
+        localStorage.setItem("fluency-lab:difficulty", newDifficulty)
+        setDifficulty(newDifficulty)
+        const newFiltered = PHRASES.filter(p => p.difficulty === newDifficulty)
+        setCurrentIndex(Math.floor(Math.random() * newFiltered.length))
+        setAnswer("")
+        setFeedback(null)
     }
 
     // Alterna o favorito: remove se já existe, adiciona se não existe
@@ -195,12 +219,12 @@ export default function Practice() {
                 {/*        </SelectGroup>*/}
                 {/*    </SelectContent>*/}
                 {/*</Select>*/}
-                <Tabs defaultValue="overview" className="w-100">
+                {/* tabs de dificuldade — controladas e persistidas no localStorage */}
+                <Tabs value={difficulty} onValueChange={handleChangeDifficulty} className="w-fit">
                     <TabsList>
-                        <TabsTrigger value="overview" className="px-5">Fácil</TabsTrigger>
-                        <TabsTrigger value="analytics" className="px-5">Médio</TabsTrigger>
-                        <TabsTrigger value="reports" className="px-5">Difícil</TabsTrigger>
-                        {/*<TabsTrigger value="settings">Settings</TabsTrigger>*/}
+                        <TabsTrigger value="easy" className="px-5">Fácil</TabsTrigger>
+                        <TabsTrigger value="medium" className="px-5">Médio</TabsTrigger>
+                        <TabsTrigger value="hard" className="px-5">Difícil</TabsTrigger>
                     </TabsList>
                 </Tabs>
                 {/* badge clicável que alterna entre "Favoritar" e "Favoritada" */}
