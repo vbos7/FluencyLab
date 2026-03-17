@@ -5,18 +5,13 @@ import { useEffect, useState } from "react";
 
 const user = {
   name: "Marcus Vinicius",
-  level: 2,
-  xp: 300,
-  xpNeeded: 500,
+  level: 4,
+  xp: 980,
+  xpNeeded: 1500,
   streak: 7,
   stats: { translations: 20, accuracy: 70, minutesToday: 45 },
 };
 
-const ranking = [
-  { pos: 1, name: "João", xp: 500, tier: "gold", initials: "J", pct: 100 },
-  { pos: 2, name: "Maria", xp: 450, tier: "silver", initials: "M", pct: 90 },
-  { pos: 3, name: "Pedro", xp: 400, tier: "bronze", initials: "P", pct: 80 },
-];
 
 const navItems = [
   {
@@ -424,15 +419,15 @@ export default function Home() {
               <div className="w-10 h-10 rounded-full flex items-center justify-center
                       text-sm font-bold text-white flex-shrink-0
                       bg-gradient-to-br from-blue-600 to-blue-800">
-                J
+                <img src="https://github.com/leerob.png" alt="Lucas M." className=" rounded-full" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 mb-1.5">João</p>
+                <p className="text-sm font-bold text-slate-900 mb-1.5">Lusca M.</p>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div className="h-full w-full rounded-full bg-gradient-to-r from-amber-400 to-orange-400" />
                   </div>
-                  <span className="text-[0.68rem] text-slate-400 font-mono whitespace-nowrap">500 XP</span>
+                  <span className="text-[0.68rem] text-slate-400 font-mono whitespace-nowrap">9.820 XP</span>
                 </div>
               </div>
             </div>
@@ -445,15 +440,15 @@ export default function Home() {
               <div className="w-10 h-10 rounded-full flex items-center justify-center
                       text-sm font-bold text-white flex-shrink-0
                       bg-gradient-to-br from-emerald-500 to-cyan-600">
-                M
+                <img src="https://github.com/rauchg.png" alt="Carlos J." className=" rounded-full" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 mb-1.5">Maria</p>
+                <p className="text-sm font-bold text-slate-900 mb-1.5">Carlos J.</p>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div className="h-full w-[90%] rounded-full bg-gradient-to-r from-slate-400 to-slate-500" />
                   </div>
-                  <span className="text-[0.68rem] text-slate-400 font-mono whitespace-nowrap">450 XP</span>
+                  <span className="text-[0.68rem] text-slate-400 font-mono whitespace-nowrap">9.350 XP</span>
                 </div>
               </div>
             </div>
@@ -466,15 +461,15 @@ export default function Home() {
               <div className="w-10 h-10 rounded-full flex items-center justify-center
                       text-sm font-bold text-white flex-shrink-0
                       bg-gradient-to-br from-orange-500 to-red-500">
-                P
+                <img src="https://github.com/timneutkens.png" alt="Pedro H." className=" rounded-full" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 mb-1.5">Pedro</p>
+                <p className="text-sm font-bold text-slate-900 mb-1.5">Pedro H.</p>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div className="h-full w-[80%] rounded-full bg-gradient-to-r from-orange-700 to-orange-500" />
                   </div>
-                  <span className="text-[0.68rem] text-slate-400 font-mono whitespace-nowrap">400 XP</span>
+                  <span className="text-[0.68rem] text-slate-400 font-mono whitespace-nowrap">8.980 XP</span>
                 </div>
               </div>
             </div>

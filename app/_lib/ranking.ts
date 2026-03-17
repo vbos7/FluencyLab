@@ -10,7 +10,7 @@ export type LeaderboardUser = {
 // Dados fake do leaderboard — substituir pela query ao banco quando disponível
 export const USERS_LEADERBOARD: LeaderboardUser[] = [
     { id: 1,  name: "Lucas M.",      xp: 9820, level: 12, github: "leerob" },
-    { id: 2,  name: "Ana Clara",     xp: 9350, level: 11, github: "rauchg" },
+    { id: 2,  name: "Carlos J.",     xp: 9350, level: 11, github: "rauchg" },
     { id: 3,  name: "Pedro H.",      xp: 8980, level: 10, github: "timneutkens" },
     { id: 4,  name: "Mariana S.",    xp: 8540, level: 9,  github: "shuding" },
     { id: 5,  name: "Rafael O.",     xp: 8100, level: 8,  github: "maxleiter" },
