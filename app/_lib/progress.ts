@@ -45,6 +45,33 @@ export const FAKE_STATS = {
     userXp:         1250,
 }
 
+// Tipo de um ponto no gráfico de evolução semanal
+export type WeeklyPoint = {
+    // Rótulo da semana exibido no eixo X (ex: "Sem 1", "Sem 2")
+    week: string
+    // XP ganho na semana
+    xp: number
+    // Treinos realizados na semana
+    treinos: number
+}
+
+// Dados fake das últimas 12 semanas para o gráfico de evolução
+// Substituir pela query ao banco quando disponível
+export const FAKE_WEEKLY_DATA: WeeklyPoint[] = [
+    { week: "Sem 1",  xp:  80, treinos: 4 },
+    { week: "Sem 2",  xp: 120, treinos: 6 },
+    { week: "Sem 3",  xp:  60, treinos: 3 },
+    { week: "Sem 4",  xp: 200, treinos: 9 },
+    { week: "Sem 5",  xp: 175, treinos: 8 },
+    { week: "Sem 6",  xp:  90, treinos: 5 },
+    { week: "Sem 7",  xp: 240, treinos: 11 },
+    { week: "Sem 8",  xp: 160, treinos: 7 },
+    { week: "Sem 9",  xp: 210, treinos: 10 },
+    { week: "Sem 10", xp: 130, treinos: 6 },
+    { week: "Sem 11", xp: 280, treinos: 13 },
+    { week: "Sem 12", xp: 190, treinos: 9 },
+]
+
 // Tipo dos valores computados usados nos cards de estatísticas
 export type ComputedStats = {
     // Total de treinos realizados

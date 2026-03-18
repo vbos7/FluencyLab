@@ -1,6 +1,7 @@
-import { generateWeeks, FAKE_STATS, computeStats } from "@/app/_lib/progress"
+import { generateWeeks, FAKE_STATS, computeStats, FAKE_WEEKLY_DATA } from "@/app/_lib/progress"
 import { ConsistencyHeatmap } from "@/app/_components/progress/consistency-heatmap"
 import { StatsCards } from "@/app/_components/progress/stats-cards"
+import { WeeklyChart } from "@/app/_components/progress/weekly-chart"
 
 export default function ProgressPage() {
     // Gera as semanas do ano atual e o índice da semana corrente
@@ -11,7 +12,7 @@ export default function ProgressPage() {
 
     return (
         <main className="mx-auto px-4 pt-8 pb-24 flex flex-col gap-6">
-            <div>
+            <div className="flex flex-col items-center gap-1">
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Consistência</h1>
                 <p className="text-sm text-slate-400 mt-1">Seu histórico de atividade</p>
             </div>
@@ -19,6 +20,8 @@ export default function ProgressPage() {
             <ConsistencyHeatmap weeks={weeks} currentWeekIdx={currentWeekIdx} />
 
             <StatsCards stats={stats} />
+
+            <WeeklyChart data={FAKE_WEEKLY_DATA} />
         </main>
     )
 }
