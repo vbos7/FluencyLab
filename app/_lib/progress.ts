@@ -45,6 +45,37 @@ export const FAKE_STATS = {
     userXp:         1250,
 }
 
+// Tipo dos valores computados usados nos cards de estatísticas
+export type ComputedStats = {
+    // Total de treinos realizados
+    totalPracticed: number
+    // Taxa de acerto em porcentagem (0–100)
+    completionRate: number
+    // Horas completas de estudo
+    totalHours: number
+    // Minutos restantes após as horas completas
+    totalMinutes: number
+    // XP total acumulado
+    userXp: number
+}
+
+// Deriva os valores exibidos nos cards a partir dos dados brutos.
+// Fórmula do tempo: cada treino dura ~3,2 minutos + base de 45 minutos.
+export function computeStats(raw: typeof FAKE_STATS): ComputedStats {
+    const totalTime    = Math.round((raw.totalPracticed * 3.2 + 45) * 10) / 10
+    const completionRate = raw.totalPracticed > 0
+        ? Math.round((raw.totalCorrect / raw.totalPracticed) * 100)
+        : 0
+
+    return {
+        totalPracticed: raw.totalPracticed,
+        completionRate,
+        totalHours:   Math.floor(totalTime),
+        totalMinutes: Math.round((totalTime % 1) * 60),
+        userXp: raw.userXp,
+    }
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 // Nomes dos meses em PT-BR
