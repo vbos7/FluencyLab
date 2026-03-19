@@ -7,7 +7,7 @@ import { cn } from "@/app/_lib/utils"
 
 
 const items = [
-    { href: "/", icon: Home, label: "Início" },
+    { href: "/home", icon: Home, label: "Início" },
     { href: "/progress", icon: Calendar, label: "Progresso" },
     { href: "/ranking", icon: BarChart2, label: "Ranking" },
     { href: "/profile", icon: User, label: "Perfil" },
@@ -17,7 +17,7 @@ export function TopNav() {
     const pathname = usePathname()
     const router = useRouter()
 
-    if (pathname === "/login" || pathname === "/register") return null  // ← adiciona essa linha
+    if (pathname === "/login" || pathname === "/register" || pathname === "/") return null  // ← adiciona essa linha
 
   return (
       <>

@@ -6,7 +6,7 @@ import { Button } from "@/app/_components/ui/button"
 import { cn } from "@/app/_lib/utils"
 
 const items = [
-  { href: "/", icon: Home, label: "Início" },
+  { href: "/home", icon: Home, label: "Início" },
   { href: "/progress", icon: Calendar, label: "Progresso" },
   { href: "/practice", icon: Languages, label: "Praticar", center: true },
   { href: "/ranking", icon: BarChart2, label: "Ranking" },
@@ -16,7 +16,7 @@ const items = [
 export function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
-  if (pathname === "/login" || pathname === "/register") return null  // ← adiciona essa linha
+  if (pathname === "/login" || pathname === "/register" || pathname === "/") return null  // ← adiciona essa linha
 
   return (
     <nav

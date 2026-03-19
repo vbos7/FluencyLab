@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Mail } from "lucide-react"
+import Home from "../home/page";
 
 
 export default function LoginPage() {
@@ -125,7 +126,7 @@ export default function LoginPage() {
               type="button"
               className="relative overflow-hidden w-full h-12 rounded-xl font-bold text-sm text-white bg-gradient-to-br from-blue-500 to-blue-800 shadow-md shadow-blue-400/35 hover:shadow-lg hover:shadow-blue-400/45 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200"
             >
-              <a href="#">
+              <a href="/home">
                 Login
                 <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[shimmer_3s_2s_infinite]" />
               </a>
