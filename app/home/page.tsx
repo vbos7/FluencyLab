@@ -63,6 +63,7 @@ function useMounted() {
 
 
 export default function Home() {
+
   return (
 
     <div className="mx-auto min-h-dvh relative bg-white pb-24 px-4 sm:px-6 lg:px-8">

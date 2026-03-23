@@ -30,7 +30,7 @@ export function BottomNav() {
             onClick={() => router.push(item.href)}
             aria-label={item.label}
             className={cn(
-              "w-14 h-14 rounded-full bg-[#2B54FF] hover:bg-[#2B54FF]/90 text-white",
+              "w-14 h-14 rounded-full font-bold bg-gradient-to-br from-blue-500 to-blue-800 shadow-md shadow-blue-400/35 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-400/45 active:scale-95 transition-all text-white",
               pathname === item.href && "shadow-[0_2px_20px_rgba(37,99,235,0.4)]",
             )}
           >

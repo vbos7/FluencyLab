@@ -2,8 +2,10 @@
 
 import { User2Icon, UserIcon } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
+    const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -151,14 +153,13 @@ export default function LoginPage() {
 
                     {/* submit */}
                     <div className={`mt-2 ${fadeUp(200)}`}>
-                        <button
+                        <button onClick={() => router.push("/login")}
                             type="button"
                             className="relative overflow-hidden w-full h-12 rounded-xl font-bold text-sm text-white bg-gradient-to-br from-blue-500 to-blue-800 shadow-md shadow-blue-400/35 hover:shadow-lg hover:shadow-blue-400/45 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200"
                         >
-                            <a href="/login">
+                            
                             Register
                             <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[shimmer_3s_2s_infinite]" />
-                            </a>
                         </button>
                     </div>
                 </div>

@@ -155,7 +155,7 @@ export default function FluencyLabHome() {
               <p className="text-white/70 leading-relaxed max-w-sm
                             text-sm sm:text-base">
                 Receba frases em português e escreva a tradução em inglês —
-                Usando um sistema de Competição com seu amigos.
+                Usando um sistema de Competição com seus amigos.
               </p>
             </div>
           </div>
