@@ -15,7 +15,7 @@ export default function ProfilePage() {
     confirmarSenha: "",
   });
 
-  useEffect(() => {
+  useEffect(() => {     
     const el = xpFillRef.current;
     if (!el) return;
     requestAnimationFrame(() => {
@@ -57,7 +57,7 @@ export default function ProfilePage() {
                 className="w-[72px] h-[72px] sm:w-[88px] sm:h-[88px] rounded-full border-4 border-white flex items-center justify-center text-3xl sm:text-4xl font-black text-white shadow-[0_4px_16px_rgba(37,99,235,0.35)]"
                 style={{ background: "linear-gradient(135deg,#1d4ed8,#60a5fa)" }}
               >
-                S
+                
               </div>
               <div className="absolute bottom-0.5 right-0.5 w-[22px] h-[22px] sm:w-[26px] sm:h-[26px] bg-[#f5a623] rounded-full border-[3px] border-white flex items-center justify-center text-[10px] sm:text-xs z-10">
                 🥇
@@ -88,7 +88,7 @@ export default function ProfilePage() {
         
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {[
-            { icon: "⭐", value: "2.000", label: "Pontos" },
+            { icon: "⭐", value: "200", label: "Pontos" },
             { icon: "🏆", value: "#1",    label: "Posição" },
             { icon: "🔥", value: "14",    label: "Sequência" },
             { icon: "✅", value: "47",    label: "Concluídos" },
@@ -112,8 +112,8 @@ export default function ProfilePage() {
             ⚡ Progresso para o Próximo Nível
           </div>
           <div className="flex justify-between text-[11px] sm:text-[.82rem] font-bold text-[#7a94b8] mb-2">
-            <span>Nível 5 — Expert</span>
-            <span>200 / 300 XP</span>
+            <span>Nível 4 — Expert</span>
+            <span>250 / 300 XP</span>
           </div>
           <div className="h-2.5 sm:h-3 bg-[#e8f0fe] rounded-full overflow-hidden">
             <div
@@ -123,7 +123,7 @@ export default function ProfilePage() {
             />
           </div>
           <div className="text-[10px] sm:text-[.78rem] text-[#7a94b8] mt-1.5 text-right">
-            Faltam 100 pts para o Nível 6
+            Faltam 50 pts para o Nível 5
           </div>
         </div>
 
@@ -131,11 +131,11 @@ export default function ProfilePage() {
         <div className="bg-white border border-[#dce8ff] rounded-2xl p-4 sm:p-6 shadow-[0_2px_16px_rgba(37,99,235,0.08)]">
           <div className="text-sm sm:text-base font-extrabold mb-3 sm:mb-4">📊 Ranking Atual</div>
           {[
-            { pos: "🥇", name: "Samuel",   pts: "200", isYou: true  },
-            { pos: "🥈", name: "Isabella", pts: "190", isYou: false },
-            { pos: "🥉", name: "Pedro",    pts: "180", isYou: false },
-            { pos: "#4", name: "Milena",   pts: "165", isYou: false },
-            { pos: "#5", name: "Bruno",    pts: "155", isYou: false },
+            { pos: "🥇", name: "Samuel",   pts: "200 pts", isYou: true  },
+            { pos: "🥈", name: "Isabella", pts: "190 pts", isYou: false },
+            { pos: "🥉", name: "Pedro",    pts: "180 pts", isYou: false },
+            { pos: "#4", name: "Milena",   pts: "165 pts", isYou: false },
+            { pos: "#5", name: "Bruno",    pts: "155 pts", isYou: false },
           ].map((r, i) => (
             <div
               key={r.name}
@@ -147,7 +147,7 @@ export default function ProfilePage() {
               <div className={`flex-1 font-bold text-xs sm:text-sm ${r.isYou ? "text-[#2563eb]" : ""}`}>
                 {r.name}
               </div>
-              <div className="text-xs sm:text-sm font-extrabold text-[#2563eb]">🔥 {r.pts}</div>
+              <div className="text-xs sm:text-sm font-extrabold text-[#2563eb]"> {r.pts}</div>
             </div>
           ))}
         </div>
@@ -169,7 +169,7 @@ export default function ProfilePage() {
                 onClick={() => setIsModalOpen(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-[#f0f4ff] text-[#7a94b8] text-xs font-bold hover:bg-[#dce8ff] transition-colors"
               >
-                ✕
+                
               </button>
             </div>
 
