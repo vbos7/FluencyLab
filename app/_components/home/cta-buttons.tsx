@@ -16,7 +16,7 @@ export function CtaButtons() {
             <div className="grid grid-cols-2 gap-3">
                 <a
                     href="/register"
-                    className="relative flex h-13 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-800 text-sm font-bold text-white shadow-md shadow-blue-400/35 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-400/45 active:scale-[0.98]"
+                    className="relative flex h-13 w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-linear-to-br from-blue-500 to-blue-800 text-sm font-bold text-white shadow-md shadow-blue-400/35 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-400/45 active:scale-[0.98]"
                 >
                     <svg
                         width="16"
@@ -33,7 +33,7 @@ export function CtaButtons() {
                         <line x1="22" y1="11" x2="16" y2="11" />
                     </svg>
                     Criar conta
-                    <span className="absolute inset-0 -translate-x-full animate-[shimmer_3s_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                    <span className="absolute inset-0 -translate-x-full animate-[shimmer_3s_2s_infinite] bg-linear-to-r from-transparent via-white/10 to-transparent" />
                 </a>
 
                 <a
