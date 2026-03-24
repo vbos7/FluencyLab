@@ -2,6 +2,7 @@ import { USERS_LEADERBOARD, getLevel } from "@/app/_lib/ranking"
 import { Podium } from "@/app/_components/ranking/podium"
 import { LeaderboardList } from "@/app/_components/ranking/leaderboard-list"
 import { PositionFooter } from "@/app/_components/ranking/position-footer"
+import NavLayout from "@/app/_layouts/nav-layout";
 
 // Quantidade de linhas exibidas na lista abaixo do pódio
 const LIST_SIZE = 10
@@ -36,15 +37,17 @@ export default function RankingPage() {
     const visibleRows = leaderboard.slice(3).slice(startIdx, startIdx + LIST_SIZE)
 
     return (
-        <main className="mx-auto px-4 pt-8 pb-25 flex flex-col gap-6">
-            <div className="flex flex-col items-center gap-1">
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Ranking</h1>
-                <p className="text-sm text-slate-400 mt-1">Veja como você se compara com outros</p>
-            </div>
+        <NavLayout>
+            <main className="mx-auto px-4 pt-8 pb-25 flex flex-col gap-6">
+                <div className="flex flex-col items-center gap-1">
+                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Ranking</h1>
+                    <p className="text-sm text-slate-400 mt-1">Veja como você se compara com outros</p>
+                </div>
 
-            <Podium top3={top3} />
-            <LeaderboardList rows={visibleRows} startIdx={startIdx} />
-            <PositionFooter position={myPosition} />
-        </main>
+                <Podium top3={top3} />
+                <LeaderboardList rows={visibleRows} startIdx={startIdx} />
+                <PositionFooter position={myPosition} />
+            </main>
+        </NavLayout>
     )
 }
