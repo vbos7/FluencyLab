@@ -29,6 +29,57 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#f0f4ff] flex items-center justify-center px-4 relative overflow-hidden">
 
+      {/* modal */}
+              {isOpen && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm rounded-3xl">
+                  <div className="w-full max-w-sm bg-white rounded-2xl p-7 border border-blue-100 shadow-xl">
+
+                    {/* fechar */}
+                    <button onClick={() => setIsOpen(false)} className="float-right text-slate-400 hover:text-slate-600">
+                      <X size={16} />
+                    </button>
+
+                    {!sent ? (
+                      <>
+                        <h2 className="text-lg font-extrabold text-slate-900 mb-1">Recuperar senha</h2>
+                        <p className="text-sm text-slate-400 mb-5">Digite seu e-mail para receber o link.</p>
+
+                        <div className={`flex items-center gap-3 bg-[#f0f4ff] rounded-xl px-4 h-12 mb-4`}>
+                          <Mail size={16} className="text-slate-400" />
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="seu@email.com"
+                            className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none"
+                          />
+                        </div>
+
+                        <button
+                          onClick={() => setSent(true)} // troca pelo sua chamada de API
+                          className="w-full h-11 rounded-xl text-sm font-bold text-white bg-gradient-to-br from-blue-500 to-blue-800"
+                        >
+                          Enviar link
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <h2 className="text-lg font-extrabold text-slate-900 mb-1">E-mail enviado!</h2>
+                        <p className="text-sm text-slate-400 mb-5">
+                          Enviamos o link de recuperação para <strong className="text-blue-500">{email}</strong>.
+                        </p>
+                        <button
+                          onClick={() => setIsOpen(false)}
+                          className="w-full h-11 rounded-xl text-sm font-bold text-white bg-gradient-to-br from-blue-500 to-blue-800"
+                        >
+                          Entendi
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
       {/* dot grid */}
       <div
         className="fixed inset-0 pointer-events-none z-0"
@@ -143,56 +194,6 @@ export default function LoginPage() {
           </a>
         </p>
 
-        {/* modal */}
-              {isOpen && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center px-4 bg-black/40 backdrop-blur-sm rounded-3xl">
-                  <div className="w-full max-w-sm bg-white rounded-2xl p-7 border border-blue-100 shadow-xl">
-
-                    {/* fechar */}
-                    <button onClick={() => setIsOpen(false)} className="float-right text-slate-400 hover:text-slate-600">
-                      <X size={16} />
-                    </button>
-
-                    {!sent ? (
-                      <>
-                        <h2 className="text-lg font-extrabold text-slate-900 mb-1">Recuperar senha</h2>
-                        <p className="text-sm text-slate-400 mb-5">Digite seu e-mail para receber o link.</p>
-
-                        <div className={`flex items-center gap-3 bg-[#f0f4ff] rounded-xl px-4 h-12 mb-4`}>
-                          <Mail size={16} className="text-slate-400" />
-                          <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="seu@email.com"
-                            className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none"
-                          />
-                        </div>
-
-                        <button
-                          onClick={() => setSent(true)} // troca pelo sua chamada de API
-                          className="w-full h-11 rounded-xl text-sm font-bold text-white bg-gradient-to-br from-blue-500 to-blue-800"
-                        >
-                          Enviar link
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <h2 className="text-lg font-extrabold text-slate-900 mb-1">E-mail enviado!</h2>
-                        <p className="text-sm text-slate-400 mb-5">
-                          Enviamos o link de recuperação para <strong className="text-blue-500">{email}</strong>.
-                        </p>
-                        <button
-                          onClick={() => setIsOpen(false)}
-                          className="w-full h-11 rounded-xl text-sm font-bold text-white bg-gradient-to-br from-blue-500 to-blue-800"
-                        >
-                          Entendi
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
       </div>
     </div>
   );
