@@ -1,5 +1,5 @@
 "use client";
-
+import { Avatar, AvatarFallback, AvatarImage, AvatarBadge } from "@/app/_components/ui/avatar"
 import { useEffect, useRef, useState } from "react";
 
 
@@ -8,7 +8,7 @@ export default function ProfilePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [form, setForm] = useState({
-    nome: "samuel",
+    nome: "Marcus Vinicius ",
     email: "",
     telefone: "",
     senhaAtual: "",
@@ -16,7 +16,7 @@ export default function ProfilePage() {
     confirmarSenha: "",
   });
 
-  useEffect(() => {     
+  useEffect(() => {
     const el = xpFillRef.current;
     if (!el) return;
     requestAnimationFrame(() => {
@@ -37,7 +37,7 @@ export default function ProfilePage() {
     <div className="bg-[#f0f4ff] min-h-screen px-4 py-6 sm:py-10 font-sans text-[#1e293b]">
       <div className="w-full max-w-3xl mx-auto flex flex-col gap-4 sm:gap-6">
 
-        
+
         <div className="bg-white rounded-2xl sm:rounded-3xl border border-[#dce8ff] overflow-hidden shadow-[0_8px_32px_rgba(37,99,235,0.13)]">
           <div
             className="h-20 sm:h-28 relative"
@@ -52,19 +52,23 @@ export default function ProfilePage() {
           </div>
 
           <div className="px-4 sm:px-8 pb-5 sm:pb-8">
-            
+
             <div className="relative inline-block -mt-9 sm:-mt-11 mb-2 sm:mb-3">
               <div
                 className="w-[72px] h-[72px] sm:w-[88px] sm:h-[88px] rounded-full border-4 border-white flex items-center justify-center text-3xl sm:text-4xl font-black text-white shadow-[0_4px_16px_rgba(37,99,235,0.35)]"
                 style={{ background: "linear-gradient(135deg,#1d4ed8,#60a5fa)" }}
               >
-                
-                
+                <Avatar className="w-full h-full">
+                  <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                  <AvatarFallback>CN</AvatarFallback>
+                  <AvatarBadge className="bg-green-600 dark:bg-green-800" />
+                </Avatar>
+
               </div>
              
             </div>
 
-            
+
             <div className="flex items-start justify-between flex-wrap gap-2 sm:gap-3">
               <div>
                 <h1 className="text-lg sm:text-[1.35rem] font-black leading-tight">{form.nome}</h1>
@@ -85,13 +89,13 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        
+
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           {[
-            { icon: "⭐", value: "200", label: "Pontos" },
-            { icon: "🏆", value: "#1",    label: "Posição" },
-            { icon: "🔥", value: "14",    label: "Sequência" },
-            { icon: "✅", value: "47",    label: "Concluídos" },
+            { icon: "⭐", value: "1.250", label: "Pontos" },
+            { icon: "🏆", value: "#27", label: "Posição" },
+            { icon: "🔥", value: "64%", label: "Sequência" },
+            { icon: "✅", value: "135", label: "Concluídos" },
           ].map((s) => (
             <div
               key={s.label}
@@ -106,7 +110,7 @@ export default function ProfilePage() {
           ))}
         </div>
 
-        
+
         <div className="bg-white border border-[#dce8ff] rounded-2xl p-4 sm:p-6 shadow-[0_2px_16px_rgba(37,99,235,0.08)]">
           <div className="text-sm sm:text-base font-extrabold mb-3 sm:mb-4">
             ⚡ Progresso para o Próximo Nível
@@ -126,34 +130,9 @@ export default function ProfilePage() {
             Faltam 50 pts para o Nível 5
           </div>
         </div>
-
-        
-        <div className="bg-white border border-[#dce8ff] rounded-2xl p-4 sm:p-6 shadow-[0_2px_16px_rgba(37,99,235,0.08)]">
-          <div className="text-sm sm:text-base font-extrabold mb-3 sm:mb-4">📊 Ranking Atual</div>
-          {[
-            { pos: "🥇", name: "Samuel",   pts: "200 pts", isYou: true  },
-            { pos: "🥈", name: "Isabella", pts: "190 pts", isYou: false },
-            { pos: "🥉", name: "Pedro",    pts: "180 pts", isYou: false },
-            { pos: "#4", name: "Milena",   pts: "165 pts", isYou: false },
-            { pos: "#5", name: "Bruno",    pts: "155 pts", isYou: false },
-          ].map((r, i) => (
-            <div
-              key={r.name}
-              className={`flex items-center gap-3 py-2 sm:py-2.5 ${i < 4 ? "border-b border-[#dce8ff]" : ""}`}
-            >
-              <div className={`w-6 sm:w-7 text-center text-xs sm:text-sm font-bold ${i >= 3 && !r.isYou ? "text-[#7a94b8]" : ""}`}>
-                {r.pos}
-              </div>
-              <div className={`flex-1 font-bold text-xs sm:text-sm ${r.isYou ? "text-[#2563eb]" : ""}`}>
-                {r.name}
-              </div>
-              <div className="text-xs sm:text-sm font-extrabold text-[#2563eb]"> {r.pts}</div>
-            </div>
-          ))}
-        </div>
       </div>
 
-      
+
       {isModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center px-4"
@@ -162,21 +141,21 @@ export default function ProfilePage() {
         >
           <div className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-md p-6 sm:p-8 flex flex-col gap-4 shadow-2xl">
 
-            
+
             <div className="flex items-center justify-between">
               <h2 className="text-base sm:text-lg font-extrabold">Editar Perfil</h2>
               <button
                 onClick={() => setIsModalOpen(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-full bg-[#f0f4ff] text-[#7a94b8] text-xs font-bold hover:bg-[#dce8ff] transition-colors"
               >
-                
+
               </button>
             </div>
 
-            
+
             <div className="flex flex-col gap-3">
 
-              
+
               <div>
                 <label className="block text-[10px] sm:text-xs font-bold text-[#7a94b8] uppercase tracking-wide mb-1">
                   Nome
@@ -204,7 +183,7 @@ export default function ProfilePage() {
                 />
               </div>
 
-              
+
               <div>
                 <label className="block text-[10px] sm:text-xs font-bold text-[#7a94b8] uppercase tracking-wide mb-1">
                   Telefone
@@ -219,7 +198,7 @@ export default function ProfilePage() {
                 />
               </div>
 
-              
+
               <div className="border-t border-[#dce8ff] pt-3 sm:pt-4 flex flex-col gap-2.5 sm:gap-3">
                 <p className="text-[10px] sm:text-xs font-bold text-[#7a94b8] uppercase tracking-wide">
                   Trocar Senha
@@ -251,7 +230,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            
+
             <div className="flex gap-2.5 sm:gap-3 mt-1">
               <button
                 onClick={() => setIsModalOpen(false)}
