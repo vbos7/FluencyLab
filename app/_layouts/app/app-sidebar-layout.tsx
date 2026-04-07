@@ -16,7 +16,7 @@ export default function AppSidebarLayout({
             <Toaster position="top-center" richColors />
             <FlashToast />
             <AppSidebar />
-            <AppContent variant="sidebar" className="overflow-x-hidden">
+            <AppContent variant="sidebar" id="main-content" tabIndex={-1} className="overflow-x-hidden">
                 <AppSidebarHeader breadcrumbs={breadcrumbs} />
                 {children}
             </AppContent>

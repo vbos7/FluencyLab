@@ -5,7 +5,9 @@ export default function NavLayout({ children }: { children: React.ReactNode }) {
     return (
         <>
             <TopNav />
-            {children}
+            <main id="main-content" tabIndex={-1}>
+                {children}
+            </main>
             <BottomNav />
         </>
     )

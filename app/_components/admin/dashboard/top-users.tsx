@@ -22,7 +22,7 @@ export function TopUsers() {
                                       ? "bg-slate-100 text-slate-600"
                                       : i === 2
                                         ? "bg-orange-100 text-orange-600"
-                                        : "bg-slate-50 text-slate-400"
+                                        : "bg-slate-100 text-slate-600"
                             )}
                         >
                             {i + 1}
@@ -42,13 +42,13 @@ export function TopUsers() {
                             <p className="truncate text-sm font-medium text-slate-800">
                                 {user.name}
                             </p>
-                            <p className="truncate text-[11px] text-slate-400">{user.email}</p>
+                            <p className="truncate text-[11px] text-slate-500">{user.email}</p>
                         </div>
 
                         {/* XP */}
                         <span className="shrink-0 font-mono text-sm font-bold text-slate-700">
                             {user.xp.toLocaleString("pt-BR")}
-                            <span className="ml-0.5 text-[10px] font-normal text-slate-400">
+                            <span className="ml-0.5 text-[10px] font-normal text-slate-500">
                                 xp
                             </span>
                         </span>

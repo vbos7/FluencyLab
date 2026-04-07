@@ -60,14 +60,14 @@ export function CtaButtons() {
             {/* Botão convidado */}
             <div className="relative flex items-center gap-3">
                 <div className="h-px flex-1 bg-blue-100" />
-                <span className="text-[11px] font-medium tracking-wide text-blue-300 uppercase">
+                <span className="text-[11px] font-medium tracking-wide text-blue-500 uppercase">
                     ou
                 </span>
                 <div className="h-px flex-1 bg-blue-100" />
             </div>
             <button
                 onClick={enterAsGuest}
-                className="flex h-12 w-full items-center justify-center gap-2.5 rounded-xl border border-dashed border-blue-200 bg-white/60 text-sm font-semibold text-slate-500 transition-all duration-200 hover:border-blue-400 hover:bg-white hover:text-blue-600 active:scale-[0.98]"
+                className="flex h-12 w-full items-center justify-center gap-2.5 rounded-xl border border-dashed border-blue-300 bg-white text-sm font-semibold text-slate-600 transition-all duration-200 hover:border-blue-400 hover:text-blue-600 active:scale-[0.98]"
             >
                 <svg
                     width="16"

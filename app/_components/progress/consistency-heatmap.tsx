@@ -29,7 +29,7 @@ export function ConsistencyHeatmap({ weeks, currentWeekIdx }: Props) {
                     {DAY_LABELS.map((label, i) => (
                         <span
                             key={i}
-                            className="text-[10px] font-medium text-slate-300"
+                            className="text-[10px] font-medium text-slate-500"
                             style={{ height: 14, lineHeight: "14px" }}
                         >
                             {label}
@@ -49,7 +49,7 @@ export function ConsistencyHeatmap({ weeks, currentWeekIdx }: Props) {
                                     {/* Label do mês — ocupa espaço fixo; visível só na semana do dia 1 */}
                                     <div className="mb-1 h-4">
                                         {label && (
-                                            <span className="text-[11px] leading-none font-medium text-slate-400">
+                                            <span className="text-[11px] leading-none font-medium text-slate-600">
                                                 {label}
                                             </span>
                                         )}
@@ -83,11 +83,11 @@ export function ConsistencyHeatmap({ weeks, currentWeekIdx }: Props) {
 
             {/* Legenda de intensidade */}
             <div className="mt-4 flex items-center justify-end gap-1.5">
-                <span className="text-[11px] text-slate-400">Menos</span>
+                <span className="text-[11px] text-slate-600">Menos</span>
                 {[0, 1, 2, 3].map((lvl) => (
                     <div key={lvl} className={cn("size-[11px] rounded-[2px]", cellClass(lvl))} />
                 ))}
-                <span className="text-[11px] text-slate-400">Mais</span>
+                <span className="text-[11px] text-slate-600">Mais</span>
             </div>
         </div>
     )

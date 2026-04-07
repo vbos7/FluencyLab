@@ -4,7 +4,7 @@ export function WelcomeHeader({ name }: Props) {
     const chars = (name + "!").split("")
 
     return (
-        <div className="mt-[5%] mb-2">
+        <header className="mt-[5%] mb-2">
             <p className="mb-1 text-sm font-medium text-slate-400">👋 Olá de volta,</p>
             <h1 className="text-3xl leading-tight font-extrabold tracking-tight text-slate-900">
                 Bem-vindo,{" "}
@@ -22,6 +22,6 @@ export function WelcomeHeader({ name }: Props) {
                     ))}
                 </span>
             </h1>
-        </div>
+        </header>
     )
 }

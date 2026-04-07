@@ -34,7 +34,7 @@ export default function FrasesPage() {
                 <div className="flex items-start justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900">Frases</h1>
-                        <p className="mt-0.5 text-sm text-slate-400">
+                        <p className="mt-0.5 text-sm text-slate-500">
                             {ADMIN_PHRASES.length} frases cadastradas
                         </p>
                     </div>
@@ -46,7 +46,7 @@ export default function FrasesPage() {
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-neutral-200 bg-slate-50 text-xs tracking-wide text-slate-500 uppercase dark:border-white/8 dark:bg-white/3">
+                                <tr className="border-b border-neutral-200 bg-slate-50 text-xs tracking-wide text-slate-600 uppercase dark:border-white/8 dark:bg-white/3">
                                     <th className="w-8 px-5 py-3 text-left">#</th>
                                     <th className="px-5 py-3 text-left">Inglês</th>
                                     <th className="px-5 py-3 text-left">Português</th>
@@ -65,7 +65,7 @@ export default function FrasesPage() {
                                             i === ADMIN_PHRASES.length - 1 && "border-b-0"
                                         )}
                                     >
-                                        <td className="px-5 py-3 font-mono text-xs text-slate-400">
+                                        <td className="px-5 py-3 font-mono text-xs text-slate-500">
                                             {phrase.id}
                                         </td>
 
@@ -76,7 +76,7 @@ export default function FrasesPage() {
                                         </td>
 
                                         <td className="max-w-xs px-5 py-3">
-                                            <p className="truncate text-slate-500">
+                                            <p className="truncate text-slate-600">
                                                 {phrase.portuguese}
                                             </p>
                                         </td>

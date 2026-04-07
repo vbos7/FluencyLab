@@ -18,10 +18,10 @@ const TOP3 = [
         xp: "9.350 XP",
         avatar: "https://github.com/rauchg.png",
         medal: "🥈",
-        posColor: "text-slate-400",
+        posColor: "text-slate-600",
         ringClass: "ring-slate-200 group-hover:ring-slate-400",
         hoverBg: "hover:bg-slate-50",
-        xpClass: "text-slate-500 bg-slate-50 border-slate-100",
+        xpClass: "text-slate-600 bg-slate-100 border-slate-200",
     },
     {
         pos: 3,
@@ -39,9 +39,9 @@ const TOP3 = [
 
 export function RankingTop3() {
     return (
-        <div className="mt-7">
+        <section aria-labelledby="ranking-title" className="mt-7">
             <div className="mb-3.5 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-slate-900">Ranking Top 3</h2>
+                <h2 id="ranking-title" className="text-xl font-bold text-slate-900">Ranking Top 3</h2>
                 <a
                     href="/ranking"
                     className="text-xs font-bold text-blue-500 transition-colors hover:text-blue-700"
@@ -50,11 +50,13 @@ export function RankingTop3() {
                 </a>
             </div>
 
-            <div className="flex flex-col divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+            <ul className="flex flex-col divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm" role="list">
                 {TOP3.map((entry) => (
-                    <div
-                        key={entry.pos}
-                        className={`rank-row-${entry.pos} group flex items-center gap-3 px-4 py-3.5 ${entry.hoverBg} cursor-pointer transition-colors duration-200`}
+                    <li key={entry.pos}>
+                    <a
+                        href="/ranking"
+                        aria-label={`${entry.pos}º lugar: ${entry.name}, Nível ${entry.level}, ${entry.xp}`}
+                        className={`rank-row-${entry.pos} group flex items-center gap-3 px-4 py-3.5 ${entry.hoverBg} transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400`}
                     >
                         <span
                             className={`w-6 text-center text-sm font-bold ${entry.posColor} transition-transform duration-200 group-hover:scale-125`}
@@ -78,7 +80,7 @@ export function RankingTop3() {
                             <p className="truncate text-sm font-semibold text-slate-800">
                                 {entry.name}
                             </p>
-                            <p className="text-xs text-slate-400">Nível {entry.level}</p>
+                            <p className="text-xs text-slate-500">Nível {entry.level}</p>
                         </div>
 
                         <span
@@ -86,9 +88,10 @@ export function RankingTop3() {
                         >
                             {entry.xp}
                         </span>
-                    </div>
+                    </a>
+                    </li>
                 ))}
-            </div>
-        </div>
+            </ul>
+        </section>
     )
 }

@@ -44,7 +44,7 @@ export function PracticeHeader({
                         "inline-flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all duration-200 select-none",
                         isFav
                             ? "border-blue-600 bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.3)]"
-                            : "border-slate-300 bg-white text-slate-500 hover:border-blue-400 hover:text-blue-500",
+                            : "border-slate-300 bg-white text-slate-600 hover:border-blue-400 hover:text-blue-600",
                         justFavorited && "scale-125"
                     )}
                 >

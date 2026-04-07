@@ -8,6 +8,8 @@ type Props = { stats: Stat[] }
 
 export function StatsGrid({ stats }: Props) {
     return (
+        <section aria-labelledby="stats-title">
+            <h2 id="stats-title" className="sr-only">Estatísticas</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             {stats.map((s) => (
                 <div
@@ -22,5 +24,6 @@ export function StatsGrid({ stats }: Props) {
                 </div>
             ))}
         </div>
+        </section>
     )
 }
