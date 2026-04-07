@@ -3,6 +3,7 @@ import { StatsGrid } from "@/app/_components/profile/stats-grid"
 import { XpProgress } from "@/app/_components/profile/xp-progress"
 import { AvatarUpload } from "@/app/_components/profile/avatar-upload"
 import { EditProfileDialog } from "@/app/_components/profile/edit-profile-dialog"
+import { SettingsDialog } from "@/app/_components/profile/settings-dialog"
 import { FavoriteQuestions } from "@/app/_components/profile/favorite-questions"
 import { LogoutButton } from "@/app/_components/profile/logout-button"
 import NavLayout from "@/app/_layouts/nav-layout"
@@ -30,7 +31,10 @@ export default function ProfilePage() {
                     rankLabel={USER.rankLabel}
                     avatarSlot={<AvatarUpload name={USER.name} avatarSrc={USER.avatarSrc} />}
                 >
-                    <EditProfileDialog initialName={USER.name} initialEmail={USER.email} />
+                    <div className="flex items-center gap-2">
+                        <EditProfileDialog initialName={USER.name} initialEmail={USER.email} />
+                        <SettingsDialog />
+                    </div>
                 </ProfileHeader>
 
                 <StatsGrid stats={USER.stats} />
