@@ -53,7 +53,7 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
     }, [open, initialEmail])
 
     const fieldClass = (name: string) =>
-        `flex items-center gap-3 bg-[#f0f4ff] rounded-xl px-4 h-12 border transition-all duration-200 ${
+        `flex items-center gap-3 bg-[#f0f4ff] rounded-xl px-4 h-12 border transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-300 ${
             focused === name ? "border-blue-400 shadow-sm shadow-blue-100" : "border-transparent"
         }`
 
@@ -153,7 +153,7 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                                     className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none"
                                 />
                             </div>
-                            {error && <p className="text-xs text-red-500">{error}</p>}
+                            {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
                             <button onClick={submitEmail} className={btnClass}>
                                 Enviar código
                             </button>
@@ -188,14 +188,15 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                                         inputMode="numeric"
                                         maxLength={1}
                                         value={digit}
+                                        aria-label={`Dígito ${i + 1} de 6`}
                                         onChange={(e) => handleCodeChange(i, e.target.value)}
                                         onKeyDown={(e) => handleCodeKeyDown(i, e)}
-                                        className="h-12 w-11 rounded-xl border-2 border-transparent bg-[#f0f4ff] text-center text-lg font-bold text-slate-800 transition-all duration-150 outline-none focus:border-blue-400 focus:shadow-sm focus:shadow-blue-100"
+                                        className="h-12 w-11 rounded-xl border-2 border-transparent bg-[#f0f4ff] text-center text-lg font-bold text-slate-800 transition-all duration-150 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-300 focus:shadow-sm focus:shadow-blue-100"
                                     />
                                 ))}
                             </div>
 
-                            {error && <p className="text-center text-xs text-red-500">{error}</p>}
+                            {error && <p role="alert" className="text-center text-xs text-red-600">{error}</p>}
 
                             <button onClick={submitCode} className={btnClass}>
                                 Verificar código
@@ -248,8 +249,8 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                                 <button
                                     type="button"
                                     onClick={() => setShowPass(!showPass)}
-                                    className="text-slate-400 transition-colors hover:text-blue-500"
-                                    tabIndex={-1}
+                                    aria-label={showPass ? "Ocultar nova senha" : "Mostrar nova senha"}
+                                    className="text-slate-400 transition-colors hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded"
                                 >
                                     {showPass ? <EyeOffIcon /> : <EyeIcon />}
                                 </button>
@@ -269,14 +270,14 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                                 <button
                                     type="button"
                                     onClick={() => setShowConfirm(!showConfirm)}
-                                    className="text-slate-400 transition-colors hover:text-blue-500"
-                                    tabIndex={-1}
+                                    aria-label={showConfirm ? "Ocultar confirmação de senha" : "Mostrar confirmação de senha"}
+                                    className="text-slate-400 transition-colors hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded"
                                 >
                                     {showConfirm ? <EyeOffIcon /> : <EyeIcon />}
                                 </button>
                             </div>
 
-                            {error && <p className="text-xs text-red-500">{error}</p>}
+                            {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
 
                             <button onClick={submitPassword} className={`${btnClass} mt-1`}>
                                 Salvar nova senha

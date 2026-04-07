@@ -26,7 +26,7 @@ export function LoginForm() {
         }`
 
     const fieldClass = (name: string) =>
-        `flex items-center gap-3 bg-[#f0f4ff] rounded-xl px-4 h-12 border transition-all duration-200 ${
+        `flex items-center gap-3 bg-[#f0f4ff] rounded-xl px-4 h-12 border transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-300 ${
             focused === name ? "border-blue-400 shadow-sm shadow-blue-100" : "border-transparent"
         }`
 
@@ -48,7 +48,7 @@ export function LoginForm() {
                 <div className="flex flex-col gap-4">
                     {/* E-mail */}
                     <div className={fadeUp(100)}>
-                        <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                        <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
                             E-mail
                         </label>
                         <div className={fieldClass("email")}>
@@ -68,7 +68,7 @@ export function LoginForm() {
                     {/* Senha */}
                     <div className={fadeUp(150)}>
                         <div className="mb-2 flex items-center justify-between">
-                            <label className="block text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                            <label className="block text-xs font-semibold tracking-wider text-slate-600 uppercase">
                                 Senha
                             </label>
                             <button
@@ -93,8 +93,8 @@ export function LoginForm() {
                             <button
                                 type="button"
                                 onClick={() => setShowPass(!showPass)}
-                                className="text-slate-400 transition-colors hover:text-blue-500"
-                                tabIndex={-1}
+                                aria-label={showPass ? "Ocultar senha" : "Mostrar senha"}
+                                className="text-slate-400 transition-colors hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded"
                             >
                                 {showPass ? <EyeOffIcon /> : <EyeIcon />}
                             </button>

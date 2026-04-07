@@ -25,7 +25,7 @@ export function RegisterForm() {
         }`
 
     const fieldClass = (name: string) =>
-        `flex items-center gap-3 bg-[#f0f4ff] rounded-xl px-4 h-12 border transition-all duration-200 ${
+        `flex items-center gap-3 bg-[#f0f4ff] rounded-xl px-4 h-12 border transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-300 ${
             focused === name ? "border-blue-400 shadow-sm shadow-blue-100" : "border-transparent"
         }`
 
@@ -40,7 +40,7 @@ export function RegisterForm() {
             <div className="flex flex-col gap-3">
                 {/* Nome */}
                 <div className={fadeUp(100)}>
-                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
                         Nome
                     </label>
                     <div className={fieldClass("nome")}>
@@ -57,7 +57,7 @@ export function RegisterForm() {
 
                 {/* E-mail */}
                 <div className={fadeUp(125)}>
-                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
                         E-mail
                     </label>
                     <div className={fieldClass("email")}>
@@ -76,7 +76,7 @@ export function RegisterForm() {
 
                 {/* Senha */}
                 <div className={fadeUp(150)}>
-                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
                         Senha
                     </label>
                     <div className={fieldClass("password")}>
@@ -93,17 +93,17 @@ export function RegisterForm() {
                         <button
                             type="button"
                             onClick={() => setShowPass(!showPass)}
-                            className="text-slate-400 transition-colors hover:text-blue-500"
-                            tabIndex={-1}
+                            aria-label={showPass ? "Ocultar senha" : "Mostrar senha"}
+                            className="text-slate-400 transition-colors hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded"
                         >
                             {showPass ? <EyeOffIcon /> : <EyeIcon />}
                         </button>
                     </div>
                 </div>
 
-                {/* Confirmar senha */}
+                {/* Confirmar senha — mesmo botão de olho, mesmo aria-label dinâmico */}
                 <div className={fadeUp(175)}>
-                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
                         Confirmar senha
                     </label>
                     <div className={fieldClass("confirmPassword")}>
@@ -120,8 +120,8 @@ export function RegisterForm() {
                         <button
                             type="button"
                             onClick={() => setShowPass(!showPass)}
-                            className="text-slate-400 transition-colors hover:text-blue-500"
-                            tabIndex={-1}
+                            aria-label={showPass ? "Ocultar senha" : "Mostrar senha"}
+                            className="text-slate-400 transition-colors hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded"
                         >
                             {showPass ? <EyeOffIcon /> : <EyeIcon />}
                         </button>
