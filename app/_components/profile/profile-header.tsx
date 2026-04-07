@@ -1,19 +1,12 @@
-import { Avatar, AvatarImage, AvatarFallback, AvatarBadge } from "@/app/_components/ui/avatar"
 
 type Props = {
     name: string
     rankLabel: string
-    avatarSrc?: string
-    children?: React.ReactNode // slot para o botão "Editar Perfil"
+    avatarSlot: React.ReactNode // slot para o avatar com botão de câmera (client)
+    children?: React.ReactNode  // slot para o botão "Editar Perfil"
 }
 
-export function ProfileHeader({ name, rankLabel, avatarSrc, children }: Props) {
-    const initials = name
-        .split(" ")
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join("")
-
+export function ProfileHeader({ name, rankLabel, avatarSlot, children }: Props) {
     return (
         <div className="overflow-hidden rounded-2xl border border-[#dce8ff] bg-white shadow-[0_8px_32px_rgba(37,99,235,0.13)] sm:rounded-3xl">
             {/* Banner */}
@@ -32,18 +25,9 @@ export function ProfileHeader({ name, rankLabel, avatarSrc, children }: Props) {
             </div>
 
             <div className="px-4 pb-5 sm:px-8 sm:pb-8">
-                {/* Avatar */}
-                <div className="relative -mt-9 mb-2 inline-block sm:-mt-11 sm:mb-3">
-                    <div
-                        className="flex h-[72px] w-[72px] items-center justify-center rounded-full border-4 border-white shadow-[0_4px_16px_rgba(37,99,235,0.35)] sm:h-[88px] sm:w-[88px]"
-                        style={{ background: "linear-gradient(135deg,#1d4ed8,#60a5fa)" }}
-                    >
-                        <Avatar className="h-full w-full">
-                            {avatarSrc && <AvatarImage src={avatarSrc} alt={name} />}
-                            <AvatarFallback>{initials}</AvatarFallback>
-                            <AvatarBadge className="bg-green-600" />
-                        </Avatar>
-                    </div>
+                {/* Avatar — renderizado pelo slot client (AvatarUpload) */}
+                <div className="-mt-9 mb-2 inline-block sm:-mt-11 sm:mb-3">
+                    {avatarSlot}
                 </div>
 
                 {/* Nome + ranking + ação */}

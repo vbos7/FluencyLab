@@ -1,6 +1,7 @@
 import { ProfileHeader } from "@/app/_components/profile/profile-header"
 import { StatsGrid } from "@/app/_components/profile/stats-grid"
 import { XpProgress } from "@/app/_components/profile/xp-progress"
+import { AvatarUpload } from "@/app/_components/profile/avatar-upload"
 import { EditProfileDialog } from "@/app/_components/profile/edit-profile-dialog"
 import { FavoriteQuestions } from "@/app/_components/profile/favorite-questions"
 import { LogoutButton } from "@/app/_components/profile/logout-button"
@@ -27,7 +28,7 @@ export default function ProfilePage() {
                 <ProfileHeader
                     name={USER.name}
                     rankLabel={USER.rankLabel}
-                    avatarSrc={USER.avatarSrc}
+                    avatarSlot={<AvatarUpload name={USER.name} avatarSrc={USER.avatarSrc} />}
                 >
                     <EditProfileDialog initialName={USER.name} initialEmail={USER.email} />
                 </ProfileHeader>
