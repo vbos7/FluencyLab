@@ -88,18 +88,21 @@ export function BottomNav() {
                         key={item.href}
                         onClick={() => router.push(item.href)}
                         aria-label={item.label}
+                        aria-current={pathname === item.href ? "page" : undefined}
                         className={cn(
                             "h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-800 font-bold text-white shadow-md shadow-blue-400/35 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-400/45 active:scale-95",
                             pathname === item.href && "shadow-[0_2px_20px_rgba(37,99,235,0.4)]"
                         )}
                     >
-                        <item.icon className="size-6" />
+                        <item.icon className="size-6" aria-hidden="true" />
                     </Button>
                 ) : (
                     <Button
                         key={item.href}
                         variant="ghost"
                         onClick={() => router.push(item.href)}
+                        aria-label={item.label}
+                        aria-current={pathname === item.href ? "page" : undefined}
                         className={cn(
                             "h-auto flex-col gap-0.5 rounded-xl px-3 py-4 hover:bg-transparent",
                             pathname === item.href
@@ -107,7 +110,7 @@ export function BottomNav() {
                                 : "text-slate-400 hover:text-slate-400"
                         )}
                     >
-                        <item.icon className="size-6" />
+                        <item.icon className="size-6" aria-hidden="true" />
                     </Button>
                 )
             )}

@@ -22,7 +22,9 @@ export function AnswerForm({ answer, onChange, onVerify, onSkip, inputRef }: Pro
             {/* Textarea controlado; Enter sem Shift aciona a verificação */}
             <textarea
                 ref={inputRef}
-                className="min-h-20 w-full resize-none rounded-2xl border-2 border-slate-200 bg-white px-5 py-4 text-base text-slate-800 transition-colors outline-none placeholder:text-slate-400 focus:border-blue-500"
+                aria-label="Digite a tradução em inglês da frase acima"
+                aria-describedby="current-phrase"
+                className="min-h-20 w-full resize-none rounded-2xl border-2 border-slate-200 bg-white px-5 py-4 text-base text-slate-800 transition-colors outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-300"
                 placeholder="Digite a tradução em inglês..."
                 value={answer}
                 onChange={(e) => onChange(e.target.value)}

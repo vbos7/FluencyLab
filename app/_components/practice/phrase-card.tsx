@@ -21,7 +21,7 @@ export function PhraseCard({ phrase }: Props) {
                 </span>
                 <span className="text-xs font-medium text-slate-400">{phrase.category}</span>
             </div>
-            <p className="text-[20px] leading-relaxed font-semibold tracking-tight text-slate-800">
+            <p id="current-phrase" className="text-[20px] leading-relaxed font-semibold tracking-tight text-slate-800">
                 {phrase.pt}
             </p>
         </div>
