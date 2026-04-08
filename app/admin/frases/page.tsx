@@ -13,17 +13,17 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 const difficultyStyle: Record<string, string> = {
-    fácil: "bg-emerald-50 text-emerald-700",
-    médio: "bg-amber-50 text-amber-700",
-    difícil: "bg-red-50 text-red-600",
+    "f\u00e1cil": "bg-emerald-50 text-emerald-700",
+    "m\u00e9dio": "bg-amber-50 text-amber-700",
+    "dif\u00edcil": "bg-red-50 text-red-600",
 }
 
 const categoryStyle: Record<string, string> = {
     Cotidiano: "bg-blue-50 text-blue-700",
     Viagens: "bg-violet-50 text-violet-700",
-    Negócios: "bg-slate-100 text-slate-700",
-    Gramática: "bg-teal-50 text-teal-700",
-    Expressões: "bg-orange-50 text-orange-700",
+    "Neg\u00f3cios": "bg-slate-100 text-slate-700",
+    "Gram\u00e1tica": "bg-teal-50 text-teal-700",
+    "Express\u00f5es": "bg-orange-50 text-orange-700",
 }
 
 export default function FrasesPage() {

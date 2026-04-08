@@ -37,6 +37,8 @@ export function PracticeController({ phrases }: Props) {
     const [answer, setAnswer] = useState("")
     // Resultado da verificação; null enquanto o usuário ainda não verificou
     const [feedback, setFeedback] = useState<Feedback | null>(null)
+    // Texto lido pelo screen reader ao verificar (região aria-live sempre presente no DOM)
+    const [srAnnouncement, setSrAnnouncement] = useState("")
     // Controla a visibilidade do toast de XP
     const [showXpToast, setShowXpToast] = useState(false)
     // Quantidade de XP exibida no toast após verificar
@@ -79,6 +81,17 @@ export function PracticeController({ phrases }: Props) {
         setEarnedXp(fb.xp)
         setShowXpToast(true)
         setTimeout(() => setShowXpToast(false), 2000)
+
+        // Monta o texto completo para o screen reader
+        const parts = [fb.title, fb.message]
+        if (fb.corrections.length > 0) {
+            parts.push(`Tradução esperada: ${fb.corrections[0].correct}.`)
+            parts.push(fb.corrections[0].explanation)
+        }
+        parts.push(`Você ganhou ${fb.xp} XP.`)
+        // Limpa primeiro para que a mudança seja detectada mesmo se o texto for igual
+        setSrAnnouncement("")
+        setTimeout(() => setSrAnnouncement(parts.join(" ")), 50)
     }
 
     // Avança para uma frase aleatória diferente da atual (dentro da dificuldade ativa)
@@ -117,6 +130,16 @@ export function PracticeController({ phrases }: Props) {
 
     return (
         <div className="page-enter mx-auto max-w-5xl bg-white px-5 pt-10 pb-28">
+            {/* Região aria-live sempre presente no DOM — screen readers anunciam ao receber texto */}
+            <div
+                role="status"
+                aria-live="assertive"
+                aria-atomic="true"
+                className="sr-only"
+            >
+                {srAnnouncement}
+            </div>
+
             <XpToast earnedXp={earnedXp} visible={showXpToast} />
 
             <PracticeHeader

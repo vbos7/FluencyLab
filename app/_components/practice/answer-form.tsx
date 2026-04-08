@@ -40,7 +40,7 @@ export function AnswerForm({ answer, onChange, onVerify, onSkip, inputRef }: Pro
                 <Button
                     onClick={onVerify}
                     disabled={!answer.trim()}
-                    className="h-auto w-full rounded-2xl bg-blue-600 py-4 text-base font-semibold shadow-[0_4px_16px_rgba(37,99,235,0.3)] hover:bg-blue-700 active:scale-[0.98] disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                    className="hover-lift h-auto w-full rounded-2xl bg-blue-600 py-4 text-base font-semibold hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400"
                 >
                     Verificar Tradução
                 </Button>

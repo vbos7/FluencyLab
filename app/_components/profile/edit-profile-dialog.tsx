@@ -46,7 +46,7 @@ export function EditProfileDialog({ initialName, initialEmail = "" }: Props) {
             {/* Trigger */}
             <button
                 onClick={() => setOpen(true)}
-                className="rounded-xl bg-[#2563eb] px-4 py-2 text-xs font-bold text-white shadow-[0_4px_14px_rgba(37,99,235,0.30)] transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(37,99,235,0.45)] active:scale-95 sm:px-5 sm:py-2.5 sm:text-sm"
+                className="hover-lift rounded-xl bg-[#2563eb] px-4 py-2 text-xs font-bold text-white hover:bg-[#1d4ed8] sm:px-5 sm:py-2.5 sm:text-sm"
             >
                 Editar Perfil
             </button>

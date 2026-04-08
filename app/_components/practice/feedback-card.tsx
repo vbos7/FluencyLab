@@ -14,8 +14,7 @@ type Props = {
 
 export function FeedbackCard({ feedback, answer, onNext }: Props) {
     return (
-        // aria-live anuncia o resultado ao leitor de tela assim que o card aparece
-        <div aria-live="polite" aria-atomic="true">
+        <div>
             {/* Cor do card varia conforme o status via FEEDBACK_STYLES */}
             <div className={cn("mb-4 rounded-4xl p-6", FEEDBACK_STYLES[feedback.status])}>
                 <h3 className="mb-1.5 text-[20px] font-bold">{feedback.title}</h3>

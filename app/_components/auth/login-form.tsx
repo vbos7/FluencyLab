@@ -106,6 +106,8 @@ export function LoginForm() {
                         <button
                             onClick={() => {
                                 localStorage.removeItem("fluency-lab:mode")
+                                // Marca primeira entrada para exibir o onboarding na home
+                                localStorage.setItem("fluency-lab:firstLogin", "true")
                                 router.push("/home")
                             }}
                             type="button"

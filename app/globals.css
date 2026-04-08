@@ -7,8 +7,8 @@
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --font-sans: var(--font-geist-sans);
-    --font-mono: var(--font-geist-mono);
+    --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
+    --font-mono: var(--font-geist-mono, ui-monospace, monospace);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -294,11 +294,93 @@
 /* ── Profile page animations ── */
 @keyframes xpFill {
     from {
-        width: 0%;
+        width: 0;
     }
 }
 
 /* ── Page transition ── */
 .page-enter {
     animation: fadeUp 0.25s ease both;
+}
+
+/* ─── Hover lift ──────────────────────────────────────────────────────────────
+   Aplica o efeito "pular" no hover apenas quando reduce-motion está desativado.
+   Nos botões, substitui transition-colors — as cores continuam com transição
+   porque listamos as propriedades explicitamente.
+── */
+.hover-lift {
+    transition-property: color, background-color, border-color, transform, box-shadow;
+    transition-duration: 0.15s;
+    transition-timing-function: ease;
+}
+html:not(.reduce-motion) .hover-lift:hover {
+    transform: translateY(-2px);
+}
+html:not(.reduce-motion) .hover-lift:active {
+    transform: scale(0.97);
+}
+
+
+/* ─── Tamanho de Fonte ───────────────────────────────────────────────────────
+   Aumenta a fonte base de 16px para 18px. Como o Tailwind v4 gera utilitários
+   em rem, todas as classes text-* escalam proporcionalmente de forma automática.
+── */
+html.font-large {
+    font-size: 125%; /* 20px — escala todos os rem do Tailwind */
+}
+
+/* ─── Redução de Movimento ───────────────────────────────────────────────────
+   Desativa animações e transições para usuários sensíveis a movimento.
+   A duração mínima (0.01ms) em vez de 0 garante que eventos animationend/
+   transitionend ainda disparem, evitando quebras em bibliotecas de UI.
+── */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+}
+
+/* ─── Modo Daltônico ─────────────────────────────────────────────────────────
+   Deuteranopia/Protanopia: confusão entre vermelho e verde.
+   Substituição: Verde/Emerald → Ciano | Vermelho → Laranja
+   Azul e Âmbar permanecem (seguros para todos os tipos).
+   Como Tailwind v4 gera utilitários via var(--color-*), sobrescrever
+   as variáveis aqui afeta bg-green-*, text-green-*, border-green-*, etc.
+   automaticamente em todo o site.
+── */
+:root.colorblind {
+    /* Verde → Ciano */
+    --color-green-50: var(--color-cyan-50);
+    --color-green-100: var(--color-cyan-100);
+    --color-green-200: var(--color-cyan-200);
+    --color-green-300: var(--color-cyan-300);
+    --color-green-400: var(--color-cyan-500);
+    --color-green-500: var(--color-cyan-600);
+    --color-green-600: var(--color-cyan-700);
+    --color-green-700: var(--color-cyan-800);
+    --color-green-800: var(--color-cyan-900);
+
+    /* Emerald → Ciano (usado em badges de status "Ativo") */
+    --color-emerald-50: var(--color-cyan-50);
+    --color-emerald-100: var(--color-cyan-100);
+    --color-emerald-200: var(--color-cyan-200);
+    --color-emerald-400: var(--color-cyan-500);
+    --color-emerald-500: var(--color-cyan-600);
+    --color-emerald-600: var(--color-cyan-700);
+    --color-emerald-700: var(--color-cyan-800);
+
+    /* Vermelho → Laranja */
+    --color-red-50: var(--color-orange-50);
+    --color-red-100: var(--color-orange-100);
+    --color-red-200: var(--color-orange-200);
+    --color-red-300: var(--color-orange-300);
+    --color-red-400: var(--color-orange-400);
+    --color-red-500: var(--color-orange-500);
+    --color-red-600: var(--color-orange-600);
+    --color-red-700: var(--color-orange-700);
+    --color-red-800: var(--color-orange-800);
 }

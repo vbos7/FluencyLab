@@ -1,6 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { Home, Calendar, Languages, BarChart2, User } from "lucide-react"
 import { Button } from "@/app/_components/ui/button"
@@ -17,11 +16,11 @@ const items = [
 export function BottomNav() {
     const pathname = usePathname()
     const router = useRouter()
-    const [isGuest, setIsGuest] = useState(false)
-
-    useEffect(() => {
-        setIsGuest(localStorage.getItem("fluency-lab:mode") === "guest")
-    }, [pathname])
+    // Derivado diretamente do localStorage — re-calculado a cada navegação
+    // porque usePathname() já causa re-render quando a rota muda
+    const isGuest =
+        typeof window !== "undefined" &&
+        localStorage.getItem("fluency-lab:mode") === "guest"
 
     if (pathname === "/login" || pathname === "/register" || pathname === "/") return null
 

@@ -1,3 +1,4 @@
+import { Star, Trophy, Flame, CircleCheck } from "lucide-react"
 import { ProfileHeader } from "@/app/_components/profile/profile-header"
 import { StatsGrid } from "@/app/_components/profile/stats-grid"
 import { XpProgress } from "@/app/_components/profile/xp-progress"
@@ -14,10 +15,10 @@ const USER = {
     avatarSrc: "https://github.com/shadcn.png",
     rankLabel: "#1 no Ranking Geral",
     stats: [
-        { icon: "⭐", value: "1.250", label: "Pontos" },
-        { icon: "🏆", value: "#27", label: "Posição" },
-        { icon: "🔥", value: "64%", label: "Sequência" },
-        { icon: "✅", value: "135", label: "Concluídos" },
+        { icon: Star,         iconColor: "text-amber-500",  iconBg: "bg-amber-50",   value: "1.250", label: "Pontos" },
+        { icon: Trophy,       iconColor: "text-blue-600",   iconBg: "bg-blue-50",    value: "#27",   label: "Posição" },
+        { icon: Flame,        iconColor: "text-orange-500", iconBg: "bg-orange-50",  value: "64%",   label: "Sequência" },
+        { icon: CircleCheck,  iconColor: "text-emerald-600",iconBg: "bg-emerald-50", value: "135",   label: "Concluídos" },
     ],
     xp: { current: 250, max: 300, level: 4, levelLabel: "Expert" },
 }

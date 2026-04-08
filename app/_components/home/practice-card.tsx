@@ -26,7 +26,7 @@ export function PracticeCard({ xp, xpNeeded, level }: Props) {
             {/* Botão */}
             <a
                 href="/practice"
-                className="flex w-20 shrink-0 items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-800 px-3 py-2 text-[0.7rem] font-bold text-white shadow-md shadow-blue-400/35 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-400/45 active:scale-95 md:w-48 md:rounded-xl md:px-10 md:py-4 md:text-base"
+                className="hover-lift flex w-20 shrink-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-[0.7rem] font-bold text-white hover:bg-blue-700 md:w-48 md:rounded-xl md:px-10 md:py-4 md:text-base"
             >
                 <Languages className="h-3 w-3 shrink-0 md:h-5 md:w-5" />
                 <span className="hidden md:inline">Ir Praticar</span>

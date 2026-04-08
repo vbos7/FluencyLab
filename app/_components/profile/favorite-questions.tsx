@@ -8,17 +8,18 @@ const ALL_PHRASES = FRASES.flat()
 
 export function FavoriteQuestions() {
     const [open, setOpen] = useState(false)
-    const [favoriteIds, setFavoriteIds] = useState<number[]>([])
-
-    // Lê os IDs favoritos do localStorage ao montar
-    useEffect(() => {
+    // Lazy initializer evita setState síncrono dentro de useEffect
+    const [favoriteIds, setFavoriteIds] = useState<number[]>(() => {
+        if (typeof window === "undefined") return []
         try {
             const stored = localStorage.getItem("fluency-lab:favorites")
-            if (stored) setFavoriteIds(JSON.parse(stored))
+            return stored ? JSON.parse(stored) : []
         } catch {
-            // ignora erros de parse
+            return []
         }
+    })
 
+    useEffect(() => {
         // Escuta mudanças no storage (caso outra aba atualize)
         function onStorage(e: StorageEvent) {
             if (e.key !== "fluency-lab:favorites") return
@@ -62,9 +63,10 @@ export function FavoriteQuestions() {
             {open && (
                 <div className="flex flex-col gap-3 px-5 pb-5" style={{ animation: "fadeUp 0.2s ease" }}>
                     {phrases.length === 0 ? (
-                        <p className="py-6 text-center text-sm text-[#94a3b8]">
-                            Nenhuma frase favoritada ainda. Toque na ⭐ durante a prática!
-                        </p>
+                        <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-[#94a3b8]">
+                            <Star className="size-5 text-slate-300" aria-hidden="true" />
+                            <span>Nenhuma frase favoritada ainda. Toque no ícone de estrela durante a prática!</span>
+                        </div>
                     ) : (
                         phrases.map((p) => (
                             <div

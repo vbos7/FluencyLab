@@ -1,5 +1,6 @@
 import NavLayout from "@/app/_layouts/nav-layout"
 import { WelcomeHeader } from "@/app/_components/home/welcome-header"
+import { OnboardingDialog } from "@/app/_components/home/onboarding-dialog"
 import { LevelCard } from "@/app/_components/home/level-card"
 import { PracticeCard } from "@/app/_components/home/practice-card"
 import { RankingTop3 } from "@/app/_components/home/ranking-top3"
@@ -19,6 +20,7 @@ export default function HomePage() {
 
     return (
         <NavLayout>
+            <OnboardingDialog />
             <div className="page-enter relative mx-auto min-h-dvh max-w-5xl bg-white px-4 pb-24 sm:px-6 lg:px-8">
                 <WelcomeHeader name={USER.name} />
 

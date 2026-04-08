@@ -1,3 +1,5 @@
+import { Zap } from "lucide-react"
+
 type Props = {
     current: number
     max: number
@@ -12,8 +14,9 @@ export function XpProgress({ current, max, level, levelLabel }: Props) {
     return (
         <section aria-labelledby="xp-title">
         <div className="rounded-2xl border border-[#dce8ff] bg-white p-4 shadow-[0_2px_16px_rgba(37,99,235,0.08)] sm:p-6">
-            <h2 id="xp-title" className="mb-3 text-sm font-extrabold text-[#1e293b] sm:mb-4 sm:text-base">
-                ⚡ Progresso para o Próximo Nível
+            <h2 id="xp-title" className="mb-3 flex items-center gap-1.5 text-sm font-extrabold text-[#1e293b] sm:mb-4 sm:text-base">
+                <Zap className="size-4 text-blue-500" aria-hidden="true" />
+                Progresso para o Próximo Nível
             </h2>
 
             <div className="mb-2 flex justify-between text-[11px] font-bold text-[#7a94b8] sm:text-[.82rem]">

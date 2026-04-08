@@ -1,8 +1,6 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
-import { TopNav } from "@/app/_components/top-nav"
-import { BottomNav } from "@/app/_components/bottom-nav"
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -26,7 +24,16 @@ export default function RootLayout({
     children: React.ReactNode
 }>) {
     return (
-        <html lang="pt-BR">
+        <html lang="pt-BR" suppressHydrationWarning>
+            {/* Script síncrono: aplica a classe ANTES da hidratação para evitar flash */}
+            <head>
+                <title>FluencyLab</title>
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `(function(){try{var cl=document.documentElement.classList;if(localStorage.getItem('fluency-lab:colorBlind')==='true')cl.add('colorblind');if(localStorage.getItem('fluency-lab:reduceMotion')==='true')cl.add('reduce-motion');if(localStorage.getItem('fluency-lab:fontSize')==='large')cl.add('font-large')}catch(e){}})()`,
+                    }}
+                />
+            </head>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 {/* Skip link — visível só quando recebe foco via teclado */}
                 <a
@@ -35,7 +42,7 @@ export default function RootLayout({
                 >
                     Pular para o conteúdo
                 </a>
-                {children}
+                <main id="main-content">{children}</main>
             </body>
         </html>
     )

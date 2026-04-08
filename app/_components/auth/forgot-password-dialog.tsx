@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, startTransition } from "react"
 import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react"
 import {
     Dialog,
@@ -47,9 +47,9 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
         }
     }, [open])
 
-    // Sincroniza email inicial quando abre
+    // Sincroniza email inicial quando abre — startTransition evita setState síncrono em effect
     useEffect(() => {
-        if (open) setEmail(initialEmail)
+        if (open) startTransition(() => setEmail(initialEmail))
     }, [open, initialEmail])
 
     const fieldClass = (name: string) =>
