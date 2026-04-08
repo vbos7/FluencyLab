@@ -302,3 +302,45 @@
 .page-enter {
     animation: fadeUp 0.25s ease both;
 }
+
+
+/* ─── Modo Daltônico ─────────────────────────────────────────────────────────
+   Deuteranopia/Protanopia: confusão entre vermelho e verde.
+   Substituição: Verde/Emerald → Ciano | Vermelho → Laranja
+   Azul e Âmbar permanecem (seguros para todos os tipos).
+   Como Tailwind v4 gera utilitários via var(--color-*), sobrescrever
+   as variáveis aqui afeta bg-green-*, text-green-*, border-green-*, etc.
+   automaticamente em todo o site.
+── */
+:root.colorblind {
+    /* Verde → Ciano */
+    --color-green-50: var(--color-cyan-50);
+    --color-green-100: var(--color-cyan-100);
+    --color-green-200: var(--color-cyan-200);
+    --color-green-300: var(--color-cyan-300);
+    --color-green-400: var(--color-cyan-500);
+    --color-green-500: var(--color-cyan-600);
+    --color-green-600: var(--color-cyan-700);
+    --color-green-700: var(--color-cyan-800);
+    --color-green-800: var(--color-cyan-900);
+
+    /* Emerald → Ciano (usado em badges de status "Ativo") */
+    --color-emerald-50: var(--color-cyan-50);
+    --color-emerald-100: var(--color-cyan-100);
+    --color-emerald-200: var(--color-cyan-200);
+    --color-emerald-400: var(--color-cyan-500);
+    --color-emerald-500: var(--color-cyan-600);
+    --color-emerald-600: var(--color-cyan-700);
+    --color-emerald-700: var(--color-cyan-800);
+
+    /* Vermelho → Laranja */
+    --color-red-50: var(--color-orange-50);
+    --color-red-100: var(--color-orange-100);
+    --color-red-200: var(--color-orange-200);
+    --color-red-300: var(--color-orange-300);
+    --color-red-400: var(--color-orange-400);
+    --color-red-500: var(--color-orange-500);
+    --color-red-600: var(--color-orange-600);
+    --color-red-700: var(--color-orange-700);
+    --color-red-800: var(--color-orange-800);
+}

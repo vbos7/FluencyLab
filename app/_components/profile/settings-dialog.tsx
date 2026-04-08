@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Settings } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/_components/ui/dialog"
+import { useColorBlind } from "@/hooks/use-color-blind"
 
 type Toggle = {
     key: string
@@ -27,7 +28,7 @@ const SETTINGS: Toggle[] = [
     {
         key: "colorBlind",
         label: "Modo daltônico",
-        description: "Substitui cores por padrões e ícones para diferenciar elementos visuais.",
+        description: "Substitui cores por padrões seguros para deuteranopia e protanopia (verde→ciano, vermelho→laranja).",
         defaultOn: false,
     },
     {
@@ -44,12 +45,21 @@ const SETTINGS: Toggle[] = [
     },
 ]
 
-function Switch({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+function Switch({
+    on,
+    onChange,
+    label,
+}: {
+    on: boolean
+    onChange: (v: boolean) => void
+    label: string
+}) {
     return (
         <button
             type="button"
             role="switch"
             aria-checked={on}
+            aria-label={label}
             onClick={() => onChange(!on)}
             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
                 on ? "bg-blue-600" : "bg-slate-200"
@@ -66,13 +76,28 @@ function Switch({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
 
 export function SettingsDialog() {
     const [open, setOpen] = useState(false)
+
+    // Modo daltônico — persistido no localStorage e aplicado globalmente
+    const { enabled: colorBlind, toggle: toggleColorBlind } = useColorBlind()
+
+    // Demais toggles — in-memory por enquanto (sem efeito funcional ainda)
     const [values, setValues] = useState<Record<string, boolean>>(
-        Object.fromEntries(SETTINGS.map((s) => [s.key, s.defaultOn]))
+        Object.fromEntries(
+            SETTINGS.filter((s) => s.key !== "colorBlind").map((s) => [s.key, s.defaultOn])
+        )
     )
 
-    function toggle(key: string, val: boolean) {
+    function handleToggle(key: string, val: boolean) {
+        if (key === "colorBlind") {
+            toggleColorBlind(val)
+            return
+        }
         setValues((prev) => ({ ...prev, [key]: val }))
-        // TODO: persistir preferências via API ou localStorage
+    }
+
+    function getValue(key: string): boolean {
+        if (key === "colorBlind") return colorBlind
+        return values[key] ?? false
     }
 
     return (
@@ -81,7 +106,7 @@ export function SettingsDialog() {
                 onClick={() => setOpen(true)}
                 className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md active:scale-95 sm:px-5 sm:py-2.5 sm:text-sm"
             >
-                <Settings size={14} />
+                <Settings size={14} aria-hidden="true" />
                 Configurações
             </button>
 
@@ -89,7 +114,7 @@ export function SettingsDialog() {
                 <DialogContent className="max-w-md rounded-2xl p-6 sm:rounded-3xl sm:p-8">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-slate-900 sm:text-lg">
-                            <Settings size={18} className="text-blue-600" />
+                            <Settings size={18} className="text-blue-600" aria-hidden="true" />
                             Configurações
                         </DialogTitle>
                     </DialogHeader>
@@ -101,7 +126,11 @@ export function SettingsDialog() {
                                     <p className="text-sm font-semibold text-slate-800">{s.label}</p>
                                     <p className="mt-0.5 text-xs text-slate-500">{s.description}</p>
                                 </div>
-                                <Switch on={values[s.key]} onChange={(v) => toggle(s.key, v)} />
+                                <Switch
+                                    on={getValue(s.key)}
+                                    onChange={(v) => handleToggle(s.key, v)}
+                                    label={s.label}
+                                />
                             </div>
                         ))}
                     </div>
@@ -111,7 +140,7 @@ export function SettingsDialog() {
                             onClick={() => setOpen(false)}
                             className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-bold text-white shadow-[0_4px_14px_rgba(37,99,235,0.30)] transition-colors hover:bg-blue-700 active:scale-95"
                         >
-                            Salvar
+                            Fechar
                         </button>
                     </div>
                 </DialogContent>

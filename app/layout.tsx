@@ -27,6 +27,14 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="pt-BR">
+            {/* Script síncrono: aplica a classe ANTES da hidratação para evitar flash */}
+            <head>
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `(function(){try{if(localStorage.getItem('fluency-lab:colorBlind')==='true')document.documentElement.classList.add('colorblind')}catch(e){}})()`,
+                    }}
+                />
+            </head>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
                 {/* Skip link — visível só quando recebe foco via teclado */}
                 <a

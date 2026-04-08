@@ -9,11 +9,11 @@ export function LevelCard({ level, xp, xpNeeded, streak }: Props) {
     const pct = (xp / xpNeeded) * 100
 
     return (
-        <div className="relative mb-1 overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-blue-300 p-7 text-white shadow-xl shadow-blue-400">
+        <div className="relative mb-1 overflow-hidden rounded-2xl bg-linear-to-br from-blue-600 to-blue-300 p-7 text-white shadow-xl shadow-blue-400">
             {/* Orbs decorativos */}
-            <div className="pointer-events-none absolute -top-14 -right-14 h-52 w-52 rounded-full bg-white/[0.06]" />
-            <div className="pointer-events-none absolute right-16 -bottom-16 h-40 w-40 rounded-full bg-white/[0.05]" />
-            <div className="pointer-events-none absolute bottom-28 -left-28 h-40 w-40 rounded-full bg-white/[0.05]" />
+            <div className="pointer-events-none absolute -top-14 -right-14 h-52 w-52 rounded-full bg-white/6" />
+            <div className="pointer-events-none absolute right-16 -bottom-16 h-40 w-40 rounded-full bg-white/5" />
+            <div className="pointer-events-none absolute bottom-28 -left-28 h-40 w-40 rounded-full bg-white/5" />
 
             <div className="relative z-10">
                 {/* Nível + streak */}
@@ -43,16 +43,16 @@ export function LevelCard({ level, xp, xpNeeded, streak }: Props) {
                 {/* Barra de progresso */}
                 <div className="h-2.5 overflow-hidden rounded-full bg-white/20">
                     <div
-                        className="relative h-full rounded-full bg-gradient-to-r from-white/90 to-white/60 transition-all duration-1000 ease-out"
+                        className="relative h-full rounded-full bg-linear-to-r from-white/90 to-white/60 transition-all duration-1000 ease-out"
                         style={{ width: `${pct}%` }}
                     >
                         <span className="absolute top-1/2 right-0 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
                     </div>
                 </div>
 
-                <p className="mt-2.5 text-right text-[0.7rem] font-medium opacity-60">
+                <p className="mt-2.5 text-left text-[0.7rem] font-medium opacity-60">
                     Faltam <strong className="opacity-100">{xpNeeded - xp} XP</strong> para o Nível{" "}
-                    {level + 1} 🚀
+                    {level + 1}
                 </p>
             </div>
         </div>
