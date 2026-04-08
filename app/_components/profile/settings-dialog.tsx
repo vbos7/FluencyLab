@@ -38,12 +38,6 @@ const SETTINGS: Toggle[] = [
         description: "Desativa animações e transições para usuários sensíveis a movimento.",
         defaultOn: false,
     },
-    {
-        key: "vlibras",
-        label: "Suporte a Libras (VLibras)",
-        description: "Ativa o widget VLibras para tradução de conteúdo em Língua Brasileira de Sinais.",
-        defaultOn: false,
-    },
 ]
 
 function Switch({
@@ -87,7 +81,9 @@ export function SettingsDialog() {
     // Demais toggles — in-memory por enquanto (sem efeito funcional ainda)
     const [values, setValues] = useState<Record<string, boolean>>(
         Object.fromEntries(
-            SETTINGS.filter((s) => s.key !== "colorBlind" && s.key !== "reduceMotion").map((s) => [s.key, s.defaultOn])
+            SETTINGS
+                .filter((s) => !["colorBlind", "reduceMotion"].includes(s.key))
+                .map((s) => [s.key, s.defaultOn])
         )
     )
 

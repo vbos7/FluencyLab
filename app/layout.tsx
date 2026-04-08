@@ -26,7 +26,7 @@ export default function RootLayout({
     children: React.ReactNode
 }>) {
     return (
-        <html lang="pt-BR">
+        <html lang="pt-BR" suppressHydrationWarning>
             {/* Script síncrono: aplica a classe ANTES da hidratação para evitar flash */}
             <head>
                 <script
