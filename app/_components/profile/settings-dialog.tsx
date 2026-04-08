@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Settings } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/app/_components/ui/dialog"
 import { useColorBlind } from "@/hooks/use-color-blind"
+import { useReduceMotion } from "@/hooks/use-reduce-motion"
 
 type Toggle = {
     key: string
@@ -80,23 +81,25 @@ export function SettingsDialog() {
     // Modo daltônico — persistido no localStorage e aplicado globalmente
     const { enabled: colorBlind, toggle: toggleColorBlind } = useColorBlind()
 
+    // Redução de movimento — persistido no localStorage e aplicado globalmente
+    const { enabled: reduceMotion, toggle: toggleReduceMotion } = useReduceMotion()
+
     // Demais toggles — in-memory por enquanto (sem efeito funcional ainda)
     const [values, setValues] = useState<Record<string, boolean>>(
         Object.fromEntries(
-            SETTINGS.filter((s) => s.key !== "colorBlind").map((s) => [s.key, s.defaultOn])
+            SETTINGS.filter((s) => s.key !== "colorBlind" && s.key !== "reduceMotion").map((s) => [s.key, s.defaultOn])
         )
     )
 
     function handleToggle(key: string, val: boolean) {
-        if (key === "colorBlind") {
-            toggleColorBlind(val)
-            return
-        }
+        if (key === "colorBlind") { toggleColorBlind(val); return }
+        if (key === "reduceMotion") { toggleReduceMotion(val); return }
         setValues((prev) => ({ ...prev, [key]: val }))
     }
 
     function getValue(key: string): boolean {
         if (key === "colorBlind") return colorBlind
+        if (key === "reduceMotion") return reduceMotion
         return values[key] ?? false
     }
 

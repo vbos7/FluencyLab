@@ -31,7 +31,7 @@ export default function RootLayout({
             <head>
                 <script
                     dangerouslySetInnerHTML={{
-                        __html: `(function(){try{if(localStorage.getItem('fluency-lab:colorBlind')==='true')document.documentElement.classList.add('colorblind')}catch(e){}})()`,
+                        __html: `(function(){try{var cl=document.documentElement.classList;if(localStorage.getItem('fluency-lab:colorBlind')==='true')cl.add('colorblind');if(localStorage.getItem('fluency-lab:reduceMotion')==='true')cl.add('reduce-motion')}catch(e){}})()`,
                     }}
                 />
             </head>

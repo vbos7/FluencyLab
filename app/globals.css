@@ -304,6 +304,21 @@
 }
 
 
+/* ─── Redução de Movimento ───────────────────────────────────────────────────
+   Desativa animações e transições para usuários sensíveis a movimento.
+   A duração mínima (0.01ms) em vez de 0 garante que eventos animationend/
+   transitionend ainda disparem, evitando quebras em bibliotecas de UI.
+── */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+}
+
 /* ─── Modo Daltônico ─────────────────────────────────────────────────────────
    Deuteranopia/Protanopia: confusão entre vermelho e verde.
    Substituição: Verde/Emerald → Ciano | Vermelho → Laranja
