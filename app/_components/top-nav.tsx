@@ -11,7 +11,6 @@ const items = [
     { href: "/progress", icon: Calendar, label: "Progresso" },
     { href: "/ranking", icon: BarChart2, label: "Ranking" },
     { href: "/profile", icon: User, label: "Perfil" },
-    { href: "/planos", icon: BadgeCent, label: "Planos" },
 ]
 
 export function TopNav() {

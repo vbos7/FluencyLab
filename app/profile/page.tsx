@@ -7,7 +7,9 @@ import { EditProfileDialog } from "@/app/_components/profile/edit-profile-dialog
 import { SettingsDialog } from "@/app/_components/profile/settings-dialog"
 import { FavoriteQuestions } from "@/app/_components/profile/favorite-questions"
 import { LogoutButton } from "@/app/_components/profile/logout-button"
+
 import NavLayout from "@/app/_layouts/nav-layout"
+import PremiumCard from "../_components/pricing/PremiumCard"
 
 const USER = {
     name: "Marcus Vinicius",
@@ -40,12 +42,15 @@ export default function ProfilePage() {
 
                 <StatsGrid stats={USER.stats} />
 
+
                 <XpProgress
                     current={USER.xp.current}
                     max={USER.xp.max}
                     level={USER.xp.level}
                     levelLabel={USER.xp.levelLabel}
                 />
+
+                <PremiumCard />
 
                 <FavoriteQuestions />
 

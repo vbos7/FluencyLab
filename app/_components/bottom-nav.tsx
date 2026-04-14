@@ -11,7 +11,6 @@ const items = [
     { href: "/practice", icon: Languages, label: "Praticar", center: true },
     { href: "/ranking", icon: BarChart2, label: "Ranking" },
     { href: "/planos", icon: BadgeCent, label: "Planos" },
-    { href: "/profile", icon: User, label: "Perfil" },
     
 ]
 

@@ -7,6 +7,7 @@ import { RankingTop3 } from "@/app/_components/home/ranking-top3"
 import { StatsCards } from "@/app/_components/progress/stats-cards"
 import { FAKE_STATS, computeStats } from "@/app/_lib/progress"
 import CursosPage from "../cursos/page"
+import ProModal from "@/app/_components/pro-modal";
 
 const USER = {
     name: "Marcus Vinicius",
@@ -21,6 +22,7 @@ export default function HomePage() {
 
     return (
         <NavLayout>
+            <ProModal />
             <OnboardingDialog />
             <div className="page-enter relative mx-auto min-h-dvh max-w-5xl bg-white px-4 pb-24 sm:px-6 lg:px-8">
                 <WelcomeHeader name={USER.name} />
