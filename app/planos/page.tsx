@@ -3,6 +3,7 @@ import { HeroSection } from "@/app/_components/home/hero-section"
 import { DemoCard } from "@/app/_components/home/demo-card"
 import { CtaButtons } from "@/app/_components/home/cta-buttons"
 import { TermsFooter } from "@/app/_components/home/terms-dialog"
+import NavLayout from "../_layouts/nav-layout";
 
 export const metadata = {
   title: "FluencyLab",
@@ -25,13 +26,14 @@ const features = {
     { label: "Fill-in-the-blank", included: true, highlight: true },
     { label: "Dictation (ouvir e escrever)", included: true, highlight: true },
     { label: "Reordenar palavras", included: true, highlight: true },
-    { label: "Relatório semanal de evolução", included: true, highlight: true },
+    { label: "Curso de inglês Básico ao Avançado", included: true, highlight: true },
   ],
 };
 
 export default function PlanosPage() {
   return (
-    <div className="min-h-screen bg-blue-600 grid place-items-center p-7 relative overflow-hidden bg-linear-to-br from-blue-900 via-blue-700 to-blue-500">
+    <NavLayout>
+    <div className="min-h-screen  grid place-items-center p-7 relative overflow-hidden">
 
          <div
                 className="absolute inset-0 opacity-20"
@@ -81,5 +83,6 @@ export default function PlanosPage() {
       </p>
     </main>
     </div>
+    </NavLayout>
   );
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { BarChart2, Calendar, Home, Languages, User } from "lucide-react"
+import { BarChart2, Calendar, Home, Languages, User, BadgeCent  } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/app/_components/ui/button"
 import { cn } from "@/app/_lib/utils"
@@ -11,6 +11,7 @@ const items = [
     { href: "/progress", icon: Calendar, label: "Progresso" },
     { href: "/ranking", icon: BarChart2, label: "Ranking" },
     { href: "/profile", icon: User, label: "Perfil" },
+    { href: "/planos", icon: BadgeCent, label: "Planos" },
 ]
 
 export function TopNav() {
