@@ -11,22 +11,26 @@ export const metadata = {
 
 const features = {
   free: [
-    { label: "Exercícios de tradução", included: true },
+    { label: "Traduções ilimitadas por dia", included: true },
+    { label: "Explicação de erros com IA", included: true },
     { label: "XP, níveis e streaks", included: true },
     { label: "Ranking geral", included: true },
-    { label: "Progressão do usuário", included: true },
-    { label: "Análise de erros com IA", included: false },
-    { label: "Tipos avançados de prática", included: false },
-    { label: "Relatório semanal", included: false },
+    { label: "Até 10 frases favoritas", included: true },
+    { label: "Escolha de categorias de frases", included: false },
+    { label: "Videoaulas de inglês", included: false },
+    { label: "Modos avançados de prática", included: false },
+    { label: "Relatório completo de evolução", included: false },
   ],
   pro: [
     { label: "Tudo do plano Free", included: true },
-    { label: "Práticas ilimitadas", included: true, highlight: true },
-    { label: "Análise de erros com IA", included: true, highlight: true },
-    { label: "Fill-in-the-blank", included: true, highlight: true },
-    { label: "Dictation (ouvir e escrever)", included: true, highlight: true },
-    { label: "Reordenar palavras", included: true, highlight: true },
-    { label: "Curso de inglês Básico ao Avançado", included: true, highlight: true },
+    { label: "Favoritos ilimitados", included: true, highlight: true },
+    { label: "Escolha de categorias de frases", included: true, highlight: true },
+    { label: "Videoaulas básico, intermediário e avançado", included: true, highlight: true },
+    { label: "Modo Dictation — ouça e escreva", included: true, highlight: true },
+    { label: "Modo Fill-in-the-blank", included: true, highlight: true },
+    { label: "Modo Reordenar palavras", included: true, highlight: true },
+    { label: "Relatório semanal completo", included: true, highlight: true },
+    { label: "Suporte prioritário", included: true, highlight: true },
   ],
 };
 
@@ -65,9 +69,9 @@ export default function PlanosPage() {
         />
         <PricingCard
           plan="Pro"
-          price="R$ 30"
-          period="mês"
-          description="Evolua rápido com IA e recursos exclusivos."
+          price="R$ 4,99"
+          period="Vitalício"
+          description="Evolua o jeito de pratica com recursos exclusivos."
           features={features.pro}
           ctaLabel="Assinar Pro"
           ctaVariant="primary"

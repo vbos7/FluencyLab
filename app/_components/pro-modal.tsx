@@ -7,8 +7,8 @@ export default function ProModal() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Aparece após 4 segundos na página
-    const timer = setTimeout(() => setVisible(true), 4000);
+    // Aparece após 10 segundos na página
+    const timer = setTimeout(() => setVisible(true), 10000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -37,11 +37,11 @@ export default function ProModal() {
         <div className="px-6 py-5">
           <ul className="flex flex-col gap-3 mb-5">
             {[
-              "Análise de erros com IA — saiba exatamente onde melhorar",
-              "Aulas em vídeo: básico, intermediário e avançado",
+              "Video aulas básico, intermediário e avançado",
+              "Escolha de categorias de frases para praticar",
               "Dictation, fill-in-the-blank e exercícios exclusivos",
               "Relatório semanal com sua evolução detalhada",
-              "Práticas ilimitadas — sem bloqueio por dia",
+              "Suporte prioritário para tirar suas dúvidas",
             ].map((item, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-gray-800">
                 <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-[11px] shrink-0 mt-0.5">

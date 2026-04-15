@@ -1,5 +1,9 @@
+'use client';
+
 import FeatureList from "@/app/_components/pricing/FeatureList";
 import Link from "next/link";
+import { useState } from "react";
+import CheckoutModal from "@/app/_components/checkout-modal";
 
 type Feature = {
   label: string;
@@ -22,6 +26,9 @@ export default function PricingCard({
   plan, price, period, description,
   features, ctaLabel, ctaVariant, highlighted,
 }: Props) {
+
+  const [showCheckout, setShowCheckout] = useState(false);
+
   return (
     <div
       className={`rounded-2xl border p-6 flex flex-col gap-4 ${
@@ -30,6 +37,7 @@ export default function PricingCard({
           : "border-gray-200"
       }`}
     >
+    
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-gray-500">{plan}</span>
         {highlighted && (
@@ -50,16 +58,26 @@ export default function PricingCard({
 
       <FeatureList features={features} />
 
-      <Link
-        href={highlighted ? "/checkout" : "#"}
-        className={`mt-auto text-center py-2.5 px-4 rounded-xl text-sm font-medium transition ${
-          ctaVariant === "primary"
-            ? "bg-blue-600 text-white hover:bg-blue-700"
-            : "border border-gray-200 text-gray-700 hover:bg-gray-50"
-        }`}
-      >
-        {ctaLabel}
-      </Link>
+     {ctaVariant === "primary" ? (
+  <>
+    <button
+      onClick={() => setShowCheckout(true)}
+      className="mt-auto w-full text-center py-2.5 px-4 rounded-xl text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition"
+    >
+      {ctaLabel}
+    </button>
+    {showCheckout && (
+      <CheckoutModal 
+        onClose={() => setShowCheckout(false)} 
+        key="pricing-checkout-modal" // ← Adicione isso
+      />
+    )}
+  </>
+) : (
+  <Link href="#" className="mt-auto text-center py-2.5 px-4 rounded-xl text-sm font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 transition">
+    {ctaLabel}
+  </Link>
+)}
     </div>
   );
 }

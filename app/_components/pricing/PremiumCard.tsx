@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import {  BowArrow, Video, SquareKanban, BookOpenCheck } from 'lucide-react';
+import { ElementType } from 'react';
+import { Icon } from "../admin/icon";
 
 export default function PremiumCard() {
     return (
@@ -21,21 +23,24 @@ export default function PremiumCard() {
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[
-          { icon: "🤖", title: "IA Avançada", desc: "Análise completa dos seus erros" },
-          { icon: "📹", title: "Vídeos", desc: "Aulas do básico ao avançado" },
-          { icon: "📊", title: "Relatórios", desc: "Evolução semanal detalhada" },
-          { icon: "♾️", title: "Ilimitado", desc: "Sem bloqueio por dia" },
-        ].map((item, i) => (
+          { icon: BowArrow, title: "Modos exclusivos", desc: "Dictation, fill-in e mais" },
+          { icon: Video, title: "Vídeos", desc: "Aulas do básico ao avançado" },
+          { icon: SquareKanban, title: "Relatórios", desc: "Evolução semanal detalhada" },
+          { icon: BookOpenCheck, title: "Suas categorias", desc: "Escolha o tema das frases" },
+        ].map((item, i) => {
+          const IconComponent = item.icon;
+          return (
           <div key={i} className="group bg-white/70 hover:bg-white backdrop-blur-sm p-6 rounded-2xl border border-white/50 hover:border-blue-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
             <div className="flex items-start gap-4 mb-3">
-              <span className="text-2xl flex-shrink-0">{item.icon}</span>
+              <div className="text-2xl flex-shrink-0"><IconComponent size={24} /></div>
               <div>
                 <h4 className="font-bold text-lg text-gray-900 group-hover:text-blue-700">{item.title}</h4>
                 <p className="text-sm text-gray-600">{item.desc}</p>
               </div>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
       
       {/* Social Proof */}
@@ -55,8 +60,13 @@ export default function PremiumCard() {
     </div>
 
     {/* Coluna 2 - Preço e CTA */}
-    <div className="text-center lg:text-left">
-      <div className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-10 rounded-3xl shadow-2xl mb-8 backdrop-blur-sm border border-white/30">
+    <div className="text-center lg:text-left relative overflow-hidden">
+
+      <div className="pointer-events-none absolute -top-14 -right-14 h-52 w-52 rounded-full bg-white/6" />
+            <div className="pointer-events-none absolute right-16 -bottom-16 h-40 w-40 rounded-full bg-white/5" />
+            <div className="pointer-events-none absolute bottom-28 -left-28 h-40 w-40 rounded-full bg-white/5" />
+
+      <div className="  p-10  mb-8 rounded-2xl bg-linear-to-br from-blue-700 to-blue-600 p-7 text-white shadow-xl shadow-blue-900/40">
         <div className="flex items-baseline justify-center lg:justify-start mb-4">
           <span className="text-blue-200 text-lg font-medium tracking-wide uppercase">Único pagamento</span>
         </div>
@@ -71,9 +81,9 @@ export default function PremiumCard() {
 
       <a
         href="/planos"
-        className="block w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-5 px-8 rounded-3xl text-xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 transition-all duration-300 mb-6 flex items-center justify-center gap-3 text-lg"
+        className="block w-full bg-linear-to-br from-blue-700 to-blue-600 shadow-blue-900/40 text-white font-bold py-5 px-8 rounded-3xl text-xl shadow-2xl  transform hover:-translate-y-2 transition-all duration-300 mb-6 flex items-center justify-center gap-3 text-lg"
       >
-        <span>🚀 Quero o Premium Agora</span>
+        <span>Quero o Premium Agora </span>
       </a>
 
       <p className="text-sm text-gray-500 text-center lg:text-left">
