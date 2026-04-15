@@ -1,8 +1,9 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { BarChart2, Calendar, Home, Languages, User, BadgeCent  } from "lucide-react"
+import { BarChart2, Calendar, Home, Languages, User, MonitorPlay  } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/app/_components/ui/button"
 import { cn } from "@/app/_lib/utils"
 import ProModal from "@/app/_components/pro-modal";
@@ -11,7 +12,8 @@ const items = [
     { href: "/home", icon: Home, label: "Início" },
     { href: "/progress", icon: Calendar, label: "Progresso" },
     { href: "/ranking", icon: BarChart2, label: "Ranking" },
-    { href: "/profile", icon: User, label: "Perfil" },
+    { href: "/cursos", icon: MonitorPlay, label: "Cursos" },
+    { href: "/profile", icon: User, label: "Perfil" }
 ]
 
 export function TopNav() {
@@ -29,7 +31,8 @@ export function TopNav() {
             {/* Dispositivos Móveis */}
             <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-center border-b border-slate-100 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] md:hidden">
                 <Link href="/" className="flex items-center gap-2 text-[17px] font-bold tracking-tight text-slate-900">
-                    <Languages className="text-blue-600" size={20} />
+                    <Image src="/img/logo.png" alt="Logo" width={50} height={60} className="object-contain"/>
+                    {/* <img src={logo} alt="Logo" width={200} height={60} className="w-48 h-12 object-contain"/> */}
                     FluencyLab
                 </Link>
             </nav>
@@ -37,7 +40,7 @@ export function TopNav() {
             {/* Dispositivos Desktop */}
             <nav className="sticky top-0 z-50 hidden h-16 w-full items-center gap-1 border-b border-slate-100 bg-white px-8 shadow-[0_1px_4px_rgba(0,0,0,0.04)] md:flex">
                 <Link href="/" className="mr-auto flex items-center gap-2 text-[17px] font-bold tracking-tight text-slate-900">
-                    <Languages className="text-blue-600" size={20} />
+                    <Image src="/img/logo.png" alt="Logo" width={50} height={60} className="object-contain"/>
                     FluencyLab
                 </Link>
 
