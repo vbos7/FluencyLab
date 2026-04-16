@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import CheckoutModal from "@/app/_components/checkout-modal";
+import NavLayout from "@/app/_layouts/nav-layout"
 
 const featuresF = [
   { label: "Traduções ilimitadas por dia", included: true },
@@ -31,6 +32,7 @@ type Feature = { label: string; included: boolean; highlight?: boolean };
 
 function FeatureItem({ f }: { f: Feature }) {
   return (
+    
     <li className="flex items-start gap-2 text-sm">
       <span className={`mt-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
         f.included
@@ -52,6 +54,7 @@ export default function PlanosPage() {
   const [showCheckout, setShowCheckout] = useState(false);
 
   return (
+    <NavLayout>
     <div className="min-h-screen grid place-items-center p-7 relative overflow-hidden">
       <div
         className="absolute inset-0 opacity-20"
@@ -134,5 +137,6 @@ export default function PlanosPage() {
         <CheckoutModal onClose={() => setShowCheckout(false)} />
       )}
     </div>
+    </NavLayout>
   );
 }

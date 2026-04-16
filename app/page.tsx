@@ -3,6 +3,7 @@ import { DemoCard } from "@/app/_components/home/demo-card"
 import { CtaButtons } from "@/app/_components/home/cta-buttons"
 import { TermsFooter } from "@/app/_components/home/terms-dialog"
 
+
 export default function FluencyLabHome() {
     return (
         <main id="main-content" tabIndex={-1} className="flex min-h-screen w-full flex-col bg-blue-100">

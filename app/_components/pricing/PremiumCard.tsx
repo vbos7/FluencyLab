@@ -7,7 +7,7 @@ import { Icon } from "../admin/icon";
 
 export default function PremiumCard() {
     return (
-        <div className="rounded-2xl border border-[#dce8ff] bg-white p-4 shadow-[0_2px_16px_rgba(37,99,235,0.08)] sm:p-6 max-w-5xl mx-auto">
+        <div className="rounded-2xl border border-[#dce8ff] bg-white p-4 shadow-[0_2px_16px_rgba(37,99,235,0.08)] sm:p-6 ">
   {/* Header */}
   <div className="text-center mb-10 lg:mb-12">
     <h3 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent mb-3">
