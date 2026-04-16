@@ -3,7 +3,7 @@ import { BookOpen, ChevronRight } from "lucide-react";
 
 export function CoursesCard() {
   return (
-    <Link href="/cursos" className="block md:hidden">
+    <Link href="/cursos" className="block ">
       <div className="rounded-2xl border border-[#dce8ff] bg-white shadow-[0_2px_16px_rgba(37,99,235,0.08)] p-4 hover:shadow-[0_4px_24px_rgba(37,99,235,0.13)] hover:-translate-y-0.5 transition-all duration-200 mb-8">
         <div className="flex items-center justify-between">
 
