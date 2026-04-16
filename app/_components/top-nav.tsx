@@ -1,10 +1,11 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { BarChart2, Calendar, Home, Languages, User } from "lucide-react"
+import { BarChart2, Calendar, Home, Languages, User, BadgeCent  } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/app/_components/ui/button"
 import { cn } from "@/app/_lib/utils"
+import ProModal from "@/app/_components/pro-modal";
 
 const items = [
     { href: "/home", icon: Home, label: "Início" },
@@ -43,6 +44,7 @@ export function TopNav() {
                 {isGuest ? (
                     /* Modo convidado: apenas botões de login e registro */
                     <div className="flex items-center gap-2">
+                        <ProModal />
                         <Button
                             variant="ghost"
                             size="sm"
