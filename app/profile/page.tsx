@@ -15,7 +15,7 @@ const USER = {
     name: "Marcus Vinicius",
     email: "marcus@fluencylab.com",
     avatarSrc: "https://github.com/shadcn.png",
-    rankLabel: "#1 no Ranking Geral",
+    rankLabel: "#27 no Ranking Geral",
     stats: [
         { icon: Star,         iconColor: "text-amber-500",  iconBg: "bg-amber-50",   value: "1.250", label: "Pontos" },
         { icon: Trophy,       iconColor: "text-blue-600",   iconBg: "bg-blue-50",    value: "#27",   label: "Posição" },

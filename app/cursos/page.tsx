@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import NavLayout from "../_layouts/nav-layout";
-import { Languages } from "lucide-react";
+import { Languages, LibraryBig, Timer } from "lucide-react";
 import { Icon } from "../_components/admin/icon";
 
 const niveis = [
@@ -13,7 +13,7 @@ const niveis = [
     aulas: 12,
     emoji: <Languages size={32} className="text-white" />,
     cor: "from-green-500 to-green-600",
-    bg: "bg-gradient-to-br from-green-50 to-emerald-50",
+    bg: "bg-white",
     border: "border-green-100",
     shadow: "shadow-md hover:shadow-xl",
   },
@@ -24,7 +24,7 @@ const niveis = [
     aulas: 15,
     emoji:  <Languages size={32} className="text-white" />,
     cor: "from-blue-500 to-blue-600",
-    bg: "bg-gradient-to-br from-blue-50 to-cyan-50",
+    bg: "bg-white",
     border: "border-blue-100",
     shadow: "shadow-md hover:shadow-xl",
   },
@@ -35,7 +35,7 @@ const niveis = [
     aulas: 10,
     emoji:  <Languages size={32} className="text-white" />,
     cor: "from-purple-500 to-purple-600",
-    bg: "bg-gradient-to-br from-purple-50 to-violet-50",
+    bg: "bg-white",
     border: "border-purple-100",
     shadow: "shadow-md hover:shadow-xl",
   },
@@ -46,24 +46,24 @@ export default function CursosPage() {
   return (
     <NavLayout>
       <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-20 px-4">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-20">
+          <div className="text-center mb-10">
             <div className="inline-flex items-center gap-3 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-3xl border border-gray-200 shadow-xl mb-8">
               
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 bg-clip-text text-transparent">
+              <h1 className="text-4xl md:text-5xl font-bold text-blue-600 bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-transparent animate-float">
                 Nossos Cursos
               </h1>
             </div>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Escolha seu nível e comece sua jornada rumo à fluência no inglês. 
+              Escolha seu nível e comece sua jornada rumo à fluência no inglês. <br />
               <span className="font-semibold text-blue-600"> Aulas práticas e eficazes.</span>
             </p>
           </div>
 
           {/* Cards HORIZONTAIS empilhados */}
-          <div className="space-y-8 max-w-2xl mx-auto">
-            {niveis.map((nivel, index) => (
+          <div className="space-y-8 max-w-5xl mx-auto">
+            {niveis.map((nivel) => (
               <Link
                 key={nivel.slug}
                 href={`/cursos/${nivel.slug}`}
@@ -78,10 +78,7 @@ export default function CursosPage() {
                   {/* Background gradient animado */}
                   <div className="absolute inset-0 bg-gradient-to-r ${nivel.cor} opacity-0 group-hover:opacity-5 transition-opacity duration-500 blur-xl"></div>
                   
-                  {/* Badge nível */}
-                  <div className="absolute -top-4 -right-4 bg-white shadow-lg px-4 py-2 rounded-2xl border border-gray-100 font-semibold text-gray-800 z-10">
-                    Nível {index + 1}
-                  </div>
+                  
 
                   <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:gap-8">
                     {/* Ícone grande */}
@@ -113,13 +110,13 @@ export default function CursosPage() {
                       <div className="flex items-center gap-6 pt-4 border-t border-gray-100">
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                           <div className="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center text-xs font-bold text-gray-700">
-                            📚
+                            <LibraryBig size={16} />
                           </div>
                           <span>{nivel.aulas} aulas</span>
                         </div>
                         <div className="hidden lg:flex items-center gap-2 text-sm text-gray-500">
-                          <div className="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center text-xs font-bold text-green-600">
-                            ⏱️
+                          <div className="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center text-xs font-bold ">
+                            <Timer size={16} />
                           </div>
                           <span>2-4 semanas</span>
                         </div>

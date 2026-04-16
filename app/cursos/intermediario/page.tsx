@@ -18,7 +18,7 @@ export default function IntermediarioPage() {
       </Link>
 
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Nível Intermediário 📘</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Nível Intermediário</h1>
         <p className="text-gray-500 text-sm mt-1">{aulas.length} aulas disponíveis</p>
       </div>
 

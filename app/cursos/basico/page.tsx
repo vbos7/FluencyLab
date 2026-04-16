@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import NavLayout from "@/app/_layouts/nav-layout";
 
 const aulas = [
-  { titulo: "Aula 1 — Apresentações e cumprimentos", duracao: "8:24",  youtubeId: "YOUTUBE_ID_AQUI" },
+  { titulo: "Aula 1 — ALFABETO EM INGLÊS", duracao: "8:08",  youtubeId: "X5TdMsc4YCg?si=vw2rIs1bZGWcc2Yz" },
   { titulo: "Aula 2 — Números e cores",              duracao: "10:10", youtubeId: "YOUTUBE_ID_AQUI" },
   { titulo: "Aula 3 — Dias da semana e meses",       duracao: "9:05",  youtubeId: "YOUTUBE_ID_AQUI" },
 ];
@@ -20,7 +20,7 @@ export default function BasicoPage() {
       </Link>
 
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Nível Básico 🌱</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Nível Básico</h1>
         <p className="text-gray-500 text-sm mt-1">{aulas.length} aulas disponíveis</p>
       </div>
 
