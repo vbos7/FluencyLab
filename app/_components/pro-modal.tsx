@@ -2,8 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { X } from "lucide-react";
 
-export default function ProModal() {
+type Props = {
+  onClose: () => void;
+};
+
+
+export default function ProModal({ onClose }: Props) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -19,12 +25,16 @@ export default function ProModal() {
       className="fixed inset-0 z-50 flex items-center justify-center bg-blue-950/55 px-4"
       style={{ animation: "fadeIn 0.3s ease" }}
     >
+      
       <div
         className="bg-white rounded-2xl w-full max-w-md mx-auto overflow-hidden shadow-xl" // ← MUDANÇAS AQUI
         style={{ animation: "slideUp 0.45s cubic-bezier(.16,1,.3,1)" }}
       >
+        
+                
         {/* Header */}
         <div className="bg-blue-700 px-6 py-7 text-center">
+
           <h2 className="text-blue-100 text-xl font-semibold">
             Você está perdendo muito!
           </h2>
@@ -73,27 +83,12 @@ export default function ProModal() {
             Quero evoluir no inglês →
           </Link>
 
-          <hr className="my-4 border-gray-100" />
+          <hr className="my-2 border-gray-100" />
 
-          {/* Social proof */}
-          <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
-            <div className="flex">
-              {["LM", "CJ", "PH"].map((init, i) => (
-                <div
-                  key={i}
-                  className="w-6 h-6 rounded-full border-2 border-white bg-blue-100 text-blue-700 text-[9px] font-medium flex items-center justify-center"
-                  style={{ marginRight: i < 2 ? "-6px" : 0 }}
-                >
-                  {init}
-                </div>
-              ))}
-            </div>
-            <span>+240 alunos já assinaram o Pro</span>
-          </div>
 
           <button
             onClick={() => setVisible(false)}
-            className="w-full mt-3 text-xs text-gray-400 hover:text-gray-600 transition py-1"
+            className="w-full mt-1 text-bold text-xs text-gray-800 hover:text-gray-600 transition py-1"
           >
             Agora não, continuar no plano Free
           </button>
