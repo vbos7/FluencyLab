@@ -4,12 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
 
-type Props = {
-  onClose: () => void;
-};
-
-
-export default function ProModal({ onClose }: Props) {
+export default function ProModal() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
