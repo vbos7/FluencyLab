@@ -22,7 +22,7 @@ const DAY_LABELS = ["Seg", "", "Qua", "", "Sex", "", ""]
 
 export function ConsistencyHeatmap({ weeks, currentWeekIdx }: Props) {
     return (
-        <div className="rounded-3xl border border-slate-100 bg-slate-50 p-5">
+        <div className="rounded-2xl border border-[#dce8ff] bg-white p-4 shadow-[0_2px_16px_rgba(37,99,235,0.08)] sm:p-6 p-5">
             <div className="flex gap-2">
                 {/* Labels dos dias à esquerda — fixas, fora do scroll */}
                 <div className="flex shrink-0 flex-col gap-[3px] pt-5">

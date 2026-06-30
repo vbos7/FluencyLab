@@ -8,7 +8,7 @@ type Props = {
 
 export function PracticeCard({ xp, xpNeeded, level }: Props) {
     return (
-        <div className="relative mb-7 flex h-28 items-center justify-between gap-3 overflow-hidden rounded-2xl border border-blue-100 bg-white p-4 shadow-sm md:h-44 md:gap-6 md:p-7">
+        <div className="relative mb-7 flex h-28 items-center justify-between gap-3 overflow-hidden rounded-2xl border border-[#dce8ff] bg-white shadow-[0_2px_16px_rgba(37,99,235,0.08)] p-4 hover:shadow-[0_4px_24px_rgba(37,99,235,0.13)] hover:-translate-y-0.5 transition-all duration-200 p-4 shadow-sm md:h-44 md:gap-6 md:p-7">
             {/* Barra lateral */}
             <div className="absolute top-0 bottom-0 left-0 w-1 rounded-l-2xl bg-gradient-to-b from-blue-300 to-blue-600 md:w-2" />
 

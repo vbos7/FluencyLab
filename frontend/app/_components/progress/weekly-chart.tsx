@@ -59,7 +59,7 @@ export function WeeklyChart({ data }: Props) {
     const { color } = METRICS[metric]
 
     return (
-        <div className="flex flex-col gap-4 rounded-3xl border border-slate-100 bg-slate-50 p-5">
+        <div className="flex flex-col gap-4 rounded-2xl border border-[#dce8ff] bg-white shadow-[0_2px_16px_rgba(37,99,235,0.08)] sm:p-6 p-5">
             {/* Cabeçalho com título e alternador de métrica */}
             <div className="flex items-center justify-between">
                 <div>
