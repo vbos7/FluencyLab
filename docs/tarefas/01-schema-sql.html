@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 01 — Schema SQL (tabelas)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 01</span>
+    <span class="badge badge-a">Aluno A</span>
+    <span class="badge badge-done">✓ Já está pronto</span>
+  </div>
+  <h1>Criar as tabelas no banco (SQL)</h1>
+
+  <p>Essa tarefa já foi feita antes de vocês começarem — o arquivo <code>backend/sql/schema.sql</code> já existe e já foi executado no banco. Leia esta página pra entender o que tem lá e por que as tabelas foram criadas dessa forma.</p>
+
+  <section>
+    <h2>Por que criar tabelas com SQL direto?</h2>
+    <p>Em frameworks como Laravel, você usa "migrations" (scripts PHP que criam tabelas). Aqui, como estamos em PHP puro, criamos direto com SQL — a linguagem que o banco realmente entende. O resultado é o mesmo: as tabelas existem no banco.</p>
+  </section>
+
+  <section>
+    <h2>Conceitos importantes</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>PRIMARY KEY — o ID único de cada linha</h3>
+        <pre><code>CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    -- ...
+);</code></pre>
+        <p><code>INT AUTO_INCREMENT PRIMARY KEY</code> significa: número inteiro, que aumenta sozinho a cada novo registro, e que identifica aquela linha de forma única. Todo <code>INSERT</code> numa tabela com isso não precisa informar o <code>id</code> — o banco gera automaticamente.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>FOREIGN KEY — a ligação entre tabelas</h3>
+        <pre><code>CREATE TABLE lessons (
+    id        INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT NOT NULL,
+    title     VARCHAR(100) NOT NULL,
+    -- ...
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+);</code></pre>
+        <p><code>FOREIGN KEY (course_id) REFERENCES courses(id)</code> diz: "a coluna <code>course_id</code> desta tabela deve ser um <code>id</code> que existe na tabela <code>courses</code>". O banco rejeita qualquer <code>INSERT</code> em <code>lessons</code> onde <code>course_id</code> não existe em <code>courses</code>.</p>
+        <p><code>ON DELETE CASCADE</code>: se o curso for apagado, suas aulas somem junto automaticamente.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>ENUM — lista de valores permitidos</h3>
+        <pre><code>role ENUM('student','admin') NOT NULL DEFAULT 'student'</code></pre>
+        <p>O banco só aceita os valores da lista. Tenta inserir <code>'superadmin'</code> e ele rejeita. É como uma validação automática na estrutura do banco.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como executar o schema num banco novo</h2>
+    <pre><code>docker compose exec -T mysql mysql --default-character-set=utf8mb4 \
+  -u root -proot fluency_lab &lt; backend/sql/schema.sql</code></pre>
+    <p>A flag <code>--default-character-set=utf8mb4</code> é <strong>obrigatória</strong> — sem ela, os acentos ficam corrompidos no banco.</p>
+  </section>
+
+  <section>
+    <h2>Para verificar que as tabelas existem</h2>
+    <pre><code>docker compose exec mysql mysql -u root -proot fluency_lab -e "SHOW TABLES;"</code></pre>
+  </section>
+
+  <div class="task-nav">
+    <a href="00-fundamentos.html">← Fundamentos</a>
+    <a href="02-arquivos-compartilhados.html">Tarefa 02 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="01" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 03 — Registro de usuário</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 03</span>
+    <span class="badge badge-a">Aluno A</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Registro de usuário</h1>
+
+  <p>A tarefa mais completa do módulo — aqui aparecem pela primeira vez: leitura de JSON, validação manual, <code>password_hash()</code>, INSERT com prepared statement, e início de sessão. Leia com calma, as próximas tarefas vão repetir esse padrão.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li>Como ler o JSON que o Next.js manda (<code>file_get_contents('php://input')</code>).</li>
+      <li>Por que <strong>nunca</strong> se salva senha em texto puro — <code>password_hash()</code>.</li>
+      <li>Como usar prepared statements para inserir dados sem risco de SQL Injection.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>O arquivo</h2>
+
+    <div class="file-label">backend/api/auth/register.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/../cors.php';
+require_once __DIR__ . '/../db.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    json_out(['error' =&gt; 'Método não permitido'], 405);
+    exit;
+}
+
+// O Next.js manda JSON no corpo da requisição, não $_POST
+$body = json_decode(file_get_contents('php://input'), true);
+
+$name     = trim($body['name']     ?? '');
+$email    = trim($body['email']    ?? '');
+$password = $body['password']      ?? '';
+$confirm  = $body['password_confirmation'] ?? '';
+
+// Validação manual
+$errors = [];
+if (empty($name))                                            $errors[] = 'Nome é obrigatório';
+if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Email inválido';
+if (strlen($password) &lt; 6)                                   $errors[] = 'Senha precisa ter pelo menos 6 caracteres';
+if ($password !== $confirm)                                  $errors[] = 'As senhas não coincidem';
+
+if (!empty($errors)) {
+    json_out(['errors' =&gt; $errors], 422);
+    exit;
+}
+
+// Verifica se email já existe
+$stmt = $pdo-&gt;prepare("SELECT id FROM users WHERE email = ?");
+$stmt-&gt;execute([$email]);
+if ($stmt-&gt;fetch()) {
+    json_out(['errors' =&gt; ['Este email já está cadastrado']], 422);
+    exit;
+}
+
+// password_hash() gera um hash seguro — nunca salve senha em texto puro!
+$hash = password_hash($password, PASSWORD_DEFAULT);
+
+$stmt = $pdo-&gt;prepare("INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)");
+$stmt-&gt;execute([$name, $email, $hash]);
+$userId = $pdo-&gt;lastInsertId();
+
+// Inicia a sessão
+$_SESSION['user_id'] = $userId;
+$_SESSION['role']    = 'student';
+
+json_out([
+    'success' =&gt; true,
+    'user' =&gt; ['id' =&gt; (int)$userId, 'name' =&gt; $name, 'email' =&gt; $email, 'role' =&gt; 'student'],
+], 201);</code></pre>
+
+    <div class="callout">
+      <strong>password_hash() e password_verify()</strong><br>
+      <code>password_hash('abc123', PASSWORD_DEFAULT)</code> retorna algo como <code>$2y$10$eImiTXuWVxfM37uY4..</code> — uma string que nunca vai ser igual à original. Na verificação (tarefa 04), você usa <code>password_verify('abc123', $hashSalvo)</code> que retorna <code>true</code> ou <code>false</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl -s -X POST http://localhost:8000/api/auth/register.php \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Ana","email":"ana@test.com","password":"123456","password_confirmation":"123456"}'</code></pre>
+    <p>Esperado: <code>{"success":true,"user":{"id":1,"name":"Ana",...}}</code></p>
+    <p>Tente de novo com o mesmo email — deve retornar erro <code>422</code> dizendo que o email já existe.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="02-arquivos-compartilhados.html">← Tarefa 02</a>
+    <a href="04-login.html">Tarefa 04 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="03" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

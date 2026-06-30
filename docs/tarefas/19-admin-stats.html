@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 19 — Estatísticas do admin (extra)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 19</span>
+    <span class="badge badge-a">Aluno A</span>
+    <span class="badge badge-extra">Extra</span>
+  </div>
+  <h1>Estatísticas do admin</h1>
+
+  <p>Mesma lógica de COUNT/SUM das tarefas 13-16, mas sem filtrar por usuário — são totais globais. E com uma verificação nova: <code>role === 'admin'</code>.</p>
+
+  <section>
+    <h2>O arquivo</h2>
+    <div class="file-label">backend/api/admin/stats.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/../cors.php';
+require_once __DIR__ . '/../db.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') { json_out(['error' =&gt; 'Método não permitido'], 405); exit; }
+
+// Verificar se está logado E se é admin
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    json_out(['error' =&gt; 'Acesso restrito a administradores'], 403);
+    exit;
+}
+
+json_out([
+    'totalUsers'   =&gt; (int) $pdo-&gt;query("SELECT COUNT(*) FROM users")-&gt;fetchColumn(),
+    'totalPhrases' =&gt; (int) $pdo-&gt;query("SELECT COUNT(*) FROM phrases")-&gt;fetchColumn(),
+    'activeToday'  =&gt; (int) $pdo-&gt;query("SELECT COUNT(DISTINCT user_id) FROM attempts WHERE DATE(created_at) = CURDATE()")-&gt;fetchColumn(),
+    'totalXP'      =&gt; (int) $pdo-&gt;query("SELECT COALESCE(SUM(xp_earned), 0) FROM attempts")-&gt;fetchColumn(),
+]);</code></pre>
+
+    <div class="callout tip">
+      <strong>$pdo-&gt;query()-&gt;fetchColumn()</strong> quando você só quer <strong>um valor</strong> (uma coluna de uma linha), não precisa de <code>fetch()</code> e depois acessar a chave — <code>fetchColumn()</code> já pega o primeiro valor diretamente.
+    </div>
+  </section>
+
+  <section>
+    <h2>Promover um usuário a admin (para testar)</h2>
+    <pre><code>docker compose exec mysql mysql -u root -proot fluency_lab \
+  -e "UPDATE users SET role='admin' WHERE email='ana@test.com';"</code></pre>
+    <p>Faça login de novo (para a sessão carregar o novo role), e então teste:</p>
+    <pre><code>curl -s -b /tmp/cookies.txt http://localhost:8000/api/admin/stats.php</code></pre>
+  </section>
+
+  <div class="task-nav">
+    <a href="18-assinatura.html">← Tarefa 18</a>
+    <a href="20-admin-usuarios.html">Tarefa 20 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="19" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

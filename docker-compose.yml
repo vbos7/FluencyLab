@@ -6,7 +6,7 @@ services:
     environment:
       MYSQL_DATABASE: fluency_lab
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_USER: laravel
+      MYSQL_USER: php_user
       MYSQL_PASSWORD: secret
     ports:
       - "3306:3306"
@@ -26,29 +26,16 @@ services:
     restart: unless-stopped
     volumes:
       - ./backend:/var/www/html
-      - /var/www/html/vendor
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      DB_CONNECTION: mysql
       DB_HOST: mysql
-      DB_PORT: 3306
-      DB_DATABASE: fluency_lab
-      DB_USERNAME: laravel
-      DB_PASSWORD: secret
-
-  nginx:
-    image: nginx:alpine
-    container_name: fluencylab-nginx
-    restart: unless-stopped
+      DB_NAME: fluency_lab
+      DB_USER: php_user
+      DB_PASS: secret
     ports:
       - "8000:80"
-    volumes:
-      - ./backend:/var/www/html
-      - ./backend/nginx.conf:/etc/nginx/conf.d/default.conf
-    depends_on:
-      - backend
 
   frontend:
     build:
@@ -61,7 +48,7 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - nginx
+      - backend
 
 volumes:
   mysql_data:

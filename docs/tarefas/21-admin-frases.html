@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 21 — Listar frases (admin, extra)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 21</span>
+    <span class="badge badge-a">Aluno A</span>
+    <span class="badge badge-extra">Extra</span>
+  </div>
+  <h1>Listar frases (admin)</h1>
+
+  <p>Listagem administrativa das frases com contagem de tentativas — inclui um <code>LEFT JOIN</code> com <code>COUNT</code>, padrão que você já viu na tarefa 16.</p>
+
+  <section>
+    <h2>O arquivo</h2>
+    <div class="file-label">backend/api/admin/phrases.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/../cors.php';
+require_once __DIR__ . '/../db.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') { json_out(['error' =&gt; 'Método não permitido'], 405); exit; }
+
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    json_out(['error' =&gt; 'Acesso restrito a administradores'], 403);
+    exit;
+}
+
+$stmt = $pdo-&gt;query("
+    SELECT p.*, COUNT(a.id) AS total_attempts
+    FROM phrases p
+    LEFT JOIN attempts a ON a.phrase_id = p.id
+    GROUP BY p.id
+    ORDER BY total_attempts DESC
+");
+json_out($stmt-&gt;fetchAll());</code></pre>
+  </section>
+
+  <section>
+    <h2>Backend completo!</h2>
+    <p>Com essa tarefa, todo o backend em PHP puro está funcionando. Cada endpoint que o Next.js precisa já existe em <code>backend/api/</code>. Agora é hora de conectar — veja a <a href="24-cliente-api.html">tarefa 24</a> que é o ponto de partida da integração com o frontend.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="20-admin-usuarios.html">← Tarefa 20</a>
+    <a href="24-cliente-api.html">Tarefa 24 — Integração frontend →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="21" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

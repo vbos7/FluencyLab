@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 17 — Planos (Free/Pro)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 17</span>
+    <span class="badge badge-c">Aluno D</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Planos (Free/Pro)</h1>
+
+  <p>Um SELECT simples. O ponto de atenção aqui é a coluna <code>features</code>, que é <code>JSON</code> no banco — o MySQL armazena como texto JSON, mas o PHP recebe como string e precisa decodificar antes de devolver.</p>
+
+  <section>
+    <h2>O arquivo</h2>
+    <div class="file-label">backend/api/plans.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/cors.php';
+require_once __DIR__ . '/db.php';
+
+// Público — qualquer um vê os planos disponíveis antes de se cadastrar
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') { json_out(['error' =&gt; 'Método não permitido'], 405); exit; }
+
+$stmt  = $pdo-&gt;query("SELECT * FROM plans ORDER BY price");
+$plans = $stmt-&gt;fetchAll();
+
+// A coluna features é JSON no banco — vem como string, precisa decodificar
+foreach ($plans as &$plan) {
+    $plan['features'] = json_decode($plan['features'] ?? '[]', true);
+}
+
+json_out($plans);</code></pre>
+
+    <div class="callout tip">
+      <strong>foreach ($plans as &$plan)</strong> — o <code>&</code> antes de <code>$plan</code> é uma referência. Sem ele, você modifica uma cópia e a variável original não muda. Com <code>&</code>, você modifica o elemento original dentro do array.
+    </div>
+  </section>
+
+  <div class="task-nav">
+    <a href="16-ranking.html">← Tarefa 16</a>
+    <a href="18-assinatura.html">Tarefa 18 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="17" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

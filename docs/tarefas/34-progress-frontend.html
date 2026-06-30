@@ -13,37 +13,15 @@
 
   <div class="task-header">
     <span class="task-num-big">Tarefa 34</span>
-    <span class="badge badge-c">Pessoa C</span>
+    <span class="badge badge-c">Aluno D</span>
     <span class="badge badge-todo">Pendente</span>
   </div>
   <h1>Conectar o progresso</h1>
 
-  <p>Primeira tarefa do seu módulo na integração — se ainda não leu a <a href="24-cliente-api.html">tarefa 24</a>, leia antes. Boa notícia: <code>progress/page.tsx</code> já é um Server Component, então é só trocar a fonte dos dados — mesmo padrão da tarefa 30.</p>
+  <p><code>progress/page.tsx</code> já é Server Component. Troque os imports de dados fake pelas chamadas reais:</p>
 
-  <section>
-    <h2>Hoje</h2>
-    <div class="file-label">frontend/app/progress/page.tsx (atual)</div>
-    <pre><code>import { generateWeeks, FAKE_STATS, computeStats, FAKE_WEEKLY_DATA } from "@/app/_lib/progress"
-
-export default function ProgressPage() {
-    const { weeks, currentWeekIdx } = generateWeeks()
-    const stats = computeStats(FAKE_STATS)
-    // ... usa FAKE_WEEKLY_DATA pro gráfico semanal
-}</code></pre>
-  </section>
-
-  <section>
-    <h2>Passo a passo</h2>
-
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-body">
-        <h3>Buscar as três fontes de dado</h3>
-        <p>Você tem três rotas pra consumir aqui (tarefas 13, 14 e 15 do backend) — dá pra buscar as três em paralelo com <code>Promise.all</code>, em vez de uma de cada vez:</p>
-
-        <div class="file-label">frontend/app/progress/page.tsx</div>
-        <pre><code>import { fetchFromApi } from "@/app/_lib/server-api"
-import { generateWeeks } from "@/app/_lib/progress" // mantém só o helper de calendário visual
+  <div class="file-label">frontend/app/progress/page.tsx</div>
+  <pre><code>import { fetchFromApi } from "@/app/_lib/server-api"
 
 type Stats = { totalPracticed: number; totalCorrect: number; userXp: number }
 type WeeklyPoint = { week: string; xp: number; treinos: number }
@@ -51,51 +29,23 @@ type CalendarDay = { date: string; level: number }
 
 export default async function ProgressPage() {
     const [stats, weeklyData, calendarData] = await Promise.all([
-        fetchFromApi&lt;Stats&gt;("/user/stats"),
-        fetchFromApi&lt;WeeklyPoint[]&gt;("/user/progress/weekly"),
-        fetchFromApi&lt;CalendarDay[]&gt;("/user/calendar"),
+        fetchFromApi&lt;Stats&gt;("/user/stats.php"),
+        fetchFromApi&lt;WeeklyPoint[]&gt;("/user/progress-weekly.php"),
+        fetchFromApi&lt;CalendarDay[]&gt;("/user/calendar.php"),
     ])
-
-    const { weeks, currentWeekIdx } = generateWeeks()
-
-    // ... resto da página usa stats, weeklyData e calendarData
-    // no lugar de FAKE_STATS / FAKE_WEEKLY_DATA / computeStats(...)
+    // Passe stats, weeklyData, calendarData para os componentes
+    // no lugar de FAKE_STATS, FAKE_WEEKLY_DATA etc.
 }</code></pre>
 
-        <div class="callout tip">
-          <strong>Promise.all — buscar em paralelo, não em sequência</strong>
-          Se você fizesse <code>await fetchFromApi(...)</code> três vezes seguidas, cada chamada esperaria a anterior terminar antes de começar — desperdiçando tempo. <code>Promise.all([...])</code> dispara as três requisições ao mesmo tempo e só segue adiante quando todas tiverem respondido. Pra três chamadas independentes (uma não depende do resultado da outra), isso é bem mais rápido.
-        </div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-body">
-        <h3>Ajustar o cálculo de "completionRate" e afins</h3>
-        <p>A função <code>computeStats()</code> do mock calculava coisas como <code>completionRate</code> e <code>totalHours</code> a partir de <code>FAKE_STATS</code>. Como a API já devolve <code>totalPracticed</code>/<code>totalCorrect</code>/<code>userXp</code> prontos (lembra da <a href="13-stats.html">tarefa 13</a>?), você pode manter essa mesma lógica de cálculo derivado, só trocando a entrada — algo como <code>computeStats(stats)</code> em vez de <code>computeStats(FAKE_STATS)</code>, se a função aceitar esse formato; ajuste os nomes de campo se precisar.</p>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-body">
-        <h3>Heatmap de calendário</h3>
-        <p>O componente <code>ConsistencyHeatmap</code> provavelmente espera um formato de dia-a-dia parecido com o que <code>GET /api/user/calendar</code> já devolve (<code>{`{ date, level }`}</code>). Confira a prop que ele recebe e ajuste o nome se for diferente.</p>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <h2>Como testar</h2>
-    <p>Pratique algumas frases (tarefa 33) primeiro, pra ter dado de verdade. Depois acesse <code>localhost:3000/progress</code> e confira que os números batem com o que você vê direto no banco (<code>tinker</code> → <code>Attempt::where('user_id', 1)-&gt;count()</code>, por exemplo).</p>
-  </section>
+  <div class="callout tip">
+    <strong>Promise.all</strong> busca as 3 rotas em paralelo — mais rápido que 3 awaits sequenciais.
+  </div>
 
   <div class="task-nav">
     <a href="33-practice-submit-frontend.html">← Tarefa 33</a>
     <a href="35-ranking-frontend.html">Tarefa 35 →</a>
   </div>
-  <button class="mark-done-btn" id="mark-done-btn" data-task="34" style="margin-top: 16px;">Marcar como concluído</button>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="34" style="margin-top:16px;">Marcar como concluído</button>
 
 </div>
 <script src="assets/progress.js"></script>

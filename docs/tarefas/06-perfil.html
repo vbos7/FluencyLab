@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 06 — Ver e editar perfil</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 06</span>
+    <span class="badge badge-a">Aluno A</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Ver e editar perfil</h1>
+
+  <p>Mesmo padrão das anteriores — mas agora um arquivo responde a <strong>dois</strong> métodos HTTP (<code>GET</code> e <code>PUT</code>) dependendo do que o cliente pede.</p>
+
+  <section>
+    <h2>O que é novo</h2>
+    <ul>
+      <li>O mesmo arquivo responde tanto a <code>GET</code> (ver dados) quanto a <code>PUT</code> (editar).</li>
+      <li><code>UPDATE</code> com prepared statement (no lugar do <code>INSERT</code> que você já viu).</li>
+      <li>Construção dinâmica de SQL — editar só os campos que vieram no request.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>O arquivo</h2>
+    <div class="file-label">backend/api/profile.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/cors.php';
+require_once __DIR__ . '/db.php';
+
+if (!isset($_SESSION['user_id'])) {
+    json_out(['error' =&gt; 'Não autenticado'], 401);
+    exit;
+}
+
+$userId = $_SESSION['user_id'];
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $stmt = $pdo-&gt;prepare("SELECT id, name, email, role, created_at FROM users WHERE id = ?");
+    $stmt-&gt;execute([$userId]);
+    json_out($stmt-&gt;fetch());
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+    $body  = json_decode(file_get_contents('php://input'), true);
+    $name  = trim($body['name']  ?? '');
+    $email = trim($body['email'] ?? '');
+
+    $fields = [];
+    $params = [];
+
+    if (!empty($name))  { $fields[] = 'name = ?';  $params[] = $name; }
+    if (!empty($email)) { $fields[] = 'email = ?'; $params[] = $email; }
+
+    if (empty($fields)) { json_out(['error' =&gt; 'Nada para atualizar'], 422); exit; }
+
+    $params[] = $userId;
+    $pdo-&gt;prepare("UPDATE users SET " . implode(', ', $fields) . " WHERE id = ?")-&gt;execute($params);
+
+    if (!empty($name)) $_SESSION['name'] = $name;
+
+    $stmt = $pdo-&gt;prepare("SELECT id, name, email, role FROM users WHERE id = ?");
+    $stmt-&gt;execute([$userId]);
+    json_out($stmt-&gt;fetch());
+    exit;
+}
+
+json_out(['error' =&gt; 'Método não permitido'], 405);</code></pre>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code># Ver perfil (GET)
+curl -s -b /tmp/cookies.txt http://localhost:8000/api/profile.php
+
+# Editar nome (PUT)
+curl -s -b /tmp/cookies.txt -X PUT http://localhost:8000/api/profile.php \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Ana Silva"}'</code></pre>
+  </section>
+
+  <div class="task-nav">
+    <a href="05-logout.html">← Tarefa 05</a>
+    <a href="07-cursos.html">Tarefa 07 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="06" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

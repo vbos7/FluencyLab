@@ -13,69 +13,28 @@
 
   <div class="task-header">
     <span class="task-num-big">Tarefa 35</span>
-    <span class="badge badge-c">Pessoa C</span>
+    <span class="badge badge-c">Aluno D</span>
     <span class="badge badge-todo">Pendente</span>
   </div>
   <h1>Conectar o ranking</h1>
 
-  <p>Mesmo padrão das tarefas 30 e 34 — <code>ranking/page.tsx</code> já é Server Component, só precisa trocar a fonte.</p>
+  <p><code>ranking/page.tsx</code> é Server Component. Troque <code>USERS_LEADERBOARD</code> pela API:</p>
 
-  <section>
-    <h2>Hoje</h2>
-    <pre><code>import { USERS_LEADERBOARD, getLevel } from "@/app/_lib/ranking"
-
-export default function RankingPage() {
-    const leaderboard = [...USERS_LEADERBOARD]
-        .map((u) =&gt; (u.isCurrentUser ? { ...u, level: getLevel(u.xp).level } : u))
-        .sort((a, b) =&gt; b.xp - a.xp)
-    // ...
-}</code></pre>
-  </section>
-
-  <section>
-    <h2>Passo a passo</h2>
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-body">
-        <h3>Buscar o leaderboard real</h3>
-        <pre><code>import { fetchFromApi } from "@/app/_lib/server-api"
+  <div class="file-label">frontend/app/ranking/page.tsx</div>
+  <pre><code>import { fetchFromApi } from "@/app/_lib/server-api"
 
 type LeaderboardUser = { id: number; name: string; xp: number; level: number }
 
 export default async function RankingPage() {
-    const leaderboard = await fetchFromApi&lt;LeaderboardUser[]&gt;("/ranking")
-    // já vem ordenado por XP e com o nível calculado — não precisa mais
-    // do .map()/.sort() nem do getLevel() local
-    // ...
+    const leaderboard = await fetchFromApi&lt;LeaderboardUser[]&gt;("/ranking.php")
+    // Já vem ordenado por XP e com level calculado — não precisa mais do .sort() nem getLevel()
 }</code></pre>
-
-        <div class="callout">
-          <strong>O cálculo de nível e a ordenação já vêm prontos da API</strong>
-          Repare que tanto a ordenação (<code>.sort()</code>) quanto o cálculo de nível (<code>getLevel()</code>) que existiam no frontend já foram implementados no backend, na <a href="17-ranking.html">tarefa 17</a> — o <code>RankingController</code> já devolve a lista ordenada e com <code>level</code> calculado. Isso é bom: a regra de negócio mora num lugar só (o backend), e qualquer cliente futuro (um app mobile, por exemplo) recebe o mesmo cálculo sem precisar reimplementá-lo.
-        </div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-body">
-        <h3>Identificar o usuário atual na lista</h3>
-        <p>A API não sabe, por padrão, quem é "o usuário logado vendo a tela" dentro da lista geral — isso é uma comparação que faz mais sentido no frontend. Se você tem o ID do usuário logado disponível (pode buscar com <code>fetchFromApi("/profile")</code> em paralelo, com <code>Promise.all</code> — igual fez na tarefa 34), compare: <code>const isCurrentUser = user.id === meuId</code> ao montar a lista exibida.</p>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <h2>Como testar</h2>
-    <pre><code>localhost:3000/ranking</code></pre>
-    <p>Crie tentativas com mais de um usuário (registre um segundo usuário de teste) pra ver o ranking realmente disputado entre posições.</p>
-  </section>
 
   <div class="task-nav">
     <a href="34-progress-frontend.html">← Tarefa 34</a>
     <a href="36-planos-frontend.html">Tarefa 36 →</a>
   </div>
-  <button class="mark-done-btn" id="mark-done-btn" data-task="35" style="margin-top: 16px;">Marcar como concluído</button>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="35" style="margin-top:16px;">Marcar como concluído</button>
 
 </div>
 <script src="assets/progress.js"></script>

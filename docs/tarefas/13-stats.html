@@ -13,87 +13,71 @@
 
   <div class="task-header">
     <span class="task-num-big">Tarefa 13</span>
-    <span class="badge badge-c">Pessoa C</span>
+    <span class="badge badge-c">Aluno D</span>
     <span class="badge badge-todo">Pendente</span>
   </div>
   <h1>Estatísticas do usuário</h1>
 
-  <p>Primeira tarefa do seu módulo. Antes de começar, vale entender uma decisão importante: <strong>não existe uma tabela <code>progress</code></strong>. Os números que o frontend mostra (total praticado, total de acertos, XP) são calculados <em>na hora</em>, a partir da tabela <code>attempts</code> que a Pessoa B criou na tarefa 12. Se essa tarefa ainda não foi feita pelo seu colega, fale com ele antes de continuar — você depende da tabela <code>attempts</code> existir.</p>
+  <p>Seu módulo é focado em <strong>consultas SQL de agregação</strong> — somar e contar dados que já existem no banco. Não tem lógica de negócio complexa, mas é onde o SQL realmente brilha. Leia a <a href="00-fundamentos.html">página de Fundamentos</a> antes, especialmente a parte de PDO.</p>
 
   <section>
-    <h2>O que você vai aprender</h2>
-    <ul>
-      <li>Como fazer contagens e somas com Eloquent (<code>count()</code>, <code>sum()</code>) em vez de <code>SELECT COUNT(*)</code> na mão.</li>
-      <li>Por que às vezes é melhor <strong>calcular na hora</strong> do que guardar um número pronto numa coluna.</li>
-    </ul>
+    <h2>Funções SQL novas: COUNT e SUM</h2>
+    <pre><code>-- Conta quantas linhas existem para user_id = 5
+SELECT COUNT(*) FROM attempts WHERE user_id = 5
+
+-- Soma a coluna xp_earned de todas as tentativas desse usuário
+SELECT SUM(xp_earned) FROM attempts WHERE user_id = 5
+
+-- Conta apenas as corretas
+SELECT COUNT(*) FROM attempts WHERE user_id = 5 AND is_correct = 1</code></pre>
+    <p>Podemos fazer tudo numa query só com <code>CASE WHEN</code>:</p>
+    <pre><code>SELECT
+    COUNT(*) AS totalPracticed,
+    SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) AS totalCorrect,
+    COALESCE(SUM(xp_earned), 0) AS userXp
+FROM attempts
+WHERE user_id = ?</code></pre>
+    <p><code>COALESCE(SUM(...), 0)</code>: se não houver nenhuma tentativa, <code>SUM()</code> retorna <code>NULL</code>. O <code>COALESCE</code> substitui <code>NULL</code> por 0.</p>
   </section>
 
   <section>
-    <h2>Por que calcular em vez de guardar pronto?</h2>
-    <p>Você poderia ter uma coluna <code>users.total_xp</code> que vai sendo somada a cada tentativa. O problema: agora existem <strong>duas fontes da verdade</strong> (a soma das tentativas, e o número guardado) que podem ficar dessincronizadas se algum bug acontecer no meio do caminho. Calculando direto da tabela <code>attempts</code> toda vez, o número está sempre certo — o custo é uma query um pouco mais pesada, o que pra esse projeto não é problema.</p>
-  </section>
+    <h2>O arquivo</h2>
+    <div class="file-label">backend/api/user/stats.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/../cors.php';
+require_once __DIR__ . '/../db.php';
 
-  <section>
-    <h2>Passo a passo</h2>
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') { json_out(['error' =&gt; 'Método não permitido'], 405); exit; }
+if (!isset($_SESSION['user_id']))          { json_out(['error' =&gt; 'Não autenticado'], 401);      exit; }
 
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-body">
-        <h3>Controller</h3>
-        <pre><code>docker compose exec backend php artisan make:controller StatsController</code></pre>
+$stmt = $pdo-&gt;prepare("
+    SELECT
+        COUNT(*) AS totalPracticed,
+        SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) AS totalCorrect,
+        COALESCE(SUM(xp_earned), 0) AS userXp
+    FROM attempts WHERE user_id = ?
+");
+$stmt-&gt;execute([$_SESSION['user_id']]);
+$row = $stmt-&gt;fetch();
 
-        <div class="file-label">backend/app/Http/Controllers/StatsController.php</div>
-        <pre><code>use App\Models\Attempt;
-use Illuminate\Http\Request;
-
-public function stats(Request $request)
-{
-    $userId = $request-&gt;user()-&gt;id;
-
-    $attempts = Attempt::where('user_id', $userId);
-
-    return response()-&gt;json([
-        'totalPracticed' =&gt; (clone $attempts)-&gt;count(),
-        'totalCorrect' =&gt; (clone $attempts)-&gt;where('is_correct', true)-&gt;count(),
-        'userXp' =&gt; (clone $attempts)-&gt;sum('xp_earned'),
-    ]);
-}</code></pre>
-
-        <div class="callout warn">
-          <strong>Por que (clone $attempts)?</strong>
-          Em Eloquent, uma "query" (<code>$attempts</code> aqui) vai acumulando condições conforme você encadeia métodos — ela não "reseta" sozinha entre uma chamada e outra. Se você reaproveitar a mesma variável pra três contagens diferentes sem clonar, a segunda chamada herda os filtros da primeira (e dá resultado errado). <code>clone</code> garante que cada contagem comece do zero, só com o filtro de <code>user_id</code> que você quer manter.
-        </div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-body">
-        <h3>Rota</h3>
-        <div class="file-label">backend/routes/api.php</div>
-        <pre><code>use App\Http\Controllers\StatsController;
-
-Route::middleware('auth:sanctum')-&gt;group(function () {
-    // ...
-    Route::get('/user/stats', [StatsController::class, 'stats']);
-});</code></pre>
-      </div>
-    </div>
+json_out([
+    'totalPracticed' =&gt; (int) $row['totalPracticed'],
+    'totalCorrect'   =&gt; (int) $row['totalCorrect'],
+    'userXp'         =&gt; (int) $row['userXp'],
+]);</code></pre>
   </section>
 
   <section>
     <h2>Como testar</h2>
-    <pre><code>curl http://localhost:8000/api/user/stats \
-  -H "Authorization: Bearer SEU_TOKEN" \
-  -H "Accept: application/json"</code></pre>
-    <p>Se você ainda não tem nenhuma tentativa registrada, é normal ver tudo zerado — pratique uma frase (tarefa 12) e teste de novo.</p>
+    <pre><code>curl -s -b /tmp/cookies.txt http://localhost:8000/api/user/stats.php</code></pre>
+    <p>Pratica algumas frases (tarefa 12) e teste de novo — os números devem mudar.</p>
   </section>
 
   <div class="task-nav">
     <a href="12-check-answer.html">← Tarefa 12</a>
     <a href="14-progress-semanal.html">Tarefa 14 →</a>
   </div>
-  <button class="mark-done-btn" id="mark-done-btn" data-task="13" style="margin-top: 16px;">Marcar como concluído</button>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="13" style="margin-top:16px;">Marcar como concluído</button>
 
 </div>
 <script src="assets/progress.js"></script>

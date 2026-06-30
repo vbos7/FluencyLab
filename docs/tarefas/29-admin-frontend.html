@@ -13,27 +13,24 @@
 
   <div class="task-header">
     <span class="task-num-big">Tarefa 29</span>
-    <span class="badge badge-a">Pessoa A</span>
+    <span class="badge badge-a">Aluno A</span>
     <span class="badge badge-extra">Extra</span>
   </div>
   <h1>Conectar o painel admin</h1>
 
-  <p>Mesmo padrão das tarefas 28 e 30 (Server Component buscando dados reais), aplicado em duas telas.</p>
+  <p>Mesmo padrão da tarefa 28 — Server Components buscando dados, Client Components para ações de editar/deletar.</p>
 
-  <section>
-    <h2>Passo a passo (resumido)</h2>
-    <ul>
-      <li><strong><code>app/admin/dashboard/page.tsx</code></strong> (Server Component): troque os dados mockados de <code>AdminStats</code>/gráficos por <code>await fetchFromApi("/admin/stats")</code>, igual fez no perfil.</li>
-      <li><strong><code>app/admin/usuarios/page.tsx</code></strong> (hoje é Client Component): como esta é uma listagem, considere remover o <code>"use client"</code> do topo e buscar os dados direto no Server Component, igual fez na <a href="30-cursos-frontend.html">tarefa 30</a> — só mantenha como Client Component as partes que realmente precisam de interação (abrir modal de edição, por exemplo, que pode continuar sendo um componente filho separado).</li>
-      <li>Para editar/deletar usuário (chamadas <code>PUT</code>/<code>DELETE</code> em <code>/admin/users/{id}</code>), use o <code>apiClient</code> dentro do componente de modal/ação (Client Component), igual fez no <code>handleSave</code> da tarefa 28.</li>
-    </ul>
-  </section>
+  <ul>
+    <li><code>admin/dashboard/page.tsx</code>: <code>await fetchFromApi("/admin/stats.php")</code></li>
+    <li><code>admin/usuarios/page.tsx</code>: <code>await fetchFromApi("/admin/users.php")</code></li>
+    <li>Para editar/deletar usuário: <code>apiClient.put("/admin/users.php?id=5", {...})</code> e <code>apiClient.delete("/admin/users.php?id=5")</code></li>
+  </ul>
 
   <div class="task-nav">
     <a href="28-perfil-frontend.html">← Tarefa 28</a>
     <a href="30-cursos-frontend.html">Tarefa 30 →</a>
   </div>
-  <button class="mark-done-btn" id="mark-done-btn" data-task="29" style="margin-top: 16px;">Marcar como concluído</button>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="29" style="margin-top:16px;">Marcar como concluído</button>
 
 </div>
 <script src="assets/progress.js"></script>

@@ -13,85 +13,60 @@
 
   <div class="task-header">
     <span class="task-num-big">Tarefa 27</span>
-    <span class="badge badge-a">Pessoa A</span>
+    <span class="badge badge-a">Aluno A</span>
     <span class="badge badge-todo">Pendente</span>
   </div>
   <h1>Logout e proteger rotas</h1>
 
-  <p>Duas coisas nesta tarefa: fazer o botão de logout chamar a API de verdade, e impedir que alguém sem login acesse páginas como <code>/home</code> ou <code>/practice</code> digitando a URL direto.</p>
-
   <section>
-    <h2>O que você vai aprender</h2>
-    <ul>
-      <li>O que é um <strong>middleware</strong> no Next.js — parecido em espírito com o <code>auth:sanctum</code> do Laravel, mas do lado do frontend.</li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>Parte 1 — Logout</h2>
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-body">
-        <div class="file-label">frontend/app/_components/profile/logout-button.tsx</div>
-        <pre><code>"use client"
+    <h2>Parte 1 — LogoutButton</h2>
+    <div class="file-label">frontend/app/_components/profile/logout-button.tsx</div>
+    <pre><code>"use client"
 
 import { useRouter } from "next/navigation"
 import { LogOut } from "lucide-react"
 import { apiClient } from "@/app/_lib/api"
-import Cookies from "js-cookie"
 
 export function LogoutButton() {
     const router = useRouter()
 
     async function handleLogout() {
         try {
-            await apiClient.post("/logout")
+            await apiClient.post("/auth/logout.php")
         } catch {
-            // mesmo se a chamada falhar (ex: token já tinha expirado),
-            // seguimos limpando o cookie local — não faz sentido travar
-            // o usuário numa tela de erro só por causa do logout.
+            // mesmo se falhar, continuamos o logout local
         }
-
-        Cookies.remove("token")
+        // O PHP destruiu a sessão — o browser descartará o cookie PHPSESSID
         router.push("/login")
     }
 
     return (
-        &lt;button onClick={handleLogout} /* ...resto igual... */&gt;
+        &lt;button onClick={handleLogout} /* ...classes... */&gt;
             &lt;LogOut size={16} /&gt;
             Sair da conta
         &lt;/button&gt;
     )
 }</code></pre>
-        <p>Repare que isso usa o <code>auth:sanctum</code> + a rota <code>POST /api/logout</code> que você já fez na <a href="04-logout-me.html">tarefa 04</a> do backend — nenhuma rota nova aqui, só a chamada pelo frontend.</p>
-      </div>
-    </div>
   </section>
 
   <section>
-    <h2>Parte 2 — Proteger rotas com middleware</h2>
+    <h2>Parte 2 — Proteger rotas com middleware.ts</h2>
+    <p>Sem login, ninguém deveria acessar <code>/home</code>, <code>/practice</code>, etc. O middleware do Next.js verifica isso antes de cada página carregar:</p>
 
-    <p>Hoje, digitar <code>localhost:3000/home</code> direto na URL funciona mesmo sem estar logado — porque nenhuma página confere isso. Um <strong>middleware</strong> do Next.js roda <em>antes</em> de qualquer página renderizar, e pode redirecionar a requisição — é a versão do frontend pro que o middleware <code>auth:sanctum</code> faz no Laravel.</p>
+    <div class="file-label">frontend/middleware.ts</div>
+    <pre><code>import { NextRequest, NextResponse } from "next/server"
 
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-body">
-        <h3>Criar o arquivo</h3>
-        <p>Esse arquivo tem que ficar na raiz de <code>frontend/</code> (mesmo nível de <code>package.json</code>), não dentro de <code>app/</code>:</p>
-        <div class="file-label">frontend/middleware.ts</div>
-        <pre><code>import { NextRequest, NextResponse } from "next/server"
-
-const PUBLIC_PATHS = ["/login", "/register", "/", "/cursos", "/planos"]
+const ROTAS_PUBLICAS = ["/login", "/register", "/", "/cursos", "/planos"]
 
 export function middleware(request: NextRequest) {
-    const token = request.cookies.get("token")?.value
+    const sessao = request.cookies.get("PHPSESSID")?.value
     const { pathname } = request.nextUrl
 
-    const isPublic = PUBLIC_PATHS.some(
-        (path) =&gt; pathname === path || pathname.startsWith(path + "/")
+    const ehPublica = ROTAS_PUBLICAS.some(
+        (r) =&gt; pathname === r || pathname.startsWith(r + "/")
     )
 
-    if (!token &amp;&amp; !isPublic) {
+    if (!sessao &amp;&amp; !ehPublica) {
         return NextResponse.redirect(new URL("/login", request.url))
     }
 
@@ -99,30 +74,24 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    // roda em todas as rotas, exceto arquivos estáticos do Next.js
     matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 }</code></pre>
 
-        <div class="callout">
-          <strong>request.cookies, não js-cookie</strong>
-          Dentro de um middleware você não usa <code>js-cookie</code> nem <code>next/headers</code> — é uma terceira API, <code>request.cookies</code>, específica de middleware. Não precisa decorar todas — cada contexto do Next.js (Server Component, Client Component, middleware) tem seu próprio jeito de ler cookie, e cada tarefa deste guia te mostra qual usar onde.
-        </div>
-
-        <p>Ajuste o array <code>PUBLIC_PATHS</code> conforme as páginas do projeto que devem continuar acessíveis sem login (a home pública, cursos, planos — o que fizer sentido pro produto).</p>
-      </div>
+    <div class="callout">
+      <strong>request.cookies.get("PHPSESSID")</strong> — diferente do <code>js-cookie</code>, aqui usamos a API nativa do Next.js para middleware, que lê os cookies diretamente da requisição HTTP, sem JavaScript do browser.
     </div>
   </section>
 
   <section>
     <h2>Como testar</h2>
-    <p>Apague o cookie <code>token</code> manualmente (DevTools → Application → Cookies → botão direito → Delete) e tente acessar <code>localhost:3000/home</code> direto pela URL. Deve te jogar pra <code>/login</code> automaticamente.</p>
+    <p>Apague o cookie <code>PHPSESSID</code> (DevTools → Application → Cookies → botão direito → Delete) e tente acessar <code>localhost:3000/home</code> — deve redirecionar pro <code>/login</code>.</p>
   </section>
 
   <div class="task-nav">
     <a href="26-registro-frontend.html">← Tarefa 26</a>
     <a href="28-perfil-frontend.html">Tarefa 28 →</a>
   </div>
-  <button class="mark-done-btn" id="mark-done-btn" data-task="27" style="margin-top: 16px;">Marcar como concluído</button>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="27" style="margin-top:16px;">Marcar como concluído</button>
 
 </div>
 <script src="assets/progress.js"></script>

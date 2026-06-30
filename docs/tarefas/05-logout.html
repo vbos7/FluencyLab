@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 05 — Logout</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 05</span>
+    <span class="badge badge-a">Aluno A</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Logout</h1>
+
+  <p>O menor arquivo do projeto, mas demonstra algo importante: como destruir uma sessão.</p>
+
+  <section>
+    <h2>O arquivo</h2>
+
+    <div class="file-label">backend/api/auth/logout.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/../cors.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    json_out(['error' =&gt; 'Método não permitido'], 405);
+    exit;
+}
+
+// Limpa todos os dados da sessão
+$_SESSION = [];
+
+// Apaga o cookie PHPSESSID no navegador do usuário
+if (ini_get('session.use_cookies')) {
+    $params = session_get_cookie_params();
+    setcookie(session_name(), '', time() - 42000,
+        $params['path'], $params['domain'],
+        $params['secure'], $params['httponly']
+    );
+}
+
+// Destrói a sessão no servidor
+session_destroy();
+
+json_out(['success' =&gt; true, 'message' =&gt; 'Logout realizado']);</code></pre>
+
+    <div class="callout tip">
+      <strong>Por que mais que só session_destroy()?</strong>
+      <code>session_destroy()</code> apaga a sessão no servidor, mas o cookie <code>PHPSESSID</code> ainda fica no browser. As três etapas acima garantem uma limpeza completa: esvazia a sessão em memória, invalida o cookie no browser, e apaga no servidor.
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code># Usa o cookie salvo na tarefa anterior
+curl -s -b /tmp/cookies.txt -X POST http://localhost:8000/api/auth/logout.php
+
+# Tenta usar o mesmo cookie de novo — deve dar 401
+curl -s -b /tmp/cookies.txt http://localhost:8000/api/profile.php</code></pre>
+  </section>
+
+  <div class="task-nav">
+    <a href="04-login.html">← Tarefa 04</a>
+    <a href="06-perfil.html">Tarefa 06 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="05" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>
