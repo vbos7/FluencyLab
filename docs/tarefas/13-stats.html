@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 13 — Estatísticas do usuário</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 13</span>
+    <span class="badge badge-c">Pessoa C</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Estatísticas do usuário</h1>
+
+  <p>Primeira tarefa do seu módulo. Antes de começar, vale entender uma decisão importante: <strong>não existe uma tabela <code>progress</code></strong>. Os números que o frontend mostra (total praticado, total de acertos, XP) são calculados <em>na hora</em>, a partir da tabela <code>attempts</code> que a Pessoa B criou na tarefa 12. Se essa tarefa ainda não foi feita pelo seu colega, fale com ele antes de continuar — você depende da tabela <code>attempts</code> existir.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li>Como fazer contagens e somas com Eloquent (<code>count()</code>, <code>sum()</code>) em vez de <code>SELECT COUNT(*)</code> na mão.</li>
+      <li>Por que às vezes é melhor <strong>calcular na hora</strong> do que guardar um número pronto numa coluna.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Por que calcular em vez de guardar pronto?</h2>
+    <p>Você poderia ter uma coluna <code>users.total_xp</code> que vai sendo somada a cada tentativa. O problema: agora existem <strong>duas fontes da verdade</strong> (a soma das tentativas, e o número guardado) que podem ficar dessincronizadas se algum bug acontecer no meio do caminho. Calculando direto da tabela <code>attempts</code> toda vez, o número está sempre certo — o custo é uma query um pouco mais pesada, o que pra esse projeto não é problema.</p>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Controller</h3>
+        <pre><code>docker compose exec backend php artisan make:controller StatsController</code></pre>
+
+        <div class="file-label">backend/app/Http/Controllers/StatsController.php</div>
+        <pre><code>use App\Models\Attempt;
+use Illuminate\Http\Request;
+
+public function stats(Request $request)
+{
+    $userId = $request-&gt;user()-&gt;id;
+
+    $attempts = Attempt::where('user_id', $userId);
+
+    return response()-&gt;json([
+        'totalPracticed' =&gt; (clone $attempts)-&gt;count(),
+        'totalCorrect' =&gt; (clone $attempts)-&gt;where('is_correct', true)-&gt;count(),
+        'userXp' =&gt; (clone $attempts)-&gt;sum('xp_earned'),
+    ]);
+}</code></pre>
+
+        <div class="callout warn">
+          <strong>Por que (clone $attempts)?</strong>
+          Em Eloquent, uma "query" (<code>$attempts</code> aqui) vai acumulando condições conforme você encadeia métodos — ela não "reseta" sozinha entre uma chamada e outra. Se você reaproveitar a mesma variável pra três contagens diferentes sem clonar, a segunda chamada herda os filtros da primeira (e dá resultado errado). <code>clone</code> garante que cada contagem comece do zero, só com o filtro de <code>user_id</code> que você quer manter.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Rota</h3>
+        <div class="file-label">backend/routes/api.php</div>
+        <pre><code>use App\Http\Controllers\StatsController;
+
+Route::middleware('auth:sanctum')-&gt;group(function () {
+    // ...
+    Route::get('/user/stats', [StatsController::class, 'stats']);
+});</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl http://localhost:8000/api/user/stats \
+  -H "Authorization: Bearer SEU_TOKEN" \
+  -H "Accept: application/json"</code></pre>
+    <p>Se você ainda não tem nenhuma tentativa registrada, é normal ver tudo zerado — pratique uma frase (tarefa 12) e teste de novo.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="12-check-answer.html">← Tarefa 12</a>
+    <a href="14-progress-semanal.html">Tarefa 14 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="13" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

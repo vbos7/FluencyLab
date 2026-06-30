@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 23 — Listar frases (admin) (extra)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 23</span>
+    <span class="badge badge-a">Pessoa A</span>
+    <span class="badge badge-extra">Extra</span>
+  </div>
+  <h1>Listar frases (admin)</h1>
+
+  <p>Última tarefa do guia — e a mais curta, porque é só repetir um padrão que você já viu várias vezes.</p>
+
+  <section>
+    <h2>Passo a passo</h2>
+    <pre><code>// Admin/PhraseController.php
+public function index()
+{
+    return \App\Models\Phrase::withCount('attempts')-&gt;paginate(20);
+}</code></pre>
+
+    <p><code>withCount('attempts')</code> é igual ao <code>withSum</code> que você usou na <a href="17-ranking.html">tarefa 17</a>, só que conta quantas tentativas existem em vez de somar uma coluna — útil pro admin ver quais frases são mais praticadas. Pra isso funcionar, adicione o relacionamento no Model <code>Phrase</code>:</p>
+
+    <pre><code>// app/Models/Phrase.php
+public function attempts()
+{
+    return $this-&gt;hasMany(Attempt::class);
+}</code></pre>
+
+    <pre><code>Route::middleware(['auth:sanctum', 'admin'])-&gt;group(function () {
+    // ...
+    Route::get('/admin/phrases', [Admin\PhraseController::class, 'index']);
+});</code></pre>
+  </section>
+
+  <section>
+    <h2>Backend pronto — e agora?</h2>
+    <p>Essa era a última tarefa do <strong>backend</strong>. Mas o frontend ainda está mostrando dados mockados — a partir da <a href="24-cliente-api.html">tarefa 24</a> começa a integração com o Next.js, conectando cada tela ao que foi construído aqui.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="22-admin-usuarios.html">← Tarefa 22</a>
+    <a href="24-cliente-api.html">Tarefa 24 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="23" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

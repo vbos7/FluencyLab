@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 12 — Submeter e corrigir uma tradução</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 12</span>
+    <span class="badge badge-b">Pessoa B</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Submeter e corrigir uma tradução</h1>
+
+  <p>Esta tarefa junta tudo que você construiu até aqui: pega a frase (tarefa 10), manda pro <code>AiCorrectionService</code> (tarefa 11), salva o resultado numa tabela nova (<code>attempts</code>) e calcula o XP do usuário — exatamente o fluxo que o frontend espera de <code>POST /api/practice/check-answer</code>.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li>Como injetar uma Service class no Controller (em vez de instanciar com <code>new</code>).</li>
+      <li>Como gravar o resultado de uma chamada externa (JSON da IA) numa coluna do tipo <code>json</code>.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Migration + Model Attempt</h3>
+        <pre><code>docker compose exec backend php artisan make:model Attempt -m</code></pre>
+
+        <div class="file-label">backend/database/migrations/..._create_attempts_table.php</div>
+        <pre><code>public function up(): void
+{
+    Schema::create('attempts', function (Blueprint $table) {
+        $table-&gt;id();
+        $table-&gt;foreignId('user_id')-&gt;constrained()-&gt;cascadeOnDelete();
+        $table-&gt;foreignId('phrase_id')-&gt;constrained()-&gt;cascadeOnDelete();
+        $table-&gt;text('answer_given');
+        $table-&gt;json('ai_feedback');      // o JSON inteiro que a IA devolveu
+        $table-&gt;boolean('is_correct');
+        $table-&gt;unsignedTinyInteger('score');   // 0 a 100
+        $table-&gt;unsignedSmallInteger('xp_earned');
+        $table-&gt;timestamps();
+    });
+}</code></pre>
+
+        <div class="file-label">backend/app/Models/Attempt.php</div>
+        <pre><code>class Attempt extends Model
+{
+    protected $fillable = [
+        'user_id', 'phrase_id', 'answer_given',
+        'ai_feedback', 'is_correct', 'score', 'xp_earned',
+    ];
+
+    protected $casts = [
+        'ai_feedback' =&gt; 'array',   // o Eloquent já converte JSON &lt;-&gt; array PHP sozinho
+        'is_correct' =&gt; 'boolean',
+    ];
+}</code></pre>
+
+        <div class="callout">
+          <strong>$casts</strong>
+          Sem isso, <code>$attempt-&gt;ai_feedback</code> viria como uma string JSON crua. Com <code>'ai_feedback' =&gt; 'array'</code>, o Eloquent já devolve um array PHP pronto pra usar — e o inverso também funciona: se você atribuir um array PHP, ele já converte pra JSON antes de salvar.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Form Request</h3>
+        <pre><code>docker compose exec backend php artisan make:request CheckAnswerRequest</code></pre>
+        <pre><code>public function authorize(): bool { return true; }
+
+public function rules(): array
+{
+    return [
+        'phrase_id' =&gt; ['required', 'exists:phrases,id'],
+        'answer' =&gt; ['required', 'string'],
+    ];
+}</code></pre>
+        <p><code>'exists:phrases,id'</code> é uma regra nova: confere se aquele <code>phrase_id</code> realmente existe na tabela <code>phrases</code> antes de aceitar a requisição — evita ter que checar isso na mão no Controller.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Controller</h3>
+        <div class="file-label">backend/app/Http/Controllers/PracticeController.php</div>
+        <pre><code>use App\Http\Requests\CheckAnswerRequest;
+use App\Models\Attempt;
+use App\Models\Phrase;
+use App\Services\AiCorrectionService;
+
+public function checkAnswer(CheckAnswerRequest $request, AiCorrectionService $aiService)
+{
+    $data = $request-&gt;validated();
+    $phrase = Phrase::findOrFail($data['phrase_id']);
+
+    $feedback = $aiService-&gt;correctTranslation(
+        pt: $phrase-&gt;pt,
+        enReference: $phrase-&gt;en,
+        userAnswer: $data['answer'],
+    );
+
+    $xp = $this-&gt;calculateXp($feedback['score']);
+
+    $attempt = Attempt::create([
+        'user_id' =&gt; $request-&gt;user()-&gt;id,
+        'phrase_id' =&gt; $phrase-&gt;id,
+        'answer_given' =&gt; $data['answer'],
+        'ai_feedback' =&gt; $feedback,
+        'is_correct' =&gt; $feedback['is_correct'],
+        'score' =&gt; $feedback['score'],
+        'xp_earned' =&gt; $xp,
+    ]);
+
+    return response()-&gt;json([
+        'feedback' =&gt; $feedback,
+        'xp_earned' =&gt; $xp,
+        'attempt_id' =&gt; $attempt-&gt;id,
+    ]);
+}
+
+private function calculateXp(int $score): int
+{
+    // Mesmas faixas que já existiam no protótipo do frontend —
+    // só que agora o "score" vem da IA, não de um cálculo de
+    // similaridade de texto.
+    return match (true) {
+        $score &gt;= 95 =&gt; 25,
+        $score &gt;= 70 =&gt; 15,
+        $score &gt;= 40 =&gt; 8,
+        default =&gt; 3,
+    };
+}</code></pre>
+
+        <div class="callout tip">
+          <strong>AiCorrectionService $aiService no parâmetro</strong>
+          Igual o Laravel injeta automaticamente o Form Request validado, ele também injeta qualquer outra classe que você pedir no parâmetro do método — isso se chama <em>injeção de dependência</em>. Você não precisa escrever <code>new AiCorrectionService()</code> em lugar nenhum; o framework resolve isso sozinho.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h3>Registrar a rota</h3>
+        <div class="file-label">backend/routes/api.php</div>
+        <pre><code>Route::middleware('auth:sanctum')-&gt;group(function () {
+    // ... rotas de /profile que já estavam aqui
+    Route::post('/practice/check-answer', [PracticeController::class, 'checkAnswer']);
+});</code></pre>
+        <p>Precisa estar logado — afinal a tentativa é gravada associada a um <code>user_id</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl -X POST http://localhost:8000/api/practice/check-answer \
+  -H "Authorization: Bearer SEU_TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{"phrase_id": 1, "answer": "I want a coffee please"}'</code></pre>
+    <p>A resposta deve demorar 1-3 segundos (é a chamada real pra OpenAI) e trazer o feedback completo + o XP ganho.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="11-ai-correction-service.html">← Tarefa 11</a>
+    <a href="13-stats.html">Tarefa 13 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="12" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

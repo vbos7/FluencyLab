@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 31 — Detalhe do curso e aulas</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 31</span>
+    <span class="badge badge-b">Pessoa B</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Detalhe do curso e aulas</h1>
+
+  <p>Esta tarefa é um pouco maior que a anterior, porque mexe na <strong>estrutura de rotas</strong>. Hoje existem três páginas quase idênticas: <code>app/cursos/basico/page.tsx</code>, <code>.../intermediario/page.tsx</code> e <code>.../avancado/page.tsx</code>, cada uma com a lista de aulas escrita à mão. Com a API te dando o curso certo a partir do <code>slug</code> (que já existe desde a tarefa 07 do backend), dá pra unificar essas três páginas numa só.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li><strong>Rotas dinâmicas</strong> no Next.js — uma pasta entre colchetes, tipo <code>[slug]</code>, vira um "parâmetro" que casa com qualquer URL naquele formato.</li>
+      <li>Como combinar Server Component (busca dado) + Client Component (interatividade), reaproveitando exatamente o padrão que <code>practice-controller.tsx</code> já usa neste projeto — vale dar uma olhada nele antes de começar.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Criar a rota dinâmica</h3>
+        <p>Apague as três pastas antigas (<code>basico/</code>, <code>intermediario/</code>, <code>avancado/</code>) e crie uma nova:</p>
+        <pre><code>frontend/app/cursos/[slug]/page.tsx</code></pre>
+
+        <div class="file-label">frontend/app/cursos/[slug]/page.tsx</div>
+        <pre><code>import { fetchFromApi } from "@/app/_lib/server-api"
+import { CourseLessons } from "@/app/_components/cursos/course-lessons"
+
+type Lesson = { id: number; title: string; duration: string; youtube_id: string }
+type CourseDetail = { id: number; slug: string; title: string; lessons: Lesson[] }
+
+export default async function CursoDetalhePage({
+    params,
+}: {
+    params: Promise&lt;{ slug: string }&gt;
+}) {
+    const { slug } = await params
+    const course = await fetchFromApi&lt;CourseDetail&gt;(`/courses/${slug}`)
+
+    return &lt;CourseLessons course={course} /&gt;
+}</code></pre>
+
+        <div class="callout">
+          <strong>params é uma Promise?</strong>
+          Sim — em versões recentes do Next.js (App Router), os parâmetros de rota dinâmica chegam como uma <code>Promise</code>, por isso o <code>await params</code>. É só uma particularidade da versão do framework, não precisa entender o porquê agora — só lembrar do padrão.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Mover a parte interativa pra um Client Component</h3>
+        <p>Tudo que hoje está dentro de <code>BasicoPage</code> (estado de qual aula está tocando, comentários) vira um novo arquivo, recebendo os dados já prontos como prop — exatamente como o <code>PracticeController</code> recebe <code>phrases</code>:</p>
+
+        <div class="file-label">frontend/app/_components/cursos/course-lessons.tsx</div>
+        <pre><code>"use client"
+
+import { useState } from "react"
+// ... resto dos imports que já existiam no arquivo antigo (ícones, NavLayout, etc)
+
+type Lesson = { id: number; title: string; duration: string; youtube_id: string }
+type Course = { title: string; lessons: Lesson[] }
+
+export function CourseLessons({ course }: { course: Course }) {
+    const [aulaAtiva, setAulaAtiva] = useState(0)
+    // ... o resto do estado (drawerAberto, comentarios, novoComentario) continua igual
+
+    const aula = course.lessons[aulaAtiva]
+
+    return (
+        // ... o JSX que já existia, só trocando aulas[aulaAtiva].titulo por
+        // aula.title, aulas[aulaAtiva].youtubeId por aula.youtube_id, etc.
+        // E o .map() de aulas vira course.lessons.map(...)
+        &lt;div /&gt;
+    )
+}</code></pre>
+
+        <p>O grosso do trabalho aqui é mecânico: pegue o JSX que já existia no arquivo antigo e cole dentro desse novo componente, ajustando os nomes dos campos (<code>titulo</code> → <code>title</code>, <code>youtubeId</code> → <code>youtube_id</code>) e trocando a fonte da lista de <code>aulas</code> (array fixo) para <code>course.lessons</code> (vindo da prop).</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Atualizar os links da listagem</h3>
+        <p>Confira que os links em <code>cursos/page.tsx</code> (tarefa 30) apontam pra <code>/cursos/${course.slug}</code> — já deveriam estar assim, mas vale conferir, já que agora essa URL precisa bater exatamente com a pasta <code>[slug]</code> nova.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h3>Comentários — opcional</h3>
+        <p>Os comentários podem continuar sendo só locais (estado em memória, como já eram) por enquanto. Se a <a href="09-comentarios.html">tarefa 09</a> do backend já estiver pronta, dá pra trocar o <code>enviarComentario()</code> por uma chamada <code>apiClient.post(\`/lessons/${'${aula.id}'}/comments\`, { text: novoComentario })</code> — mesmo padrão de Client Component chamando API que você já viu nas tarefas 25/26.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>localhost:3000/cursos/basico
+localhost:3000/cursos/intermediario
+localhost:3000/cursos/avancado</code></pre>
+    <p>As três devem continuar funcionando, agora vindas da mesma rota dinâmica, com as aulas reais que você cadastrou na <a href="08-aulas.html">tarefa 08</a>.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="30-cursos-frontend.html">← Tarefa 30</a>
+    <a href="32-practice-frases-frontend.html">Tarefa 32 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="31" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 24 — Fundamentos do frontend e cliente de API</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 24</span>
+    <span class="badge badge-a">Pessoa A</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Fundamentos do frontend e cliente de API</h1>
+
+  <p>O backend está pronto, mas o frontend ainda mostra dados inventados — cada tela importa um arquivo de mock (<code>frontend/app/_lib/practice.ts</code>, <code>ranking.ts</code> etc.) em vez de chamar a API de verdade. Esta tarefa é a base de tudo que vem depois: configura o "telefone" entre o Next.js e o Laravel. Vale a pena <strong>todo mundo do time ler esta página</strong>, mesmo que só a Pessoa A vá implementá-la — os conceitos aqui valem para as tarefas 25 a 36 inteiras.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li>A diferença entre <strong>Server Components</strong> e <strong>Client Components</strong> no Next.js — e por que isso muda como você busca dados.</li>
+      <li>Por que precisamos de <strong>duas formas diferentes</strong> de chamar a API (uma para cada tipo de componente).</li>
+      <li>Como guardar o token do Sanctum num cookie, para ele "viajar" tanto para o navegador quanto para o próprio servidor do Next.js.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Server Components vs Client Components — em termos simples</h2>
+
+    <p>Repare como as páginas deste projeto já estão organizadas: <code>app/(auth)/login/page.tsx</code> é bem curta, só desenha um componente <code>&lt;LoginForm /&gt;</code>. Quem realmente faz alguma coisa (guarda o que o usuário digitou, reage a cliques) é o <code>LoginForm</code>, que começa com <code>"use client"</code> no topo do arquivo.</p>
+
+    <p>Isso não é coincidência — é como o Next.js (a partir do "App Router", que é o que esse projeto usa) funciona por padrão:</p>
+
+    <ul>
+      <li><strong>Todo arquivo <code>page.tsx</code> é, por padrão, um Server Component.</strong> Ele roda <em>no servidor</em>, antes da página chegar no navegador do usuário. Não existe <code>useState</code>, não existe <code>onClick</code>, não existe <code>window</code> ou <code>document</code> aqui — porque não tem navegador nenhum rodando esse código, só o servidor do Next.js.</li>
+      <li><strong>Um arquivo só vira Client Component se tiver <code>"use client"</code> na primeira linha.</strong> Aí sim ele roda no navegador, depois da página carregar, e pode usar <code>useState</code>, <code>onClick</code>, <code>useEffect</code> etc — exatamente como você já está acostumado nos componentes de formulário e botões deste projeto.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Por que essa separação existe?</strong>
+      Pense assim: o Server Component já chega pronto, com o HTML montado — é mais rápido pra carregar e melhor pra SEO. O Client Component é necessário quando a tela precisa <em>reagir</em> a alguma coisa que só acontece depois que a página já carregou (digitar, clicar, etc). Um app real combina os dois: páginas de listagem geralmente são Server Components (buscam os dados e já entregam prontos); formulários e botões interativos são Client Components.
+    </div>
+  </section>
+
+  <section>
+    <h2>Por que isso muda como buscamos dados da API</h2>
+
+    <p>Como Server Component roda no servidor (não no navegador), ele <strong>não tem acesso a <code>localStorage</code> nem a bibliotecas que dependem do navegador</strong> (como o <code>js-cookie</code> que vamos instalar). Mas ele <em>consegue</em> ler os cookies que o navegador mandou junto com a requisição, através de uma função especial do Next.js: <code>cookies()</code>, importada de <code>next/headers</code>.</p>
+
+    <p>Resultado prático: vamos ter <strong>dois jeitos</strong> de chamar a API, e cada tarefa vai te dizer qual usar:</p>
+
+    <ul>
+      <li><strong>Em Client Components</strong> (formulários, ações de clique — ex: login, submeter resposta): usamos uma instância do <code>axios</code> com um "interceptor" que pega o token do cookie via <code>js-cookie</code> e já anexa no header de toda requisição, automaticamente.</li>
+      <li><strong>Em Server Components</strong> (páginas de listagem — ex: cursos, ranking): usamos a função nativa <code>fetch</code> do JavaScript, lendo o token manualmente via <code>cookies()</code> do Next.js antes de montar a requisição.</li>
+    </ul>
+
+    <p>Por que cookie, e não <code>localStorage</code> puro? Porque um cookie criado no navegador é enviado automaticamente em toda requisição feita <em>para o próprio Next.js</em> — inclusive quando o Next.js está montando a próxima página no servidor. <code>localStorage</code> só existiria no navegador, e o Server Component nunca conseguiria enxergar o token.</p>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Instalar as dependências</h3>
+        <p>Local, fora do Docker — o frontend roda direto com Node, não precisa entrar em container:</p>
+        <pre><code>cd frontend
+npm install axios js-cookie
+npm install -D @types/js-cookie</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Variável de ambiente</h3>
+        <p>O endereço da API já está configurado no <code>docker-compose.yml</code> como <code>NEXT_PUBLIC_API_URL=http://localhost:8000/api</code> (o prefixo <code>NEXT_PUBLIC_</code> é o que o Next.js exige para uma variável de ambiente ficar disponível tanto no servidor quanto no navegador). Pra rodar o frontend localmente fora do Docker durante o desenvolvimento (<code>npm run dev</code>), crie também:</p>
+        <div class="file-label">frontend/.env.local</div>
+        <pre><code>NEXT_PUBLIC_API_URL=http://localhost:8000/api</code></pre>
+        <p>(esse arquivo já deve estar coberto pelo <code>.gitignore</code> padrão do Next.js — confira antes de commitar)</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Cliente para Client Components</h3>
+        <div class="file-label">frontend/app/_lib/api.ts</div>
+        <pre><code>"use client"
+
+import axios from "axios"
+import Cookies from "js-cookie"
+
+export const apiClient = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_API_URL,
+    headers: {
+        Accept: "application/json",
+    },
+})
+
+// Roda antes de TODA requisição feita com apiClient — se existir um
+// token guardado no cookie, anexa no header Authorization automaticamente.
+apiClient.interceptors.request.use((config) =&gt; {
+    const token = Cookies.get("token")
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+})</code></pre>
+        <p>A partir de agora, em qualquer Client Component, basta <code>import { apiClient } from "@/app/_lib/api"</code> e chamar <code>apiClient.post("/login", {...})</code> — o token (quando existir) já vai junto, sem você precisar lembrar de adicionar o header toda vez.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h3>Cliente para Server Components</h3>
+        <div class="file-label">frontend/app/_lib/server-api.ts</div>
+        <pre><code>import { cookies } from "next/headers"
+
+export async function fetchFromApi&lt;T = unknown&gt;(path: string): Promise&lt;T&gt; {
+    const cookieStore = await cookies()
+    const token = cookieStore.get("token")?.value
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
+        headers: {
+            Accept: "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        cache: "no-store", // sempre busca dado novo, não usa cache do Next.js
+    })
+
+    if (!res.ok) {
+        throw new Error(`Erro ao buscar ${path}: ${res.status}`)
+    }
+
+    return res.json()
+}</code></pre>
+
+        <div class="callout tip">
+          <strong>cache: "no-store"</strong>
+          Por padrão, o Next.js tenta cachear chamadas de <code>fetch</code> feitas em Server Components, pra acelerar páginas que não mudam com frequência. Como nossos dados mudam o tempo todo (XP, ranking, etc), desligamos esse cache explicitamente. Mais pra frente, se quiser otimizar uma rota específica que muda pouco (ex: lista de cursos), dá pra remover essa opção ali.
+        </div>
+
+        <p>A partir de agora, em qualquer Server Component (ou seja, em qualquer <code>page.tsx</code> sem <code>"use client"</code>), você pode fazer:</p>
+        <pre><code>export default async function CursosPage() {
+    const courses = await fetchFromApi("/courses")
+    // ...
+}</code></pre>
+        <p>Repare que a função do componente virou <code>async</code> — isso só é possível em Server Components. É o jeito do Next.js permitir "esperar" os dados chegarem antes de montar o HTML.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <p>Ainda não tem nenhuma tela usando isso — o teste real vem nas próximas tarefas. Mas dá pra confirmar que o setup está correto criando uma página de teste temporária:</p>
+    <pre><code>// algum lugar temporário, ex: app/teste/page.tsx
+import { fetchFromApi } from "@/app/_lib/server-api"
+
+export default async function TestePage() {
+    const courses = await fetchFromApi("/courses")
+    return &lt;pre&gt;{JSON.stringify(courses, null, 2)}&lt;/pre&gt;
+}</code></pre>
+    <p>Suba o frontend (<code>npm run dev</code> dentro de <code>frontend/</code>, ou via Docker) e acesse <code>/teste</code> — deve mostrar o JSON dos cursos que você cadastrou no backend (tarefa 07). Apague essa página de teste depois.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="23-admin-frases.html">← Tarefa 23 (backend)</a>
+    <a href="25-login-frontend.html">Tarefa 25 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="24" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

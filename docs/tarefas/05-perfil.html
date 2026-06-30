@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 05 — Ver e editar perfil</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 05</span>
+    <span class="badge badge-a">Pessoa A</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Ver e editar perfil</h1>
+
+  <p>Duas rotas simples, que reaproveitam tudo que você já viu: uma <code>GET</code> que devolve dados (parecido com a rota <code>/api/user</code> da tarefa 01) e uma <code>PUT</code> que atualiza, reaproveitando o padrão de Form Request + Eloquent da tarefa 02.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li>O verbo HTTP <code>PUT</code> (atualizar um recurso existente) — diferente do <code>POST</code> (criar) que você já usou.</li>
+      <li>Como atualizar um Model existente com Eloquent (<code>$user-&gt;update([...])</code>).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Form Request de atualização</h3>
+        <pre><code>docker compose exec backend php artisan make:request UpdateProfileRequest</code></pre>
+        <div class="file-label">backend/app/Http/Requests/UpdateProfileRequest.php</div>
+        <pre><code>public function authorize(): bool
+{
+    // diferente do registro: aqui SIM importa quem está logado —
+    // mas isso já é garantido pelo middleware auth:sanctum na rota,
+    // então aqui só liberamos geral.
+    return true;
+}
+
+public function rules(): array
+{
+    return [
+        'name' =&gt; ['sometimes', 'string', 'max:255'],
+        'email' =&gt; ['sometimes', 'email', 'unique:users,email,' . $this-&gt;user()-&gt;id],
+    ];
+}</code></pre>
+        <p>Duas diferenças importantes em relação ao Form Request da tarefa 02:</p>
+        <ul>
+          <li><code>'sometimes'</code> em vez de <code>'required'</code> — o usuário pode mandar só o campo que quer mudar (ex: só o nome), não precisa reenviar tudo.</li>
+          <li><code>'unique:users,email,' . $this-&gt;user()-&gt;id</code> — a regra de "email único" ignora o próprio usuário. Sem isso, ele nunca conseguiria salvar o perfil mantendo o mesmo email (porque o Laravel acharia que já existe um registro com aquele email — o dele mesmo!).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Controller</h3>
+        <p>Crie um novo Controller pra isso (faz mais sentido separar de <code>AuthController</code>, já que não é sobre autenticação, é sobre o perfil em si):</p>
+        <pre><code>docker compose exec backend php artisan make:controller ProfileController</code></pre>
+        <div class="file-label">backend/app/Http/Controllers/ProfileController.php</div>
+        <pre><code>&lt;?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\UpdateProfileRequest;
+use Illuminate\Http\Request;
+
+class ProfileController extends Controller
+{
+    public function show(Request $request)
+    {
+        return $request-&gt;user();
+    }
+
+    public function update(UpdateProfileRequest $request)
+    {
+        $request-&gt;user()-&gt;update($request-&gt;validated());
+
+        return $request-&gt;user();
+    }
+}</code></pre>
+        <p><code>$request-&gt;user()</code> é o usuário "decifrado" a partir do token — o Sanctum já fez esse trabalho antes do seu método rodar.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Registrar as rotas</h3>
+        <div class="file-label">backend/routes/api.php</div>
+        <pre><code>use App\Http\Controllers\ProfileController;
+
+Route::middleware('auth:sanctum')-&gt;group(function () {
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::put('/profile', [ProfileController::class, 'update']);
+});</code></pre>
+        <p><code>Route::middleware(...)-&gt;group(...)</code> é um jeito de aplicar o mesmo middleware em várias rotas de uma vez, em vez de repetir <code>-&gt;middleware('auth:sanctum')</code> em cada linha.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl -X PUT http://localhost:8000/api/profile \
+  -H "Authorization: Bearer SEU_TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{"name": "Maria S. Silva"}'</code></pre>
+  </section>
+
+  <div class="task-nav">
+    <a href="04-logout-me.html">← Tarefa 04</a>
+    <a href="06-middleware-admin.html">Tarefa 06 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="05" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

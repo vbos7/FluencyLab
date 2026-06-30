@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 21 — Estatísticas do admin (extra)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 21</span>
+    <span class="badge badge-a">Pessoa A</span>
+    <span class="badge badge-extra">Extra</span>
+  </div>
+  <h1>Estatísticas do admin</h1>
+
+  <p>Painel agregando números de todo o sistema (não só do usuário logado, como nas tarefas 13-15). É o primeiro lugar onde o middleware <code>admin</code> que você criou na <a href="06-middleware-admin.html">tarefa 06</a> entra em ação de verdade.</p>
+
+  <section>
+    <h2>Passo a passo (resumido)</h2>
+    <pre><code>docker compose exec backend php artisan make:controller AdminController</code></pre>
+
+    <pre><code>use App\Models\User;
+use App\Models\Phrase;
+use App\Models\Attempt;
+
+public function stats()
+{
+    return response()-&gt;json([
+        'totalUsers' =&gt; User::count(),
+        'totalPhrases' =&gt; Phrase::count(),
+        'activeToday' =&gt; Attempt::whereDate('created_at', today())-&gt;distinct('user_id')-&gt;count('user_id'),
+        'totalXP' =&gt; Attempt::sum('xp_earned'),
+        'newThisMonth' =&gt; User::whereMonth('created_at', now()-&gt;month)-&gt;count(),
+        'avgCompletionRate' =&gt; Attempt::avg('score') ?? 0,
+    ]);
+}</code></pre>
+
+    <p>Repare que isso é basicamente a mesma técnica das tarefas 13 e 17 (<code>count()</code>, <code>sum()</code>, <code>avg()</code>), só que sem filtrar por <code>user_id</code> — porque agora queremos o total geral, não de uma pessoa só.</p>
+
+    <pre><code>Route::middleware(['auth:sanctum', 'admin'])-&gt;group(function () {
+    Route::get('/admin/stats', [AdminController::class, 'stats']);
+});</code></pre>
+
+    <div class="callout">
+      Se quiser ir além: <code>GET /admin/stats/growth</code> (crescimento de usuários nos últimos 12 meses) e <code>GET /admin/stats/activity</code> (sessões/XP dos últimos 14 dias) seguem o mesmo padrão de agrupamento por período que você já usou na <a href="14-progress-semanal.html">tarefa 14</a>.
+    </div>
+  </section>
+
+  <div class="task-nav">
+    <a href="20-avatar.html">← Tarefa 20</a>
+    <a href="22-admin-usuarios.html">Tarefa 22 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="21" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

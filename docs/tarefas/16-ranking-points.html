@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 16 — Pontos de ranking automáticos</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 16</span>
+    <span class="badge badge-c">Pessoa C</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Pontos de ranking automáticos</h1>
+
+  <p>Diferente de Progress (calculado na hora), o Ranking <strong>tem</strong> uma tabela própria: <code>ranking_points</code>. A diferença é que aqui cada linha é um "evento" de pontuação (ex: "+10 pontos por exercício correto"), não um número que vai sendo somado numa coluna só. Isso permite, no futuro, dar bônus por sequência de dias ou por completar um curso, sem precisar reescrever a lógica de pontuação — só registrar mais um tipo de evento.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li>O que é um <strong>Eloquent Observer</strong> — uma classe que "escuta" eventos de um Model (criado, atualizado, apagado) e reage automaticamente, sem você precisar lembrar de chamar nada manualmente toda vez.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Por que um Observer, e não só somar dentro do PracticeController?</h2>
+    <p>Você poderia simplesmente adicionar umas linhas no <code>checkAnswer()</code> da tarefa 12, calculando e salvando os pontos de ranking ali mesmo. O problema: se amanhã outra parte do sistema também criar uma <code>Attempt</code> (por exemplo, um import de dados, ou um teste automatizado), a pontuação não aconteceria, porque essa lógica só existe dentro daquele Controller específico. Um Observer reage a "uma Attempt foi criada", não importa de onde ela veio — a regra de negócio fica centralizada num lugar só.</p>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Migration + Model</h3>
+        <pre><code>docker compose exec backend php artisan make:model RankingPoint -m</code></pre>
+        <pre><code>public function up(): void
+{
+    Schema::create('ranking_points', function (Blueprint $table) {
+        $table-&gt;id();
+        $table-&gt;foreignId('user_id')-&gt;constrained()-&gt;cascadeOnDelete();
+        $table-&gt;unsignedSmallInteger('points');
+        $table-&gt;string('reason');     // ex: "Exercício correto"
+        $table-&gt;timestamp('earned_at');
+        $table-&gt;timestamps();
+    });
+}</code></pre>
+        <pre><code>// app/Models/RankingPoint.php
+class RankingPoint extends Model
+{
+    protected $fillable = ['user_id', 'points', 'reason', 'earned_at'];
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Criar o Observer</h3>
+        <pre><code>docker compose exec backend php artisan make:observer AttemptObserver --model=Attempt</code></pre>
+
+        <div class="file-label">backend/app/Observers/AttemptObserver.php</div>
+        <pre><code>&lt;?php
+
+namespace App\Observers;
+
+use App\Models\Attempt;
+use App\Models\RankingPoint;
+
+class AttemptObserver
+{
+    public function created(Attempt $attempt): void
+    {
+        if (! $attempt-&gt;is_correct) {
+            return;
+        }
+
+        RankingPoint::create([
+            'user_id' =&gt; $attempt-&gt;user_id,
+            'points' =&gt; $attempt-&gt;xp_earned,
+            'reason' =&gt; 'Exercício correto',
+            'earned_at' =&gt; now(),
+        ]);
+    }
+}</code></pre>
+        <p>O método <code>created()</code> roda automaticamente toda vez que um <code>Attempt::create(...)</code> é executado em qualquer lugar do sistema — você não precisa chamar nada explicitamente.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Registrar o Observer</h3>
+        <p>Um Observer não funciona sozinho — precisa avisar o Laravel que ele existe e a qual Model está "ouvindo":</p>
+        <div class="file-label">backend/app/Providers/AppServiceProvider.php</div>
+        <pre><code>use App\Models\Attempt;
+use App\Observers\AttemptObserver;
+
+public function boot(): void
+{
+    Authenticate::redirectUsing(fn () =&gt; null); // já existia, deixe como está
+
+    Attempt::observe(AttemptObserver::class);
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <p>Repita o teste da <a href="12-check-answer.html">tarefa 12</a> (submeter uma tradução correta) e depois confira se uma linha nova apareceu em <code>ranking_points</code>:</p>
+    <pre><code>docker compose exec backend php artisan tinker</code></pre>
+    <pre><code>\App\Models\RankingPoint::latest()-&gt;first();</code></pre>
+  </section>
+
+  <div class="task-nav">
+    <a href="15-calendario.html">← Tarefa 15</a>
+    <a href="17-ranking.html">Tarefa 17 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="16" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

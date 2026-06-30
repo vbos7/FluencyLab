@@ -2,11 +2,13 @@
 
 ## 1. Introdução
 
-Este guia existe para alinhar como o time (3 pessoas) vai construir o backend do FluencyLab em Laravel. Duas pessoas do time tiveram contato com PHP recentemente e estão começando agora com Laravel — por isso este documento explica os conceitos do framework antes de simplesmente listar tarefas. Se você já conhece Laravel, pode pular direto para a seção 8 (Divisão de tarefas).
+Este guia existe para alinhar como o time (3 pessoas) vai construir o backend do FluencyLab em Laravel **e conectá-lo ao frontend em Next.js já existente**. Duas pessoas do time tiveram contato com PHP recentemente e estão começando agora com Laravel — e nenhuma delas é especialista em Next.js também — por isso este documento (e principalmente o site de tarefas linkado abaixo) explica os conceitos dos dois lados antes de simplesmente listar tarefas. Se você já conhece Laravel e Next.js, pode pular direto para a seção 8 (Divisão de tarefas).
 
-O que este guia cobre: arquitetura do projeto, conceitos básicos de Laravel, como rodar o ambiente, convenções de código, fluxo de Git, um checklist para criar qualquer feature do zero, a divisão de trabalho entre o time e a modelagem de dados de referência.
+O que este guia cobre: arquitetura do projeto, conceitos básicos de Laravel, como rodar o ambiente, convenções de código, fluxo de Git, um checklist para criar qualquer feature do zero, a divisão de trabalho entre o time e a modelagem de dados de referência. As tarefas práticas (incluindo a integração com o Next.js) ficam no site de tarefas linkado logo abaixo.
 
-O que ele **não** cobre: Next.js/React (isso fica no frontend), deploy em produção (assunto para mais adiante).
+O que ele **não** cobre: deploy em produção (assunto para mais adiante).
+
+> 👉 Se você só quer começar a programar, vá direto para o **[site de tarefas guiadas](tarefas/index.html)** — uma página por tarefa, em ordem, cobrindo tanto o backend (Laravel) quanto a integração no frontend (Next.js), com passo a passo e comparação com o que vocês já sabem (PHP puro / JavaScript básico). Este documento aqui é a referência de processo/ambiente/convenções por trás daquelas tarefas.
 
 ## 2. Visão geral da arquitetura
 
@@ -141,7 +143,7 @@ Essa é a receita genérica que cada pessoa vai repetir para o seu módulo. Use 
 
 ## 8. Divisão de tarefas e sprints
 
-Divisão por **módulo de domínio**: cada pessoa fica responsável por um conjunto de funcionalidades fim-a-fim (migration → model → controller → rotas), não por uma camada técnica isolada.
+Divisão por **módulo de domínio**: cada pessoa fica responsável por um conjunto de funcionalidades fim-a-fim — migration → model → controller → rotas **e depois a integração daquele pedaço no frontend Next.js** (tarefas 24 a 36 do site de tarefas) — não por uma camada técnica isolada, e não parando no backend.
 
 ### Quem cuida do quê
 
@@ -149,7 +151,7 @@ Divisão por **módulo de domínio**: cada pessoa fica responsável por um conju
 `users` + coluna `role`, Sanctum (login/registro/logout), edição de perfil, rotas de admin protegidas por `role:admin`.
 
 **Pessoa B — Cursos + Practice**
-`courses`, `lessons`, `exercises`, `attempts`. Listagem de cursos, submissão de respostas de exercícios.
+`courses`, `lessons`, `phrases`, `attempts`. Listagem de cursos, serviço de correção por IA (`AiCorrectionService`, adaptado de `~/Developer/english-practice`), submissão de traduções.
 
 **Pessoa C — Progress + Ranking + Planos**
 Progress (derivado das tentativas de B), `ranking_points` (pontuação), `plans`/`user_plan` (assinaturas).
@@ -160,11 +162,13 @@ A dependência real **não** é "Auth precisa estar 100% pronto antes de tudo". 
 
 ### Sprints sugeridas
 
-- **Sprint 1** (paralelo, baixo acoplamento): A implementa registro/login/logout/me. B cria `courses`/`lessons`/`exercises` com dados de teste (`fakerphp/faker`, que já vem instalado) e rotas públicas de listagem. C cria `plans`/`user_plan` (não depende de quase nada) e alinha com B o formato exato da tabela `attempts` antes dela ser criada.
+- **Sprint 1** (paralelo, baixo acoplamento): A implementa registro/login/logout/me. B cria `courses`/`lessons`/`phrases` com dados de teste e rotas públicas de listagem, e já adianta o `AiCorrectionService` (testável isolado via `tinker`, sem depender de rota nem de Auth). C cria `plans`/`user_plan` (não depende de quase nada) e alinha com B o formato exato da tabela `attempts` antes dela ser criada.
 
-- **Sprint 2** (integração com Auth): B implementa a rota de submissão de tentativa de exercício, agora protegida por `auth:sanctum`, gravando o `user_id` do usuário logado. C implementa as queries de Progress e a tabela `ranking_points` — uma boa forma de creditar pontos automaticamente é usar um [Eloquent Observer](https://laravel.com/docs/eloquent#observers) no model `Attempt`, que dispara sempre que uma tentativa é criada. A implementa as rotas de Admin.
+- **Sprint 2** (integração com Auth): B implementa a rota de submissão de tradução (`POST /api/practice/check-answer`), agora protegida por `auth:sanctum`, usando o `AiCorrectionService` e gravando o `user_id` do usuário logado. C implementa as queries de Progress e a tabela `ranking_points` — uma boa forma de creditar pontos automaticamente é usar um [Eloquent Observer](https://laravel.com/docs/eloquent#observers) no model `Attempt`, que dispara sempre que uma tentativa é criada. A implementa as rotas de Admin.
 
-- **Sprint 3** (polimento): revisão cruzada entre módulos (cada pessoa revisa pelo menos um módulo de outra pessoa), leaderboard paginado, fluxo de assinatura de plano.
+- **Sprint 3** (polimento do backend): revisão cruzada entre módulos (cada pessoa revisa pelo menos um módulo de outra pessoa), leaderboard paginado, fluxo de assinatura de plano.
+
+- **Sprint 4** (integração no frontend, tarefas 24-36 do site de tarefas): cada pessoa conecta no Next.js exatamente o módulo que construiu no backend. Começa pela tarefa 24 (setup do cliente de API — feito uma vez só, por quem fizer primeiro). Só faz sentido começar essa sprint depois que a rota correspondente já existe e foi testada via `curl`/Postman.
 
 ## 9. Modelagem de dados de referência
 
@@ -174,10 +178,10 @@ Convenção: tabelas plural snake_case, models singular PascalCase. Esta não é
 |---|---|---|---|
 | Auth/Users | `users` | `name`, `email`, `password`, **`role`** (`admin`/`student`, default `student`) | Já criada (ver seção 10). Perfil fica na própria tabela `users` por enquanto — sem `profiles` separada, para reduzir joins. |
 | Auth/Users | `personal_access_tokens` | — | Criada automaticamente pelo Sanctum. |
-| Cursos | `courses` | `title`, `description`, `level`, `order` | |
-| Cursos | `lessons` | `course_id`, `title`, `content`, `order` | Um único nível dentro de `courses` por enquanto (sem `modules` intermediário). |
-| Practice | `exercises` | `lesson_id` (nullable), `type`, `question`, `options` (JSON), `correct_answer` | |
-| Practice | `attempts` | `user_id`, `exercise_id`, `answer_given`, `is_correct` | Tabela-ponte: Progress e Ranking consomem ela. Alinhar o formato com quem cuida de Progress/Ranking antes de implementar. |
+| Cursos | `courses` | `slug`, `title`, `description`, `level`, `order` | |
+| Cursos | `lessons` | `course_id`, `title`, `duration`, `youtube_id`, `order` | Um único nível dentro de `courses` por enquanto (sem `modules` intermediário). |
+| Practice | `phrases` | `pt`, `en` (tradução de referência), `difficulty`, `category` | Não é múltipla escolha — são frases para o usuário traduzir. |
+| Practice | `attempts` | `user_id`, `phrase_id`, `answer_given`, `ai_feedback` (JSON), `is_correct`, `score`, `xp_earned` | A correção é **por IA** (ver `AiCorrectionService`, adaptado de `~/Developer/english-practice`), não por similaridade de texto. `ai_feedback` guarda a resposta completa da IA; `score` (0-100) alimenta o cálculo de XP. Tabela-ponte: Progress e Ranking consomem ela. |
 | Progress | — | — | **Sem tabela própria** por enquanto — calcular via query agregada sobre `attempts` (ex: % de acerto por curso). Evita manter duas fontes de verdade sincronizadas. |
 | Ranking | `ranking_points` | `user_id`, `points`, `reason`, `earned_at` | Ao contrário de Progress, esta tabela **deve** existir desde o início — é um log de eventos auditável (cada linha = um motivo de pontuação), o que facilita implementar regras como bônus por sequência de dias. |
 | Planos | `plans` | `name`, `price`, `description`, `features` (JSON), `billing_period` | |

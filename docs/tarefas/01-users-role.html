@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 01 — Tabela de usuários + papel (role)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 01</span>
+    <span class="badge badge-a">Pessoa A</span>
+    <span class="badge badge-done">✓ Já está pronto</span>
+  </div>
+  <h1>Tabela de usuários + papel (role)</h1>
+
+  <p>Essa tarefa já está implementada — leia esta página antes de partir pra <a href="02-registro.html">tarefa 02</a>, porque tudo que vem depois usa o que está descrito aqui.</p>
+
+  <section>
+    <h2>O que já existe</h2>
+    <ul>
+      <li>Laravel 13 rodando em PHP 8.4 via Docker (<code>docker compose up</code> sobe tudo).</li>
+      <li>A tabela <code>users</code> padrão do Laravel (<code>name</code>, <code>email</code>, <code>password</code>) com uma coluna extra: <code>role</code>, que só pode ser <code>"admin"</code> ou <code>"student"</code>, com <code>"student"</code> como valor padrão.</li>
+      <li>O pacote <strong>Laravel Sanctum</strong> instalado e configurado em modo token (Bearer) — explicado na <a href="00-fundamentos.html">página de Fundamentos</a>.</li>
+      <li>Uma rota de exemplo já funcionando: <code>GET /api/user</code>, protegida por <code>auth:sanctum</code>.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Por que a coluna role existe desde já</h2>
+    <p>Várias tarefas mais à frente (principalmente as de Admin, tarefas 21-23) precisam diferenciar um usuário comum de um administrador. Em vez de cada pessoa do time inventar sua própria forma de marcar isso depois, a coluna já nasceu pronta — assim todo mundo que referenciar <code>$user-&gt;role</code> está usando a mesma base.</p>
+
+    <div class="file-label">backend/database/migrations/..._add_role_to_users_table.php</div>
+    <pre><code>public function up(): void
+{
+    Schema::table('users', function (Blueprint $table) {
+        $table-&gt;enum('role', ['admin', 'student'])-&gt;default('student')-&gt;after('password');
+    });
+}</code></pre>
+
+    <p>Isso é uma <strong>migration</strong> — lembra do vocabulário da tarefa anterior? Ela não cria a tabela <code>users</code> do zero (essa já vem com o Laravel), só adiciona uma coluna numa tabela que já existe. <code>Schema::table(...)</code> ao invés de <code>Schema::create(...)</code> é o sinal disso: estamos alterando, não criando.</p>
+  </section>
+
+  <section>
+    <h2>Como o Sanctum foi ligado ao usuário</h2>
+    <p>O model <code>User</code> ganhou um "superpoder" (um <em>trait</em>, em PHP) que permite gerar e validar tokens:</p>
+
+    <div class="file-label">backend/app/Models/User.php</div>
+    <pre><code>use Laravel\Sanctum\HasApiTokens;
+
+class User extends Authenticatable
+{
+    use HasApiTokens, HasFactory, Notifiable;
+    // ...
+}</code></pre>
+
+    <p>É esse <code>HasApiTokens</code> que vai permitir, na <a href="03-login.html">tarefa 03</a>, escrever algo como <code>$user-&gt;createToken('token-de-login')</code> pra gerar o "crachá" que o frontend vai guardar.</p>
+  </section>
+
+  <section>
+    <h2>A rota de exemplo já registrada</h2>
+    <div class="file-label">backend/routes/api.php</div>
+    <pre><code>Route::get('/user', function (Request $request) {
+    return $request-&gt;user();
+})-&gt;middleware('auth:sanctum');</code></pre>
+
+    <p>Repare no <code>-&gt;middleware('auth:sanctum')</code> no final — é exatamente o "porteiro" descrito na página de Fundamentos. Sem um token válido no header <code>Authorization</code>, essa rota nunca chega a executar a função: o middleware já barra antes e devolve um erro.</p>
+  </section>
+
+  <section>
+    <h2>Testando o que já existe</h2>
+    <p>Com os containers rodando (<code>docker compose up -d</code>), tente:</p>
+    <pre><code>curl http://localhost:8000/api/user</code></pre>
+    <p>Resposta esperada (sem token, então 401 — não autorizado):</p>
+    <pre><code>{"message":"Unauthenticated."}</code></pre>
+    <p>Isso confirma que o middleware está funcionando: ele bloqueou a requisição antes mesmo dela chegar perto do banco de dados.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="00-fundamentos.html">← Fundamentos</a>
+    <a href="02-registro.html">Tarefa 02 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="01" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

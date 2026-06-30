@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 03 — Login</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 03</span>
+    <span class="badge badge-a">Pessoa A</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Login</h1>
+
+  <p>A mecânica de Form Request + Controller + Rota já foi explicada por inteiro na <a href="02-registro.html">tarefa 02</a> — aqui o foco é só na parte nova: <strong>conferir uma senha e devolver um token</strong>.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li>Como comparar a senha enviada com o hash salvo no banco (<code>Hash::check</code>).</li>
+      <li>Como buscar um registro por uma coluna específica (<code>User::where(...)-&gt;first()</code>).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Por que isso existe (comparando com PHP puro)</h2>
+    <p>No PHP puro, o login costuma ser:</p>
+    <pre><code>$sql = "SELECT * FROM usuarios WHERE email = '$email'";
+$usuario = mysqli_fetch_assoc(mysqli_query($conn, $sql));
+if ($usuario &amp;&amp; password_verify($senha, $usuario['senha'])) {
+    $_SESSION['usuario_id'] = $usuario['id'];
+}</code></pre>
+    <p>A diferença não está na lógica (é a mesma: buscar pelo email, comparar a senha) — está em <strong>o que acontece depois de confirmar quem é o usuário</strong>. Em vez de <code>$_SESSION[...]</code>, geramos um token (ver <a href="00-fundamentos.html">Fundamentos</a>).</p>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Form Request de login</h3>
+        <pre><code>docker compose exec backend php artisan make:request LoginRequest</code></pre>
+        <div class="file-label">backend/app/Http/Requests/LoginRequest.php</div>
+        <pre><code>public function authorize(): bool
+{
+    return true;
+}
+
+public function rules(): array
+{
+    return [
+        'email' =&gt; ['required', 'email'],
+        'password' =&gt; ['required', 'string'],
+    ];
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Método login() no AuthController</h3>
+        <p>Adicione este método na mesma classe <code>AuthController</code> criada na tarefa anterior:</p>
+        <div class="file-label">backend/app/Http/Controllers/AuthController.php</div>
+        <pre><code>use App\Http\Requests\LoginRequest;
+use Illuminate\Validation\ValidationException;
+
+public function login(LoginRequest $request)
+{
+    $data = $request-&gt;validated();
+
+    $user = User::where('email', $data['email'])-&gt;first();
+
+    if (! $user || ! Hash::check($data['password'], $user-&gt;password)) {
+        // ValidationException devolve um 422, no mesmo formato que o
+        // Form Request já usa — então o frontend trata os dois casos
+        // do mesmo jeito.
+        throw ValidationException::withMessages([
+            'email' =&gt; ['Credenciais inválidas.'],
+        ]);
+    }
+
+    $token = $user-&gt;createToken('auth-token')-&gt;plainTextToken;
+
+    return response()-&gt;json([
+        'user' =&gt; $user,
+        'token' =&gt; $token,
+    ]);
+}</code></pre>
+
+        <div class="callout">
+          <strong>Por que não dizer qual campo está errado?</strong>
+          Repare que a mensagem de erro não diz se foi o email ou a senha que estava errada — só "credenciais inválidas". Isso é proposital: se o erro fosse específico ("esse email não existe"), alguém mal-intencionado poderia descobrir quais emails estão cadastrados só tentando fazer login com vários.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Registrar a rota</h3>
+        <div class="file-label">backend/routes/api.php</div>
+        <pre><code>Route::post('/login', [AuthController::class, 'login']);</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl -X POST http://localhost:8000/api/login \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{"email": "maria@exemplo.com", "password": "senha1234"}'</code></pre>
+    <p>Deve devolver <code>user</code> + <code>token</code>, igual ao registro. Guarde esse token — você vai usar nele na <a href="04-logout-me.html">próxima tarefa</a>.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="02-registro.html">← Tarefa 02</a>
+    <a href="04-logout-me.html">Tarefa 04 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="03" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

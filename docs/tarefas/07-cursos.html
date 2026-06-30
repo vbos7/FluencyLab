@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 07 — Cursos</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 07</span>
+    <span class="badge badge-b">Pessoa B</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Cursos</h1>
+
+  <p>Primeira tarefa do seu módulo — se você ainda não leu a <a href="00-fundamentos.html">página de Fundamentos</a> e a <a href="02-registro.html">tarefa 02</a> (mesmo não sendo do seu módulo), vale a pena: lá está explicado o que é migration, Model, Controller e rota com calma. Aqui o ritmo já vai ser mais rápido, repetindo esse padrão.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li>Como popular o banco com dados de teste usando um <strong>Seeder</strong> (em vez de cadastrar tudo na mão).</li>
+      <li>Como criar uma rota <strong>pública</strong> (sem <code>auth:sanctum</code> — qualquer um pode ver a lista de cursos, logado ou não).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Migration e Model</h3>
+        <pre><code>docker compose exec backend php artisan make:model Course -m</code></pre>
+        <p>O <code>-m</code> já cria a migration junto com o Model, numa tacada só.</p>
+
+        <div class="file-label">backend/database/migrations/..._create_courses_table.php</div>
+        <pre><code>public function up(): void
+{
+    Schema::create('courses', function (Blueprint $table) {
+        $table-&gt;id();
+        $table-&gt;string('slug')-&gt;unique();    // ex: "basico", "intermediario"
+        $table-&gt;string('title');
+        $table-&gt;text('description');
+        $table-&gt;string('level');             // "basico" | "intermediario" | "avancado"
+        $table-&gt;integer('order')-&gt;default(0);
+        $table-&gt;timestamps();
+    });
+}</code></pre>
+
+        <div class="file-label">backend/app/Models/Course.php</div>
+        <pre><code>class Course extends Model
+{
+    protected $fillable = ['slug', 'title', 'description', 'level', 'order'];
+
+    public function lessons()
+    {
+        return $this-&gt;hasMany(Lesson::class);
+    }
+}</code></pre>
+
+        <div class="callout">
+          <strong>$fillable — por que é necessário?</strong>
+          Por padrão o Eloquent bloqueia o preenchimento em massa (<code>Course::create([...])</code> com vários campos de uma vez) por segurança — imagine alguém mandando um campo extra malicioso no JSON. O array <code>$fillable</code> é a lista de campos que você está liberando explicitamente pra esse tipo de criação.
+        </div>
+
+        <p>Repare no método <code>lessons()</code> — é o relacionamento que vai conectar com a tarefa 08. Já deixe ele aqui, mesmo que o Model <code>Lesson</code> ainda não exista (vamos criar na próxima tarefa).</p>
+
+        <pre><code>docker compose exec backend php artisan migrate</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Seeder</h3>
+        <pre><code>docker compose exec backend php artisan make:seeder CourseSeeder</code></pre>
+        <div class="file-label">backend/database/seeders/CourseSeeder.php</div>
+        <pre><code>use App\Models\Course;
+
+public function run(): void
+{
+    Course::create([
+        'slug' =&gt; 'basico',
+        'title' =&gt; 'Inglês Básico',
+        'description' =&gt; 'Para quem está começando do zero.',
+        'level' =&gt; 'basico',
+        'order' =&gt; 1,
+    ]);
+
+    Course::create([
+        'slug' =&gt; 'intermediario',
+        'title' =&gt; 'Inglês Intermediário',
+        'description' =&gt; 'Para quem já entende o básico.',
+        'level' =&gt; 'intermediario',
+        'order' =&gt; 2,
+    ]);
+
+    Course::create([
+        'slug' =&gt; 'avancado',
+        'title' =&gt; 'Inglês Avançado',
+        'description' =&gt; 'Para quem já se vira bem e quer fluência.',
+        'level' =&gt; 'avancado',
+        'order' =&gt; 3,
+    ]);
+}</code></pre>
+
+        <p>Registre o seeder no <code>DatabaseSeeder</code> principal, pra ele rodar junto com os outros:</p>
+        <div class="file-label">backend/database/seeders/DatabaseSeeder.php</div>
+        <pre><code>public function run(): void
+{
+    $this-&gt;call([
+        CourseSeeder::class,
+    ]);
+}</code></pre>
+
+        <pre><code>docker compose exec backend php artisan db:seed</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Controller e rota</h3>
+        <pre><code>docker compose exec backend php artisan make:controller CourseController --api</code></pre>
+        <p>O <code>--api</code> já gera os métodos <code>index</code>, <code>store</code>, <code>show</code>, <code>update</code>, <code>destroy</code> prontos (vazios) — você só preenche os que for usar.</p>
+
+        <div class="file-label">backend/app/Http/Controllers/CourseController.php</div>
+        <pre><code>use App\Models\Course;
+
+public function index()
+{
+    return Course::orderBy('order')-&gt;get();
+}</code></pre>
+
+        <div class="file-label">backend/routes/api.php</div>
+        <pre><code>use App\Http\Controllers\CourseController;
+
+Route::get('/courses', [CourseController::class, 'index']);</code></pre>
+
+        <p>Sem <code>auth:sanctum</code> — a listagem de cursos é pública, faz sentido alguém ver os cursos disponíveis antes de se cadastrar.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl http://localhost:8000/api/courses</code></pre>
+    <p>Deve devolver os 3 cursos, sem precisar de token nenhum.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="06-middleware-admin.html">← Tarefa 06</a>
+    <a href="08-aulas.html">Tarefa 08 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="07" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

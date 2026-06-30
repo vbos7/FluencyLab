@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 36 — Conectar os planos</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 36</span>
+    <span class="badge badge-c">Pessoa C</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Conectar os planos</h1>
+
+  <p>Última tarefa do guia inteiro — backend e frontend. Dois pontos, igual o padrão de Cursos (tarefas 30/31): a listagem de planos (remove <code>"use client"</code> desnecessário, busca real) e o checkout (Client Component, chamada de verdade no lugar do <code>setTimeout</code> fake).</p>
+
+  <section>
+    <h2>Parte 1 — Listagem de planos</h2>
+    <p><code>planos/page.tsx</code> hoje começa com <code>"use client"</code> mas só tem um array fixo (<code>featuresF</code>) — mesma situação da tarefa 30. Remova a diretiva e busque os dados reais:</p>
+    <pre><code>import { fetchFromApi } from "@/app/_lib/server-api"
+import CheckoutModalWrapper from "@/app/_components/checkout-modal-wrapper" // ver Parte 2
+
+type Plan = { id: number; name: string; price: string; features: { label: string; included: boolean }[] }
+
+export default async function PlanosPage() {
+    const plans = await fetchFromApi&lt;Plan[]&gt;("/plans")
+    // ... renderiza plans.map(...) no lugar do array featuresF fixo
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>Parte 2 — Checkout chamando a API de verdade</h2>
+
+    <p>O <code>CheckoutModal</code> hoje só recebe <code>onClose</code> como prop, e o "pagamento" é só um <code>setTimeout</code> fake. Duas mudanças: precisa saber <strong>qual plano</strong> está sendo assinado (nova prop), e o <code>handleSubmit</code> precisa virar uma chamada real.</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Adicionar a prop planId</h3>
+        <div class="file-label">frontend/app/_components/checkout-modal.tsx</div>
+        <pre><code>type Props = {
+    planId: number
+    onClose: () =&gt; void
+}
+
+export default function CheckoutModal({ planId, onClose }: Props) {
+    // ...
+}</code></pre>
+        <p>E no lugar de onde a página abre o modal hoje (provavelmente um <code>useState</code> de "qual plano foi clicado" + renderização condicional do <code>&lt;CheckoutModal /&gt;</code>), passe o <code>planId</code> correspondente ao botão que o usuário clicou.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Trocar o handleSubmit fake pela chamada real</h3>
+        <pre><code>import { apiClient } from "@/app/_lib/api"
+
+async function handleSubmit() {
+    setLoading(true)
+    try {
+        await apiClient.post("/plans/subscribe", { plan_id: planId })
+        setSuccess(true)
+    } catch (err) {
+        console.error("Erro ao assinar plano:", err)
+    } finally {
+        setLoading(false)
+    }
+}</code></pre>
+        <p>Reaproveita exatamente a mesma estrutura de <code>loading</code>/<code>success</code> que já existia — só o miolo da função mudou, de um <code>setTimeout</code> simulado pra uma chamada real à rota que vocês construíram na <a href="19-assinatura.html">tarefa 19</a> do backend.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <p>Acesse <code>localhost:3000/planos</code>, clique em assinar o plano Pro, complete o checkout. Confira no banco que a assinatura foi registrada:</p>
+    <pre><code>docker compose exec backend php artisan tinker</code></pre>
+    <pre><code>\App\Models\UserPlan::latest()-&gt;first();</code></pre>
+  </section>
+
+  <section>
+    <h2>🎉 Fim do guia</h2>
+    <p>Com essa tarefa, todas as telas do FluencyLab — autenticação, cursos, prática com correção real por IA, progresso, ranking e planos — estão conectadas de ponta a ponta, do banco de dados em MySQL até a interface em Next.js. Parabéns pelo trabalho! Qualquer dúvida que sobrar, volte no <a href="../GUIA_DESENVOLVIMENTO.md">guia de desenvolvimento</a> ou releia a <a href="00-fundamentos.html">tarefa 00</a> e a <a href="24-cliente-api.html">tarefa 24</a> — são as duas páginas-base de todo o resto.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="35-ranking-frontend.html">← Tarefa 35</a>
+    <a href="index.html">Lista de tarefas →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="36" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

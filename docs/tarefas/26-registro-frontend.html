@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 26 — Conectar o registro</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 26</span>
+    <span class="badge badge-a">Pessoa A</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Conectar o registro</h1>
+
+  <p>Mesmo padrão da <a href="25-login-frontend.html">tarefa 25</a> — só que com uma pegadinha: o formulário de registro (<code>frontend/app/_components/auth/register-form.tsx</code>) hoje só tem campos de <code>email</code>, <code>password</code> e <code>confirmPassword</code>. <strong>Falta o campo <code>name</code></strong>, que o backend exige (lembra do <code>RegisterRequest</code> da tarefa 02?). Essa tarefa inclui adicionar esse campo no formulário antes de conectar com a API.</p>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Adicionar o campo "nome"</h3>
+        <p>No topo do componente, junto dos outros <code>useState</code>:</p>
+        <pre><code>const [name, setName] = useState("")</code></pre>
+        <p>No JSX, copie o bloco do campo de email (deve ter um <code>&lt;input&gt;</code> com ícone, dentro de uma <code>div</code> com a classe de <code>fieldClass("email")</code>) e adapte pra nome — mesma estrutura, só trocando o ícone (pode usar <code>UserIcon</code>, que já está importado no arquivo), o <code>type="text"</code>, o <code>value={name}</code> e o <code>onChange={(e) =&gt; setName(e.target.value)}</code>. Coloque esse bloco <strong>antes</strong> do campo de email.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Função de registro</h3>
+        <div class="file-label">frontend/app/_components/auth/register-form.tsx</div>
+        <pre><code>import { apiClient } from "@/app/_lib/api"
+import Cookies from "js-cookie"
+
+// ...
+
+const [error, setError] = useState&lt;string | null&gt;(null)
+const [loading, setLoading] = useState(false)
+
+async function handleRegister() {
+    setError(null)
+    setLoading(true)
+
+    try {
+        const response = await apiClient.post("/register", {
+            name,
+            email,
+            password,
+            password_confirmation: confirmPassword,
+        })
+        const { token } = response.data
+
+        Cookies.set("token", token, { expires: 7 })
+        router.push("/home")
+    } catch (err) {
+        setError("Não foi possível criar a conta. Confira os dados e tente de novo.")
+    } finally {
+        setLoading(false)
+    }
+}</code></pre>
+
+        <div class="callout warn">
+          <strong>password_confirmation, não confirmPassword</strong>
+          O estado local em React pode se chamar como você quiser (<code>confirmPassword</code>), mas o <strong>nome do campo que a API espera</strong> é <code>password_confirmation</code> (foi assim que definimos a regra <code>'confirmed'</code> no <code>RegisterRequest</code> da tarefa 02 — o Laravel procura automaticamente por um campo com esse sufixo exato). Mande o valor de <code>confirmPassword</code>, mas com essa chave.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Trocar o botão "Criar conta"</h3>
+        <p>Igual fez na tarefa 25: troque o <code>onClick</code> do botão de submit pra chamar <code>handleRegister</code>, adicione <code>disabled={loading}</code> e mostre <code>{error}</code> se existir.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <p>Preencha o formulário de cadastro pela tela, com um email novo. Deve te levar pra <code>/home</code> já logado — confira o cookie <code>token</code> no DevTools, igual na tarefa anterior.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="25-login-frontend.html">← Tarefa 25</a>
+    <a href="27-logout-rotas-protegidas.html">Tarefa 27 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="26" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

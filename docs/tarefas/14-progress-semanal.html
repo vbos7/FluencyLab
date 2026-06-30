@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 14 — Progresso semanal</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 14</span>
+    <span class="badge badge-c">Pessoa C</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Progresso semanal</h1>
+
+  <p>O frontend mostra um gráfico das últimas 12 semanas: quanto XP e quantas tentativas o usuário fez em cada uma. Mesma ideia da tarefa 13 (calcular em cima de <code>attempts</code>), só que agora agrupado por semana.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li><code>Carbon</code> — a biblioteca de datas que o Laravel já usa por padrão (todo <code>created_at</code>/<code>updated_at</code> já é um objeto Carbon).</li>
+      <li>Como agrupar registros por período usando uma coleção do Eloquent (<code>groupBy</code>).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Controller</h3>
+        <div class="file-label">backend/app/Http/Controllers/StatsController.php</div>
+        <pre><code>use Carbon\Carbon;
+use App\Models\Attempt;
+
+public function weekly(Request $request)
+{
+    $start = Carbon::now()-&gt;subWeeks(11)-&gt;startOfWeek();
+
+    $attempts = Attempt::where('user_id', $request-&gt;user()-&gt;id)
+        -&gt;where('created_at', '&gt;=', $start)
+        -&gt;get();
+
+    $weeks = [];
+
+    for ($i = 0; $i &lt; 12; $i++) {
+        $weekStart = $start-&gt;copy()-&gt;addWeeks($i);
+        $weekEnd = $weekStart-&gt;copy()-&gt;endOfWeek();
+
+        $weekAttempts = $attempts-&gt;filter(
+            fn ($a) =&gt; $a-&gt;created_at-&gt;between($weekStart, $weekEnd)
+        );
+
+        $weeks[] = [
+            'week' =&gt; 'Sem ' . ($i + 1),
+            'xp' =&gt; $weekAttempts-&gt;sum('xp_earned'),
+            'treinos' =&gt; $weekAttempts-&gt;count(),
+        ];
+    }
+
+    return response()-&gt;json($weeks);
+}</code></pre>
+
+        <div class="callout">
+          <strong>Por que buscar tudo de uma vez (-&gt;get()) em vez de uma query por semana?</strong>
+          Daria pra rodar 12 queries (uma por semana, cada uma com seu próprio <code>where created_at between</code>). Mas é mais eficiente trazer todas as tentativas das últimas 12 semanas numa única consulta ao banco, e depois separar em memória com <code>-&gt;filter()</code> — evita ficar abrindo conexão com o banco repetidamente.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Rota</h3>
+        <pre><code>Route::get('/user/progress/weekly', [StatsController::class, 'weekly']);</code></pre>
+        <p>(dentro do mesmo grupo <code>auth:sanctum</code> das outras rotas de usuário)</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl http://localhost:8000/api/user/progress/weekly \
+  -H "Authorization: Bearer SEU_TOKEN" \
+  -H "Accept: application/json"</code></pre>
+    <p>Deve devolver um array com 12 objetos, um por semana.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="13-stats.html">← Tarefa 13</a>
+    <a href="15-calendario.html">Tarefa 15 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="14" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 04 — Logout e "quem sou eu"</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 04</span>
+    <span class="badge badge-a">Pessoa A</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Logout e "quem sou eu"</h1>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li>Como "apagar" um token (logout) — o equivalente a <code>session_destroy()</code>.</li>
+      <li>Que a rota <code>GET /api/user</code> (já pronta desde a tarefa 01) é o jeito padrão do frontend perguntar "quem está logado agora?".</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Por que isso existe</h2>
+    <p>Sessão tradicional tem <code>session_destroy()</code> pra "esquecer" o usuário. Com token, a lógica é parecida: como não existe estado guardado no servidor pra cada navegador, "deslogar" significa simplesmente <strong>apagar o token do banco</strong> — depois disso, qualquer requisição que tentar usar aquele token vai ser barrada pelo <code>auth:sanctum</code>, porque ele não existe mais.</p>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Método logout() no AuthController</h3>
+        <div class="file-label">backend/app/Http/Controllers/AuthController.php</div>
+        <pre><code>public function logout(Request $request)
+{
+    // currentAccessToken() pega o token que foi usado NESSA requisição
+    // (o Sanctum sabe disso pelo header Authorization) e apaga ele.
+    $request-&gt;user()-&gt;currentAccessToken()-&gt;delete();
+
+    return response()-&gt;json(['message' =&gt; 'Logout realizado com sucesso.']);
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Registrar a rota — repare que esta usa o middleware</h3>
+        <div class="file-label">backend/routes/api.php</div>
+        <pre><code>Route::post('/logout', [AuthController::class, 'logout'])-&gt;middleware('auth:sanctum');</code></pre>
+        <p>Diferente de <code>/register</code> e <code>/login</code>, essa rota <strong>precisa</strong> do middleware — só faz sentido deslogar quem já está logado (o Laravel precisa saber, via o token, qual usuário/token apagar).</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code># 1. Logout (troque SEU_TOKEN pelo token que você recebeu no login)
+curl -X POST http://localhost:8000/api/logout \
+  -H "Authorization: Bearer SEU_TOKEN" \
+  -H "Accept: application/json"
+
+# 2. Tente usar o MESMO token de novo — agora deve dar 401
+curl http://localhost:8000/api/user \
+  -H "Authorization: Bearer SEU_TOKEN" \
+  -H "Accept: application/json"</code></pre>
+  </section>
+
+  <section>
+    <h2>A rota "quem sou eu" já está pronta</h2>
+    <p>Não precisa criar nada novo aqui — a rota <code>GET /api/user</code>, que já existe desde a <a href="01-users-role.html">tarefa 01</a>, já é exatamente o que o frontend usa pra saber quem está logado a cada vez que a página carrega: ele manda o token guardado e recebe os dados do usuário de volta (ou um 401, se o token não for mais válido).</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="03-login.html">← Tarefa 03</a>
+    <a href="05-perfil.html">Tarefa 05 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="04" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

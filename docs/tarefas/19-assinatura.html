@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 19 — Assinar um plano</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 19</span>
+    <span class="badge badge-c">Pessoa C</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Assinar um plano</h1>
+
+  <p>Não existe gateway de pagamento neste projeto ainda — essa tarefa só registra "esse usuário está no plano X", pra já deixar a estrutura pronta pra integrar um pagamento de verdade no futuro.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li>O que é uma <strong>tabela pivot</strong> — uma tabela que só existe pra conectar dois outros models (aqui: qual usuário está em qual plano).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Migration</h3>
+        <pre><code>docker compose exec backend php artisan make:model UserPlan -m</code></pre>
+        <pre><code>public function up(): void
+{
+    Schema::create('user_plan', function (Blueprint $table) {
+        $table-&gt;id();
+        $table-&gt;foreignId('user_id')-&gt;constrained()-&gt;cascadeOnDelete();
+        $table-&gt;foreignId('plan_id')-&gt;constrained()-&gt;cascadeOnDelete();
+        $table-&gt;timestamp('started_at');
+        $table-&gt;timestamp('expires_at')-&gt;nullable();   // null = vitalício
+        $table-&gt;string('status')-&gt;default('active');   // active | canceled | expired
+        $table-&gt;timestamps();
+    });
+}</code></pre>
+        <pre><code>// app/Models/UserPlan.php
+class UserPlan extends Model
+{
+    protected $fillable = ['user_id', 'plan_id', 'started_at', 'expires_at', 'status'];
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Controller</h3>
+        <pre><code>use App\Models\UserPlan;
+use App\Models\Plan;
+use Illuminate\Http\Request;
+
+public function subscribe(Request $request)
+{
+    $request-&gt;validate([
+        'plan_id' =&gt; ['required', 'exists:plans,id'],
+    ]);
+
+    $plan = Plan::findOrFail($request-&gt;plan_id);
+
+    $userPlan = UserPlan::create([
+        'user_id' =&gt; $request-&gt;user()-&gt;id,
+        'plan_id' =&gt; $plan-&gt;id,
+        'started_at' =&gt; now(),
+        'expires_at' =&gt; $plan-&gt;billing_period === 'lifetime' ? null : now()-&gt;addMonth(),
+        'status' =&gt; 'active',
+    ]);
+
+    return response()-&gt;json($userPlan, 201);
+}</code></pre>
+        <div class="callout tip">
+          <strong>$request-&gt;validate() direto no método</strong>
+          Pra uma validação simples de um campo só, nem sempre vale a pena criar um Form Request separado (como você fez nas tarefas 02, 03 e 12) — dá pra validar direto assim, mais rápido de escrever. Use Form Request quando as regras forem mais complexas ou repetidas em mais de um lugar.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Rota</h3>
+        <pre><code>Route::middleware('auth:sanctum')-&gt;group(function () {
+    // ...
+    Route::post('/plans/subscribe', [PlanController::class, 'subscribe']);
+});</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="task-nav">
+    <a href="18-planos.html">← Tarefa 18</a>
+    <a href="20-avatar.html">Tarefa 20 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="19" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

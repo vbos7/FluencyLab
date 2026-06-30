@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 22 — Gerenciar usuários (admin) (extra)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 22</span>
+    <span class="badge badge-a">Pessoa A</span>
+    <span class="badge badge-extra">Extra</span>
+  </div>
+  <h1>Gerenciar usuários (admin)</h1>
+
+  <p>Até agora cada tarefa criou uma rota por vez. Aqui você vai ver o atalho que o Laravel oferece quando precisa de <strong>todas</strong> as ações de CRUD (listar, ver um, criar, editar, apagar) de uma vez: <code>Route::apiResource</code>.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li><code>Route::apiResource</code> — registra 5 rotas (index, store, show, update, destroy) numa linha só.</li>
+      <li><strong>Route model binding</strong> — como o Laravel já te entrega o Model certo, sem você precisar escrever <code>User::findOrFail($id)</code> na mão.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Controller</h3>
+        <pre><code>docker compose exec backend php artisan make:controller Admin/UserController --api</code></pre>
+
+        <div class="file-label">backend/app/Http/Controllers/Admin/UserController.php</div>
+        <pre><code>use App\Models\User;
+use Illuminate\Http\Request;
+
+class UserController extends Controller
+{
+    public function index()
+    {
+        return User::orderByDesc('created_at')-&gt;paginate(20);
+    }
+
+    public function show(User $user)
+    {
+        return $user;
+    }
+
+    public function update(Request $request, User $user)
+    {
+        $data = $request-&gt;validate([
+            'name' =&gt; ['sometimes', 'string', 'max:255'],
+            'role' =&gt; ['sometimes', 'in:admin,student'],
+        ]);
+
+        $user-&gt;update($data);
+
+        return $user;
+    }
+
+    public function destroy(User $user)
+    {
+        $user-&gt;delete();
+
+        return response()-&gt;json(null, 204);
+    }
+}</code></pre>
+
+        <div class="callout tip">
+          <strong>show(User $user) e update(Request $request, User $user)</strong>
+          Repare que você não precisa buscar o usuário manualmente (<code>User::find($id)</code>) — basta tipar o parâmetro como <code>User $user</code> que o Laravel já entende que o <code>{user}</code> da URL é um ID, busca o registro sozinho, e já devolve 404 automaticamente se não existir. Isso se chama <strong>route model binding</strong>.
+        </div>
+
+        <p><code>paginate(20)</code> em vez de <code>get()</code> — com potencialmente muitos usuários, devolver tudo de uma vez ficaria pesado. <code>paginate</code> já devolve só uma página por vez, com metadados (total de páginas, próxima página, etc) prontos no JSON.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Rotas — todas de uma vez</h3>
+        <div class="file-label">backend/routes/api.php</div>
+        <pre><code>use App\Http\Controllers\Admin\UserController;
+
+Route::middleware(['auth:sanctum', 'admin'])-&gt;group(function () {
+    Route::apiResource('admin/users', UserController::class)-&gt;except(['store']);
+});</code></pre>
+
+        <p>Isso registra de uma vez: <code>GET /admin/users</code>, <code>GET /admin/users/{user}</code>, <code>PUT /admin/users/{user}</code> e <code>DELETE /admin/users/{user}</code>. O <code>-&gt;except(['store'])</code> tira a rota de "criar usuário" (não implementamos <code>store</code> no Controller acima — criar usuário direto pelo admin não é um caso de uso essencial agora; se quiser, adicione o método e tire o <code>except</code>).</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl http://localhost:8000/api/admin/users \
+  -H "Authorization: Bearer TOKEN_DE_UM_ADMIN" \
+  -H "Accept: application/json"</code></pre>
+    <p>Pra esse teste funcionar, o usuário do token precisa ter <code>role = 'admin'</code> no banco — você pode mudar isso direto no <code>tinker</code>: <code>User::find(1)-&gt;update(['role' =&gt; 'admin']);</code></p>
+  </section>
+
+  <div class="task-nav">
+    <a href="21-admin-stats.html">← Tarefa 21</a>
+    <a href="23-admin-frases.html">Tarefa 23 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="22" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

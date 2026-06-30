@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 33 — Submeter e exibir a correção por IA</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 33</span>
+    <span class="badge badge-b">Pessoa B</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Submeter e exibir a correção por IA</h1>
+
+  <p>Esta é a tarefa que fecha o ciclo inteiro do projeto: troca a correção fake por Levenshtein pela chamada real pro <code>POST /api/practice/check-answer</code>, que por trás dos panos chama o <code>AiCorrectionService</code> que vocês construíram nas tarefas 11 e 12 do backend.</p>
+
+  <section>
+    <h2>O que vai mudar</h2>
+    <p>Em <code>practice-controller.tsx</code>, a função <code>handleVerify</code> hoje é <strong>síncrona</strong> (calcula tudo na hora, sem esperar nada):</p>
+    <pre><code>const handleVerify = () =&gt; {
+    if (!answer.trim()) return
+    const score = scoreAnswer(answer, phrase.en)
+    const fb = generateFeedback(answer, phrase.en, score)
+    setFeedback(fb)
+    setEarnedXp(fb.xp)
+    // ...
+}</code></pre>
+    <p>Vai virar <strong>assíncrona</strong> (precisa esperar a resposta da IA, que demora 1-3 segundos) e usar dados reais vindos da API em vez de calculados localmente.</p>
+  </section>
+
+  <section>
+    <h2>O desafio: a IA devolve um formato diferente do que a tela espera</h2>
+    <p>A tela usa um formato de feedback (tipo <code>Feedback</code>, em <code>_lib/practice.ts</code>) com campos como <code>status</code>, <code>title</code>, <code>corrections</code>. Já a resposta da API (que vem do <code>AiCorrectionService</code>, lembra da tarefa 11?) tem campos diferentes: <code>is_correct</code>, <code>score</code>, <code>mistakes</code>, <code>corrected_sentence</code>. Em vez de reescrever toda a tela pra usar os nomes da API, vamos criar uma pequena função "tradutora" — um padrão bem comum, chamado de <strong>adapter</strong>: pega um formato e devolve outro, sem mexer no resto do código.</p>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Criar a função adaptadora</h3>
+        <div class="file-label">frontend/app/_components/practice/practice-controller.tsx</div>
+        <pre><code>import { apiClient } from "@/app/_lib/api"
+
+type AiFeedback = {
+    is_correct: boolean
+    score: number
+    overall_comment: string
+    mistakes: { type: string; original: string; suggestion: string; explanation_pt: string }[]
+    corrected_sentence: string
+    positive_points: string[]
+}
+
+function adaptAiFeedback(ai: AiFeedback, xp: number): Feedback {
+    const status: Feedback["status"] =
+        ai.score &gt;= 95 ? "perfect" : ai.score &gt;= 70 ? "good" : ai.score &gt;= 40 ? "partial" : "needs_work"
+
+    const titles: Record&lt;Feedback["status"], string&gt; = {
+        perfect: "Perfeito!",
+        good: "Muito bem!",
+        partial: "Quase lá!",
+        needs_work: "Vamos praticar mais",
+    }
+
+    return {
+        status,
+        title: titles[status],
+        message: ai.overall_comment,
+        corrections: ai.mistakes.map((m) =&gt; ({
+            wrong: m.original,
+            correct: m.suggestion,
+            explanation: m.explanation_pt,
+        })),
+        xp,
+    }
+}</code></pre>
+
+        <div class="callout tip">
+          <strong>Mesmas faixas de score, em dois lugares</strong>
+          Repare que essas faixas (≥95, ≥70, ≥40) são as mesmas que você já usou no backend, na função <code>calculateXp()</code> da tarefa 12. Não tem como compartilhar esse código entre backend (PHP) e frontend (TypeScript) diretamente — são linguagens/projetos diferentes — então é normal (e aceitável, pra esse projeto) ter a mesma regrinha escrita duas vezes. Só fique de olho: se um dia mudar uma faixa, lembre de mudar nos dois lugares.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Trocar handleVerify por uma versão assíncrona</h3>
+        <pre><code>const [loading, setLoading] = useState(false)
+
+const handleVerify = async () =&gt; {
+    if (!answer.trim()) return
+
+    setLoading(true)
+    try {
+        const response = await apiClient.post("/practice/check-answer", {
+            phrase_id: phrase.id,
+            answer,
+        })
+
+        const fb = adaptAiFeedback(response.data.feedback, response.data.xp_earned)
+        setFeedback(fb)
+        setEarnedXp(fb.xp)
+        setShowXpToast(true)
+        setTimeout(() =&gt; setShowXpToast(false), 2000)
+
+        const parts = [fb.title, fb.message]
+        if (fb.corrections.length &gt; 0) {
+            parts.push(`Tradução esperada: ${fb.corrections[0].correct}.`)
+            parts.push(fb.corrections[0].explanation)
+        }
+        parts.push(`Você ganhou ${fb.xp} XP.`)
+        setSrAnnouncement("")
+        setTimeout(() =&gt; setSrAnnouncement(parts.join(" ")), 50)
+    } catch (err) {
+        console.error("Erro ao corrigir resposta:", err)
+    } finally {
+        setLoading(false)
+    }
+}</code></pre>
+        <p>Repare que a estrutura de baixo (anúncio pro leitor de tela, toast de XP) continua igual — só o jeito de conseguir o <code>fb</code> (feedback) mudou, de cálculo local pra chamada de API.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Mostrar um estado de carregando</h3>
+        <p>Como a IA demora 1-3 segundos pra responder, é importante o botão de "Verificar" avisar que está processando — senão parece que travou. Encontre o botão que chama <code>handleVerify</code> (provavelmente dentro de <code>answer-form.tsx</code>, que recebe uma prop tipo <code>onVerify</code>) e adicione um <code>disabled={loading}</code> + troque o texto enquanto carrega, igual fez nas tarefas 25 e 26.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h3>Limpar o que não é mais usado</h3>
+        <p>Depois de tudo funcionando, pode remover o import de <code>scoreAnswer</code>/<code>generateFeedback</code> do topo do arquivo (a "gambiarra" da apresentação não é mais necessária) — mantenha só <code>type Phrase</code> e <code>type Feedback</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <p>Pratique uma frase pela tela de verdade. A resposta deve demorar alguns segundos (é a chamada real pra OpenAI) e mostrar um feedback condizente com o que você escreveu — erre de propósito uma frase pra ver a IA apontando o erro, e acerte outra pra ver o "Perfeito!".</p>
+  </section>
+
+  <section>
+    <h2>O módulo de Cursos/Practice está completo</h2>
+    <p>Com isso, a Pessoa B termina sua parte da integração — cursos, aulas e prática com correção real por IA já funcionam de ponta a ponta. Faltam só as tarefas 34-36 (Progress, Ranking e Planos, com a Pessoa C), que aliás ficam mais interessantes de testar agora que existem tentativas reais sendo gravadas em <code>attempts</code> a cada prática.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="32-practice-frases-frontend.html">← Tarefa 32</a>
+    <a href="34-progress-frontend.html">Tarefa 34 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="33" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

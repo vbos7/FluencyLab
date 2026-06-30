@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 09 — Comentários de aula (extra)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 09</span>
+    <span class="badge badge-b">Pessoa B</span>
+    <span class="badge badge-extra">Extra</span>
+  </div>
+  <h1>Comentários de aula</h1>
+
+  <div class="callout">
+    <strong>Pode deixar pra depois</strong>
+    Essa tarefa é opcional — hoje os comentários no frontend são só visuais (não persistem). Se o tempo apertar, pule direto pra <a href="10-frases.html">tarefa 10</a> e volte aqui depois.
+  </div>
+
+  <section>
+    <h2>Passo a passo (resumido)</h2>
+    <p>Mesma receita de sempre — migration + model + controller + rota. Únicas novidades:</p>
+    <ul>
+      <li>A tabela <code>comments</code> tem <code>lesson_id</code> (igual ao <code>course_id</code> da tarefa 08) e <code>user_id</code> (igual ao que você vai ver na tarefa 12) — porque um comentário pertence tanto a uma aula quanto a um usuário.</li>
+      <li>A rota de criar comentário (<code>POST /api/lessons/{id}/comments</code>) precisa de <code>auth:sanctum</code> — só usuário logado comenta. A de listar (<code>GET</code>) pode ser pública.</li>
+    </ul>
+    <pre><code>$table-&gt;foreignId('lesson_id')-&gt;constrained()-&gt;cascadeOnDelete();
+$table-&gt;foreignId('user_id')-&gt;constrained()-&gt;cascadeOnDelete();
+$table-&gt;text('text');</code></pre>
+    <p>No Controller, ao criar o comentário, associe o usuário logado automaticamente (não deixe o cliente mandar o <code>user_id</code> — sempre pegue de <code>$request-&gt;user()-&gt;id</code>, senão alguém poderia comentar fingindo ser outra pessoa):</p>
+    <pre><code>Comment::create([
+    'lesson_id' =&gt; $lessonId,
+    'user_id' =&gt; $request-&gt;user()-&gt;id,
+    'text' =&gt; $request-&gt;validated()['text'],
+]);</code></pre>
+  </section>
+
+  <div class="task-nav">
+    <a href="08-aulas.html">← Tarefa 08</a>
+    <a href="10-frases.html">Tarefa 10 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="09" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

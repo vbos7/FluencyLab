@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 25 — Conectar o login</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 25</span>
+    <span class="badge badge-a">Pessoa A</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Conectar o login</h1>
+
+  <p>Hoje o botão "Entrar" em <code>frontend/app/_components/auth/login-form.tsx</code> não faz nenhuma chamada real — ele só navega direto pra <code>/home</code>. Esta tarefa troca isso por uma chamada de verdade pro <code>POST /api/login</code> que você construiu na <a href="03-login.html">tarefa 03</a> do backend.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li>Como chamar a API a partir de um Client Component, usando o <code>apiClient</code> da tarefa 24.</li>
+      <li>Como guardar o token recebido num cookie (<code>js-cookie</code>), pra ele ficar disponível tanto pro <code>apiClient</code> quanto pro <code>fetchFromApi</code> das próximas telas.</li>
+      <li>Como mostrar uma mensagem de erro quando a API recusa o login.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Onde mexer</h2>
+    <p>O <code>LoginForm</code> já é um Client Component (<code>"use client"</code> no topo) com <code>useState</code> pra <code>email</code> e <code>password</code>. O botão "Entrar" hoje é assim:</p>
+    <pre><code>&lt;button
+    onClick={() =&gt; {
+        localStorage.removeItem("fluency-lab:mode")
+        localStorage.setItem("fluency-lab:firstLogin", "true")
+        router.push("/home")
+    }}
+    type="button"
+&gt;
+    Entrar
+&lt;/button&gt;</code></pre>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Importar o que vai precisar</h3>
+        <div class="file-label">frontend/app/_components/auth/login-form.tsx</div>
+        <pre><code>import { apiClient } from "@/app/_lib/api"
+import Cookies from "js-cookie"</code></pre>
+        <p>Adicione também um estado novo, pra guardar mensagem de erro e o estado de "carregando":</p>
+        <pre><code>const [error, setError] = useState&lt;string | null&gt;(null)
+const [loading, setLoading] = useState(false)</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Criar a função de login</h3>
+        <pre><code>async function handleLogin() {
+    setError(null)
+    setLoading(true)
+
+    try {
+        const response = await apiClient.post("/login", { email, password })
+        const { token } = response.data
+
+        // expires: 7 — o cookie dura 7 dias antes de expirar sozinho
+        Cookies.set("token", token, { expires: 7 })
+
+        localStorage.removeItem("fluency-lab:mode")
+        localStorage.setItem("fluency-lab:firstLogin", "true")
+        router.push("/home")
+    } catch (err) {
+        setError("Email ou senha incorretos.")
+    } finally {
+        setLoading(false)
+    }
+}</code></pre>
+
+        <div class="callout">
+          <strong>try/catch, igual você já conhece</strong>
+          Se a API responder com erro (ex: 422, credenciais inválidas — lembra da tarefa 03 do backend?), o <code>axios</code> lança uma exceção automaticamente quando o status não é 2xx, que cai no <code>catch</code>. É o equivalente a checar <code>if ($http_code !== 200)</code> manualmente, só que o axios já faz isso por você.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Trocar o botão</h3>
+        <pre><code>&lt;button onClick={handleLogin} type="button" disabled={loading}&gt;
+    {loading ? "Entrando..." : "Entrar"}
+&lt;/button&gt;
+
+{error &amp;&amp; (
+    &lt;p className="mt-2 text-center text-sm text-red-500"&gt;{error}&lt;/p&gt;
+)}</code></pre>
+        <p>O <code>disabled={loading}</code> evita que o usuário clique duas vezes enquanto a requisição ainda está em andamento.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <p>Com o backend rodando (<code>docker compose up -d</code>) e algum usuário já cadastrado (curl da tarefa 02, ou cadastre um direto pelo formulário depois que a <a href="26-registro-frontend.html">tarefa 26</a> estiver pronta), tente logar pela tela. Abra o DevTools do navegador → aba Application → Cookies, e confira que um cookie <code>token</code> apareceu depois do login.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="24-cliente-api.html">← Tarefa 24</a>
+    <a href="26-registro-frontend.html">Tarefa 26 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="25" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

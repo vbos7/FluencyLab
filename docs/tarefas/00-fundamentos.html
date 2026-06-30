@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fundamentos — Do PHP puro ao Laravel</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">📖 Leitura</span>
+  </div>
+  <h1>Fundamentos — Do PHP puro ao Laravel</h1>
+
+  <p>Você sabe pegar um formulário HTML, ler <code>$_POST['email']</code>, jogar isso direto numa query SQL e devolver alguma coisa na tela. Laravel faz exatamente a mesma coisa por baixo dos panos — só que organizada em pedaços com nomes diferentes. Esta página é o "dicionário de tradução" entre o que você já sabe e o vocabulário que vai aparecer em toda tarefa daqui pra frente.</p>
+
+  <section>
+    <h2>1. De um arquivo único para Rota → Controller</h2>
+    <p>Em PHP puro, um formulário de login provavelmente manda os dados pro próprio arquivo, ou pra outro <code>.php</code> que faz tudo:</p>
+
+    <div class="file-label">login.php (PHP puro)</div>
+    <pre><code>&lt;?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = $_POST['email'];
+    $senha = $_POST['senha'];
+
+    $conn = mysqli_connect('localhost', 'root', '', 'meubanco');
+    $sql = "SELECT * FROM usuarios WHERE email = '$email'";
+    $result = mysqli_query($conn, $sql);
+    $usuario = mysqli_fetch_assoc($result);
+
+    if ($usuario &amp;&amp; password_verify($senha, $usuario['senha'])) {
+        echo json_encode(['sucesso' =&gt; true]);
+    } else {
+        echo json_encode(['sucesso' =&gt; false]);
+    }
+}</code></pre>
+
+    <p>No Laravel, esse mesmo trabalho é dividido em duas peças:</p>
+    <ul>
+      <li><strong>Rota</strong> (<code>routes/api.php</code>): só diz "quando chegar um POST em <code>/api/login</code>, chama esse método". É o equivalente a você ter decidido "esse formulário manda pra <code>login.php</code>" — só que centralizado num arquivo só, em vez de espalhado em vários <code>.php</code>.</li>
+      <li><strong>Controller</strong>: a classe PHP que efetivamente faz o trabalho (ler os dados, consultar o banco, devolver a resposta). É o conteúdo que estava dentro do <code>if ($_SERVER['REQUEST_METHOD'] === 'POST')</code> ali em cima, só que organizado num método de uma classe.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>routes/web.php vs routes/api.php</strong>
+      O Laravel já vem com dois arquivos de rota separados. <code>web.php</code> é pra quando o próprio Laravel devolve uma página HTML pronta (com Blade, o "PHP com templates" do framework) — não é o nosso caso, porque quem desenha a tela aqui é o Next.js. <code>api.php</code> é só pra respostas JSON, e tudo que você registrar lá já nasce com o prefixo <code>/api/</code> na URL e passa pelo "crachá" do Sanctum (mais sobre isso já já). Conclusão prática: <strong>nas tarefas deste guia, você vai mexer quase sempre em <code>routes/api.php</code></strong>.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. De $_GET / $_POST para o objeto Request</h2>
+    <p>Em vez de ler direto das variáveis globais <code>$_GET</code>/<code>$_POST</code>, o Laravel entrega pro seu Controller um objeto <code>Request</code> já pronto, com os dados do formulário/JSON dentro:</p>
+
+    <pre><code>// PHP puro
+$email = $_POST['email'];
+
+// Laravel — o $request já chega pronto no método do Controller
+$email = $request-&gt;input('email');
+// ou, se você validou os campos antes (mais comum, ver tarefa 02):
+$email = $request-&gt;validated()['email'];</code></pre>
+
+    <p>A vantagem não é só sintática: o <code>Request</code> do Laravel já sabe ler tanto formulário tradicional quanto JSON (que é o que o Next.js vai mandar), então você não precisa se preocupar se o dado veio de <code>$_POST</code> ou de um body JSON — é sempre <code>$request-&gt;input('campo')</code>.</p>
+  </section>
+
+  <section>
+    <h2>3. De SQL na mão para Eloquent</h2>
+    <p>Você já escreveu algo como:</p>
+    <pre><code>$sql = "INSERT INTO usuarios (nome, email, senha) VALUES ('$nome', '$email', '$senhaHash')";
+mysqli_query($conn, $sql);</code></pre>
+
+    <p>O Eloquent (o ORM do Laravel — "ORM" = uma camada que transforma linhas de tabela em objetos PHP) faz a mesma coisa assim:</p>
+    <pre><code>User::create([
+    'name' =&gt; $nome,
+    'email' =&gt; $email,
+    'password' =&gt; $senhaHash,
+]);</code></pre>
+
+    <p>Repare: nenhum SQL escrito à mão, nenhum risco de SQL injection (o Eloquent já escapa os valores pra você), e <code>User</code> é só uma classe PHP que representa a tabela <code>users</code> — chamada de <strong>Model</strong>. Pra buscar um registro, em vez de <code>SELECT * FROM usuarios WHERE id = 1</code>, você escreve <code>User::find(1)</code>.</p>
+  </section>
+
+  <section>
+    <h2>4. De echo json_encode(...) para return response()-&gt;json(...)</h2>
+    <pre><code>// PHP puro
+echo json_encode(['sucesso' =&gt; true, 'usuario' =&gt; $usuario]);
+
+// Laravel
+return response()-&gt;json(['sucesso' =&gt; true, 'usuario' =&gt; $usuario]);
+// ou simplesmente devolver um array/Model direto — o Laravel converte pra JSON sozinho:
+return $usuario;</code></pre>
+    <p>Mesma ideia, só que o Laravel cuida de detalhes que você normalmente faria na mão (definir o header <code>Content-Type: application/json</code>, formatar erros de validação, etc).</p>
+  </section>
+
+  <section>
+    <h2>5. De $_SESSION para token Sanctum</h2>
+    <p>Em PHP puro com sessão tradicional, depois do login você faria:</p>
+    <pre><code>session_start();
+$_SESSION['usuario_id'] = $usuario['id'];
+// nas páginas seguintes:
+session_start();
+if (!isset($_SESSION['usuario_id'])) { /* não logado */ }</code></pre>
+    <p>Isso funciona porque o navegador guarda um cookie de sessão e o PHP "lembra" quem é você a cada requisição, no mesmo servidor.</p>
+
+    <p>Só que aqui o frontend (Next.js) e o backend (Laravel) são duas aplicações separadas, rodando em containers/portas diferentes. Não dá pra depender de sessão de servidor do mesmo jeito. O <strong>Sanctum</strong> resolve isso com um <strong>token</strong>: pense nele como um crachá de visitante.</p>
+
+    <ol>
+      <li>No login, o backend gera uma string aleatória (o token) e devolve pro frontend.</li>
+      <li>O frontend guarda esse token e manda ele em <strong>todo</strong> request seguinte, num header: <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+      <li>O Laravel confere esse header antes de deixar a requisição chegar nas rotas protegidas — isso é o middleware <code>auth:sanctum</code>, que você vai ver em quase toda rota daqui pra frente.</li>
+    </ol>
+
+    <div class="callout tip">
+      <strong>Por que não usar sessão então?</strong>
+      Dá pra usar Sanctum em "modo sessão" também (chamado de modo SPA), mas isso exige configurar cookies entre domínios diferentes com cuidado (CORS, same-site, etc). Como o frontend é uma aplicação separada, é mais simples — e é o que vamos usar neste projeto — trabalhar só com token (modo API), sem mexer em cookie nenhum.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Vocabulário rápido (cola pra consultar depois)</h2>
+    <ul>
+      <li><strong>Migration</strong>: um arquivo PHP que descreve uma mudança na estrutura do banco (criar tabela, adicionar coluna). Rodar <code>php artisan migrate</code> aplica todas as migrations pendentes, em ordem — pense nisso como um "histórico de versões" da estrutura do banco.</li>
+      <li><strong>Model</strong>: uma classe que representa uma tabela (ex: <code>User</code> → tabela <code>users</code>).</li>
+      <li><strong>Eloquent</strong>: o nome do ORM do Laravel — o "tradutor" entre PHP e SQL.</li>
+      <li><strong>Controller</strong>: a classe que recebe a requisição (depois de passar pela rota) e decide o que fazer.</li>
+      <li><strong>Rota</strong>: a linha em <code>routes/api.php</code> que liga uma URL a um método de Controller.</li>
+      <li><strong>Middleware</strong>: uma camada que intercepta a requisição antes dela chegar no Controller — usamos principalmente o <code>auth:sanctum</code>, que bloqueia quem não manda um token válido.</li>
+      <li><strong>Form Request</strong>: uma classe dedicada só pra validar os dados de entrada (ex: "email é obrigatório e precisa ser um email válido"), em vez de validar com vários <code>if</code> dentro do Controller.</li>
+      <li><strong>Seeder</strong>: um script que popula o banco com dados de teste/exemplo, pra você não precisar cadastrar tudo na mão toda vez que resetar o banco.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Pronto pra começar?</h2>
+    <p>A <a href="01-users-role.html">tarefa 01</a> mostra o que já está pronto no projeto (a tabela de usuários e o Sanctum instalado). A <a href="02-registro.html">tarefa 02</a> é onde você efetivamente escreve a primeira rota, primeiro Controller e primeiro Form Request do zero — com cada linha explicada.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="index.html">← Lista de tarefas</a>
+    <a href="01-users-role.html">Tarefa 01 →</a>
+  </div>
+
+</div>
+</body>
+</html>

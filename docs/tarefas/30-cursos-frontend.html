@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 30 — Listar cursos</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 30</span>
+    <span class="badge badge-b">Pessoa B</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Listar cursos</h1>
+
+  <p>Primeira tarefa do seu módulo na integração — se ainda não leu a <a href="24-cliente-api.html">tarefa 24</a>, leia antes (explica Server vs Client Components, que é a base de tudo aqui).</p>
+
+  <section>
+    <h2>O que tem de diferente nesta tarefa</h2>
+    <p><code>frontend/app/cursos/page.tsx</code> hoje começa com <code>"use client"</code> — mas, olhando o arquivo, ele não usa <code>useState</code> nem <code>onClick</code> nem nada que realmente precise rodar no navegador (só tem um array fixo de dados e uns links). Isso quer dizer que o <code>"use client"</code> ali está sobrando — é um ótimo primeiro exemplo de quando <strong>remover</strong> a diretiva, transformando a página de volta num Server Component (o padrão), capaz de buscar dado direto com <code>fetchFromApi</code>.</p>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Remover "use client" e buscar dados reais</h3>
+        <div class="file-label">frontend/app/cursos/page.tsx</div>
+        <pre><code>import Link from "next/link"
+import NavLayout from "../_layouts/nav-layout"
+import { Languages, LibraryBig, Timer } from "lucide-react"
+import { fetchFromApi } from "@/app/_lib/server-api"
+
+type Course = {
+    id: number
+    slug: string
+    title: string
+    description: string
+    level: string
+}
+
+export default async function CursosPage() {
+    const courses = await fetchFromApi&lt;Course[]&gt;("/courses")
+
+    return (
+        &lt;NavLayout&gt;
+            {/* ... */}
+            {courses.map((course) =&gt; (
+                &lt;Link key={course.slug} href={`/cursos/${course.slug}`}&gt;
+                    {/* ... use course.title, course.description no lugar
+                         de nivel.titulo, nivel.descricao ... */}
+                &lt;/Link&gt;
+            ))}
+        &lt;/NavLayout&gt;
+    )
+}</code></pre>
+
+        <p>Note o que mudou estruturalmente:</p>
+        <ul>
+          <li>A função virou <code>async</code> — só é permitido porque agora é um Server Component de verdade.</li>
+          <li>O array <code>niveis</code> hardcoded sumiu — os dados vêm de <code>courses</code>, buscado da API.</li>
+          <li>Os nomes dos campos mudaram: <code>nivel.titulo</code> → <code>course.title</code>, <code>nivel.descricao</code> → <code>course.description</code> (são os nomes das colunas que você criou no banco, na <a href="07-cursos.html">tarefa 07</a>).</li>
+        </ul>
+
+        <div class="callout warn">
+          <strong>Campos visuais (cor, emoji, sombra) não existem no banco</strong>
+          O array antigo tinha campos como <code>cor</code>, <code>emoji</code>, <code>bg</code> — isso é puramente visual, não faz sentido guardar no banco de dados. Duas opções: manter um pequeno mapeamento fixo no frontend (ex: um objeto <code>{ basico: { cor: "...", emoji: ... }, ... }</code> indexado pelo <code>slug</code> que vem da API), ou simplificar o visual por enquanto. Fica a critério de quem estiver implementando.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <p>Acesse <code>localhost:3000/cursos</code> — deve mostrar os 3 cursos que você cadastrou no seeder da tarefa 07, vindos de verdade da API (confira na aba Network do DevTools que não tem mais nenhum array fixo no código fonte da página).</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="29-admin-frontend.html">← Tarefa 29</a>
+    <a href="31-curso-detalhe-frontend.html">Tarefa 31 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="30" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

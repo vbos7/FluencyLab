@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 15 — Calendário de atividade</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 15</span>
+    <span class="badge badge-c">Pessoa C</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Calendário de atividade</h1>
+
+  <p>Mesma lógica da <a href="14-progress-semanal.html">tarefa 14</a> (agrupar <code>attempts</code> por período), só que por dia em vez de por semana, e devolvendo um "nível de intensidade" em vez de números brutos — é o heatmap de atividade (tipo o do GitHub) que aparece na tela de progresso.</p>
+
+  <section>
+    <h2>Passo a passo (com dicas)</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Controller</h3>
+        <p>Adicione um método <code>calendar</code> no <code>StatsController</code>. A ideia:</p>
+        <ol>
+          <li>Busque as <code>attempts</code> do usuário do último ano (<code>Carbon::now()-&gt;subYear()</code>).</li>
+          <li>Agrupe por dia usando <code>-&gt;groupBy(fn ($a) =&gt; $a-&gt;created_at-&gt;format('Y-m-d'))</code> — isso transforma a coleção num array onde a chave é a data e o valor é a lista de tentativas daquele dia.</li>
+          <li>Pra cada dia do agrupamento, devolva <code>['date' =&gt; $data, 'level' =&gt; $nivel]</code>, onde o nível é calculado a partir da quantidade de tentativas — por exemplo: 0 tentativas = nível 0, 1-2 = nível 1, 3-5 = nível 2, 6+ = nível 3.</li>
+        </ol>
+
+        <pre><code>public function calendar(Request $request)
+{
+    $attempts = Attempt::where('user_id', $request-&gt;user()-&gt;id)
+        -&gt;where('created_at', '&gt;=', Carbon::now()-&gt;subYear())
+        -&gt;get()
+        -&gt;groupBy(fn ($a) =&gt; $a-&gt;created_at-&gt;format('Y-m-d'));
+
+    $days = $attempts-&gt;map(function ($dayAttempts, $date) {
+        $count = $dayAttempts-&gt;count();
+
+        $level = match (true) {
+            $count &gt;= 6 =&gt; 3,
+            $count &gt;= 3 =&gt; 2,
+            $count &gt;= 1 =&gt; 1,
+            default =&gt; 0,
+        };
+
+        return ['date' =&gt; $date, 'level' =&gt; $level];
+    })-&gt;values();
+
+    return response()-&gt;json($days);
+}</code></pre>
+        <p>Repare que essa resposta só inclui dias com pelo menos uma tentativa — o frontend já sabe preencher os dias "vazios" com nível 0 por conta própria.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Rota</h3>
+        <pre><code>Route::get('/user/calendar', [StatsController::class, 'calendar']);</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="task-nav">
+    <a href="14-progress-semanal.html">← Tarefa 14</a>
+    <a href="16-ranking-points.html">Tarefa 16 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="15" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

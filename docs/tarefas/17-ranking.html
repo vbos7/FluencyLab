@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 17 — Leaderboard (ranking geral)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 17</span>
+    <span class="badge badge-c">Pessoa C</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Leaderboard (ranking geral)</h1>
+
+  <p>Agora que <code>ranking_points</code> está sendo populada automaticamente (tarefa 16), é só somar os pontos por usuário e ordenar.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li>Como somar uma coluna de uma tabela relacionada, agrupando por usuário (<code>withSum</code>).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Relacionamento no Model User</h3>
+        <p>Antes de somar, o <code>User</code> precisa "saber" que tem vários <code>RankingPoint</code>:</p>
+        <div class="file-label">backend/app/Models/User.php</div>
+        <pre><code>public function rankingPoints()
+{
+    return $this-&gt;hasMany(RankingPoint::class);
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Controller</h3>
+        <pre><code>docker compose exec backend php artisan make:controller RankingController</code></pre>
+
+        <div class="file-label">backend/app/Http/Controllers/RankingController.php</div>
+        <pre><code>use App\Models\User;
+
+public function index()
+{
+    $users = User::withSum('rankingPoints as xp', 'points')
+        -&gt;orderByDesc('xp')
+        -&gt;limit(30)
+        -&gt;get();
+
+    return $users-&gt;map(fn ($user) =&gt; [
+        'id' =&gt; $user-&gt;id,
+        'name' =&gt; $user-&gt;name,
+        'xp' =&gt; $user-&gt;xp ?? 0,
+        'level' =&gt; $this-&gt;calculateLevel($user-&gt;xp ?? 0),
+    ]);
+}
+
+private function calculateLevel(int $xp): int
+{
+    // mesma fórmula que já existe no frontend: nível N exige N × 150 de XP acumulado
+    $level = 1;
+    while ($xp &gt;= $level * 150) {
+        $level++;
+    }
+    return $level;
+}</code></pre>
+
+        <div class="callout">
+          <strong>withSum('rankingPoints as xp', 'points')</strong>
+          Isso é um atalho do Eloquent pra fazer, em uma única query eficiente, o equivalente a "pra cada usuário, soma a coluna <code>points</code> de todos os <code>ranking_points</code> dele, e chama o resultado de <code>xp</code>". Sem isso, você teria que fazer um loop manual chamando <code>$user-&gt;rankingPoints-&gt;sum('points')</code> pra cada usuário — funciona, mas dispara uma query por usuário (lento com muitos usuários).
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Rota</h3>
+        <p>Pode ser pública (ver o ranking não exige estar logado, só interagir com ele):</p>
+        <pre><code>Route::get('/ranking', [RankingController::class, 'index']);</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl http://localhost:8000/api/ranking</code></pre>
+  </section>
+
+  <div class="task-nav">
+    <a href="16-ranking-points.html">← Tarefa 16</a>
+    <a href="18-planos.html">Tarefa 18 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="17" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

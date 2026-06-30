@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 10 — Frases de prática</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 10</span>
+    <span class="badge badge-b">Pessoa B</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Frases de prática</h1>
+
+  <p>Aqui começa o módulo de Practice — o coração do app. Importante entender a estrutura de dados antes de codar: o exercício de prática <strong>não</strong> é ligado a uma aula específica nem é múltipla escolha. São frases soltas, em português, que o usuário traduz pra inglês — a correção (de verdade, por IA) vem nas tarefas 11 e 12.</p>
+
+  <section>
+    <h2>O que você vai aprender</h2>
+    <ul>
+      <li>Como filtrar resultados a partir de parâmetros da URL (query string) — ex: <code>/api/practice/phrases?category=Trabalho</code>.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Migration + Model</h3>
+        <pre><code>docker compose exec backend php artisan make:model Phrase -m</code></pre>
+
+        <div class="file-label">backend/database/migrations/..._create_phrases_table.php</div>
+        <pre><code>public function up(): void
+{
+    Schema::create('phrases', function (Blueprint $table) {
+        $table-&gt;id();
+        $table-&gt;text('pt');                 // frase em português
+        $table-&gt;text('en');                 // tradução de referência (a IA usa isso de exemplo)
+        $table-&gt;string('difficulty');       // "easy" | "medium" | "hard"
+        $table-&gt;string('category');         // "Cotidiano", "Trabalho", "Viagem", etc.
+        $table-&gt;timestamps();
+    });
+}</code></pre>
+
+        <div class="file-label">backend/app/Models/Phrase.php</div>
+        <pre><code>class Phrase extends Model
+{
+    protected $fillable = ['pt', 'en', 'difficulty', 'category'];
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Seeder</h3>
+        <p>Use as frases que já existem no mock do frontend (<code>frontend/app/_lib/practice.ts</code>, array <code>PHRASES</code>) como fonte — copie pt/en/difficulty/category de lá pro seu <code>PhraseSeeder</code>, igual fez com os cursos na tarefa 07. Não precisa digitar tudo na mão: dá pra escrever um array PHP com os mesmos dados e rodar um <code>foreach</code> chamando <code>Phrase::create()</code>.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h3>Controller com filtro opcional</h3>
+        <pre><code>docker compose exec backend php artisan make:controller PracticeController --api</code></pre>
+
+        <div class="file-label">backend/app/Http/Controllers/PracticeController.php</div>
+        <pre><code>use App\Models\Phrase;
+use Illuminate\Http\Request;
+
+public function phrases(Request $request)
+{
+    $query = Phrase::query();
+
+    // ?category=Trabalho na URL vira $request-&gt;query('category')
+    if ($request-&gt;filled('category')) {
+        $query-&gt;where('category', $request-&gt;query('category'));
+    }
+
+    if ($request-&gt;filled('difficulty')) {
+        $query-&gt;where('difficulty', $request-&gt;query('difficulty'));
+    }
+
+    return $query-&gt;get();
+}</code></pre>
+
+        <div class="callout">
+          <strong>$request-&gt;filled() vs $request-&gt;has()</strong>
+          <code>filled('category')</code> só é verdadeiro se o parâmetro existir <strong>e</strong> não estiver vazio (<code>?category=</code> não conta). É o jeito mais seguro de checar "o usuário realmente quer filtrar por isso".
+        </div>
+
+        <div class="file-label">backend/routes/api.php</div>
+        <pre><code>use App\Http\Controllers\PracticeController;
+
+Route::get('/practice/phrases', [PracticeController::class, 'phrases']);</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl http://localhost:8000/api/practice/phrases
+curl "http://localhost:8000/api/practice/phrases?category=Trabalho"</code></pre>
+  </section>
+
+  <div class="task-nav">
+    <a href="09-comentarios.html">← Tarefa 09</a>
+    <a href="11-ai-correction-service.html">Tarefa 11 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="10" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

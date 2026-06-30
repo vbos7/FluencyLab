@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 32 — Carregar as frases de prática</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 32</span>
+    <span class="badge badge-b">Pessoa B</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Carregar as frases de prática</h1>
+
+  <p>Boa notícia: <code>practice/page.tsx</code> já é um Server Component, e o <code>PracticeController</code> já é um Client Component que recebe as frases prontas via prop — ou seja, o projeto já estava estruturado exatamente do jeito que a tarefa 24 ensina. Essa tarefa é só trocar <strong>de onde</strong> vem o array de frases.</p>
+
+  <section>
+    <h2>Hoje</h2>
+    <div class="file-label">frontend/app/practice/page.tsx (atual)</div>
+    <pre><code>import { FRASES } from "@/app/_lib/practice"
+import { PracticeController } from "@/app/_components/practice/practice-controller"
+import NavLayout from "@/app/_layouts/nav-layout"
+
+export default function PracticePage() {
+    const phrases = FRASES.flat()
+
+    return (
+        &lt;NavLayout&gt;
+            &lt;PracticeController phrases={phrases} /&gt;
+        &lt;/NavLayout&gt;
+    )
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>Passo a passo</h2>
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Trocar a fonte dos dados</h3>
+        <div class="file-label">frontend/app/practice/page.tsx</div>
+        <pre><code>import { fetchFromApi } from "@/app/_lib/server-api"
+import { PracticeController } from "@/app/_components/practice/practice-controller"
+import NavLayout from "@/app/_layouts/nav-layout"
+
+type Phrase = { id: number; pt: string; en: string; difficulty: string; category: string }
+
+export default async function PracticePage() {
+    const phrases = await fetchFromApi&lt;Phrase[]&gt;("/practice/phrases")
+
+    return (
+        &lt;NavLayout&gt;
+            &lt;PracticeController phrases={phrases} /&gt;
+        &lt;/NavLayout&gt;
+    )
+}</code></pre>
+
+        <div class="callout">
+          <strong>FRASES.flat() sumiu — por quê?</strong>
+          O mock antigo guardava as frases agrupadas em sub-arrays por categoria (por isso o <code>.flat()</code>, que "achata" array de arrays num array só). A tabela <code>phrases</code> do banco já é uma lista simples — <code>GET /api/practice/phrases</code> já devolve no formato achatado, então não precisa mais dessa etapa.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Conferir o tipo Phrase dentro do PracticeController</h3>
+        <p>Abra <code>app/_components/practice/practice-controller.tsx</code> e confira o import:</p>
+        <pre><code>import { type Phrase, type Feedback, scoreAnswer, generateFeedback } from "@/app/_lib/practice"</code></pre>
+        <p>Por enquanto, deixe como está — <code>scoreAnswer</code> e <code>generateFeedback</code> (a correção por Levenshtein, a "gambiarra" da apresentação) ainda vão ser usados até a <a href="33-practice-submit-frontend.html">próxima tarefa</a>, que troca isso pela correção de verdade por IA. Só confirme que o tipo <code>Phrase</code> ali bate com os campos que a API devolve (<code>id</code>, <code>pt</code>, <code>en</code>, <code>difficulty</code>, <code>category</code>) — se o arquivo <code>_lib/practice.ts</code> tiver um formato de <code>Phrase</code> diferente do mock antigo, ajuste o tipo.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <p>Acesse <code>localhost:3000/practice</code> — as frases que aparecem devem ser as que você cadastrou no <code>PhraseSeeder</code> (tarefa 10), não mais o array antigo do <code>_lib/practice.ts</code>.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="31-curso-detalhe-frontend.html">← Tarefa 31</a>
+    <a href="33-practice-submit-frontend.html">Tarefa 33 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="32" style="margin-top: 16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

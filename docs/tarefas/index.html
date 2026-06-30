@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefas do Backend — FluencyLab</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-header">
+    <h1>🚀 Tarefas do Backend — FluencyLab</h1>
+    <p>Cada card abaixo é uma tarefa real, na ordem em que faz sentido fazer. Clique pra abrir o passo a passo.</p>
+  </header>
+
+  <div class="progress-summary">
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progress-bar-fill"></div>
+    </div>
+    <span class="progress-count" id="progress-count">0 / 0 tarefas concluídas</span>
+  </div>
+
+  <div class="task-list" style="margin-bottom: 30px;">
+    <a class="task-card" href="00-fundamentos.html">
+      <span class="task-num">📖</span>
+      <span class="task-title">Fundamentos — Do PHP puro ao Laravel
+        <span class="task-desc">Leitura obrigatória antes de começar. $_GET/$_POST, routes/web.php vs api.php, Eloquent, Sanctum — em termos simples.</span>
+      </span>
+      <span class="badge badge-todo">Comece aqui</span>
+    </a>
+  </div>
+
+  <p class="group-title">Auth, Perfil e Admin — Pessoa A</p>
+  <div class="task-list">
+
+    <a class="task-card" href="01-users-role.html" data-task="01">
+      <span class="task-num">01</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Tabela de usuários + papel (role)
+        <span class="task-desc">Já está pronta — leia antes de começar a tarefa 02.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+      <span class="badge badge-done">✓ Feito</span>
+    </a>
+
+    <a class="task-card" href="02-registro.html" data-task="02">
+      <span class="task-num">02</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Registro de usuário
+        <span class="task-desc">POST /api/register — Form Request, Model::create(), gerar token. A tarefa mais detalhada do guia.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+    </a>
+
+    <a class="task-card" href="03-login.html" data-task="03">
+      <span class="task-num">03</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Login
+        <span class="task-desc">POST /api/login — autenticar credenciais e devolver um token Sanctum.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+    </a>
+
+    <a class="task-card" href="04-logout-me.html" data-task="04">
+      <span class="task-num">04</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Logout e "quem sou eu"
+        <span class="task-desc">POST /api/logout — revoga o token atual. Confirma a rota GET /api/user que já existe.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+    </a>
+
+    <a class="task-card" href="05-perfil.html" data-task="05">
+      <span class="task-num">05</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Ver e editar perfil
+        <span class="task-desc">GET/PUT /api/profile — name e email do usuário autenticado.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+    </a>
+
+    <a class="task-card" href="06-middleware-admin.html" data-task="06">
+      <span class="task-num">06</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Middleware de administrador
+        <span class="task-desc">Cria a trava role:admin, usada depois nas tarefas 21-23.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+    </a>
+  </div>
+
+  <p class="group-title">Cursos e Practice — Pessoa B</p>
+  <div class="task-list">
+
+    <a class="task-card" href="07-cursos.html" data-task="07">
+      <span class="task-num">07</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Cursos
+        <span class="task-desc">Migration + Model + seeder dos 3 níveis + GET /api/courses.</span>
+      </span>
+      <span class="badge badge-b">Pessoa B</span>
+    </a>
+
+    <a class="task-card" href="08-aulas.html" data-task="08">
+      <span class="task-num">08</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Aulas de cada curso
+        <span class="task-desc">Migration + Model Lesson, relação com Course, GET /api/courses/{slug}.</span>
+      </span>
+      <span class="badge badge-b">Pessoa B</span>
+    </a>
+
+    <a class="task-card" href="09-comentarios.html" data-task="09" data-optional="1">
+      <span class="task-num">09</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Comentários de aula <span class="badge badge-extra" style="margin-left:6px;">extra</span>
+        <span class="task-desc">GET/POST /api/lessons/{id}/comments — pode ficar pra depois.</span>
+      </span>
+      <span class="badge badge-b">Pessoa B</span>
+    </a>
+
+    <a class="task-card" href="10-frases.html" data-task="10">
+      <span class="task-num">10</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Frases de prática
+        <span class="task-desc">Migration + Model Phrase + seeder + GET /api/practice/phrases.</span>
+      </span>
+      <span class="badge badge-b">Pessoa B</span>
+    </a>
+
+    <a class="task-card" href="11-ai-correction-service.html" data-task="11">
+      <span class="task-num">11</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Serviço de correção por IA
+        <span class="task-desc">Chamando a API da OpenAI de dentro do Laravel — adaptado do projeto english-practice.</span>
+      </span>
+      <span class="badge badge-b">Pessoa B</span>
+    </a>
+
+    <a class="task-card" href="12-check-answer.html" data-task="12">
+      <span class="task-num">12</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Submeter e corrigir uma tradução
+        <span class="task-desc">POST /api/practice/check-answer — usa o serviço da tarefa 11, grava a tentativa, calcula XP.</span>
+      </span>
+      <span class="badge badge-b">Pessoa B</span>
+    </a>
+  </div>
+
+  <p class="group-title">Progress, Ranking e Planos — Pessoa C</p>
+  <div class="task-list">
+
+    <a class="task-card" href="13-stats.html" data-task="13">
+      <span class="task-num">13</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Estatísticas do usuário
+        <span class="task-desc">GET /api/user/stats — agregados calculados em cima da tabela attempts.</span>
+      </span>
+      <span class="badge badge-c">Pessoa C</span>
+    </a>
+
+    <a class="task-card" href="14-progress-semanal.html" data-task="14">
+      <span class="task-num">14</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Progresso semanal
+        <span class="task-desc">GET /api/user/progress/weekly — série de 12 semanas de XP e treinos.</span>
+      </span>
+      <span class="badge badge-c">Pessoa C</span>
+    </a>
+
+    <a class="task-card" href="15-calendario.html" data-task="15">
+      <span class="task-num">15</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Calendário de atividade
+        <span class="task-desc">GET /api/user/calendar — o heatmap de dias praticados.</span>
+      </span>
+      <span class="badge badge-c">Pessoa C</span>
+    </a>
+
+    <a class="task-card" href="16-ranking-points.html" data-task="16">
+      <span class="task-num">16</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Pontos de ranking automáticos
+        <span class="task-desc">Migration ranking_points + Eloquent Observer disparado quando uma tentativa é criada.</span>
+      </span>
+      <span class="badge badge-c">Pessoa C</span>
+    </a>
+
+    <a class="task-card" href="17-ranking.html" data-task="17">
+      <span class="task-num">17</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Leaderboard (ranking geral)
+        <span class="task-desc">GET /api/ranking — ordenado por XP, com cálculo de nível.</span>
+      </span>
+      <span class="badge badge-c">Pessoa C</span>
+    </a>
+
+    <a class="task-card" href="18-planos.html" data-task="18">
+      <span class="task-num">18</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Planos (Free/Pro)
+        <span class="task-desc">Migration Plan + seeder + GET /api/plans.</span>
+      </span>
+      <span class="badge badge-c">Pessoa C</span>
+    </a>
+
+    <a class="task-card" href="19-assinatura.html" data-task="19">
+      <span class="task-num">19</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Assinar um plano
+        <span class="task-desc">Migration user_plan (pivot) + POST /api/plans/subscribe.</span>
+      </span>
+      <span class="badge badge-c">Pessoa C</span>
+    </a>
+  </div>
+
+  <p class="group-title">Extras / Fase 2 — Pessoa A</p>
+  <div class="task-list">
+
+    <a class="task-card" href="20-avatar.html" data-task="20" data-optional="1">
+      <span class="task-num">20</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Upload de avatar <span class="badge badge-extra" style="margin-left:6px;">extra</span>
+        <span class="task-desc">POST /api/profile/avatar.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+    </a>
+
+    <a class="task-card" href="21-admin-stats.html" data-task="21" data-optional="1">
+      <span class="task-num">21</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Estatísticas do admin <span class="badge badge-extra" style="margin-left:6px;">extra</span>
+        <span class="task-desc">GET /api/admin/stats — totais, crescimento mensal, atividade.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+    </a>
+
+    <a class="task-card" href="22-admin-usuarios.html" data-task="22" data-optional="1">
+      <span class="task-num">22</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Gerenciar usuários (admin) <span class="badge badge-extra" style="margin-left:6px;">extra</span>
+        <span class="task-desc">CRUD completo em /api/admin/users.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+    </a>
+
+    <a class="task-card" href="23-admin-frases.html" data-task="23" data-optional="1">
+      <span class="task-num">23</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Listar frases (admin) <span class="badge badge-extra" style="margin-left:6px;">extra</span>
+        <span class="task-desc">GET /api/admin/phrases.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+    </a>
+  </div>
+
+  <p class="group-title">🔌 Integração com o Frontend (Next.js) — conectando o que cada um já construiu</p>
+  <div class="task-list" style="margin-bottom: 16px;">
+    <a class="task-card" href="24-cliente-api.html">
+      <span class="task-num">📖</span>
+      <span class="task-title">Fundamentos do frontend — Server vs Client Components
+        <span class="task-desc">Leitura + setup obrigatório antes de qualquer tarefa de integração: o que é "use client", como buscar dados no Next.js, onde guardar o token.</span>
+      </span>
+      <span class="badge badge-todo">Comece aqui</span>
+    </a>
+  </div>
+
+  <p class="group-title" style="margin-top: 0;">Auth, Perfil e Admin no frontend — Pessoa A</p>
+  <div class="task-list">
+    <a class="task-card" href="25-login-frontend.html" data-task="25">
+      <span class="task-num">25</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Conectar o login
+        <span class="task-desc">LoginForm chamando POST /api/login de verdade, token salvo em cookie.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+    </a>
+    <a class="task-card" href="26-registro-frontend.html" data-task="26">
+      <span class="task-num">26</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Conectar o registro
+        <span class="task-desc">RegisterForm chamando POST /api/register — inclui adicionar o campo "nome" que falta no form.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+    </a>
+    <a class="task-card" href="27-logout-rotas-protegidas.html" data-task="27">
+      <span class="task-num">27</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Logout e proteger rotas
+        <span class="task-desc">POST /api/logout + middleware.ts do Next.js barrando quem não está logado.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+    </a>
+    <a class="task-card" href="28-perfil-frontend.html" data-task="28">
+      <span class="task-num">28</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Conectar o perfil
+        <span class="task-desc">profile/page.tsx buscando dados reais via GET /api/profile, dialog de edição chamando PUT.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+    </a>
+    <a class="task-card" href="29-admin-frontend.html" data-task="29" data-optional="1">
+      <span class="task-num">29</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Conectar o painel admin <span class="badge badge-extra" style="margin-left:6px;">extra</span>
+        <span class="task-desc">Dashboard e lista de usuários com dados reais.</span>
+      </span>
+      <span class="badge badge-a">Pessoa A</span>
+    </a>
+  </div>
+
+  <p class="group-title">Cursos e Practice no frontend — Pessoa B</p>
+  <div class="task-list">
+    <a class="task-card" href="30-cursos-frontend.html" data-task="30">
+      <span class="task-num">30</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Listar cursos
+        <span class="task-desc">cursos/page.tsx vira Server Component buscando GET /api/courses.</span>
+      </span>
+      <span class="badge badge-b">Pessoa B</span>
+    </a>
+    <a class="task-card" href="31-curso-detalhe-frontend.html" data-task="31">
+      <span class="task-num">31</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Detalhe do curso e aulas
+        <span class="task-desc">cursos/[slug]/page.tsx buscando GET /api/courses/{slug}.</span>
+      </span>
+      <span class="badge badge-b">Pessoa B</span>
+    </a>
+    <a class="task-card" href="32-practice-frases-frontend.html" data-task="32">
+      <span class="task-num">32</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Carregar as frases de prática
+        <span class="task-desc">practice/page.tsx busca GET /api/practice/phrases e passa pro PracticeController.</span>
+      </span>
+      <span class="badge badge-b">Pessoa B</span>
+    </a>
+    <a class="task-card" href="33-practice-submit-frontend.html" data-task="33">
+      <span class="task-num">33</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Submeter e exibir a correção por IA
+        <span class="task-desc">PracticeController chama POST /api/practice/check-answer e mostra o feedback real.</span>
+      </span>
+      <span class="badge badge-b">Pessoa B</span>
+    </a>
+  </div>
+
+  <p class="group-title">Progress, Ranking e Planos no frontend — Pessoa C</p>
+  <div class="task-list">
+    <a class="task-card" href="34-progress-frontend.html" data-task="34">
+      <span class="task-num">34</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Conectar o progresso
+        <span class="task-desc">progress/page.tsx busca stats, weekly e calendar de verdade.</span>
+      </span>
+      <span class="badge badge-c">Pessoa C</span>
+    </a>
+    <a class="task-card" href="35-ranking-frontend.html" data-task="35">
+      <span class="task-num">35</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Conectar o ranking
+        <span class="task-desc">ranking/page.tsx busca GET /api/ranking.</span>
+      </span>
+      <span class="badge badge-c">Pessoa C</span>
+    </a>
+    <a class="task-card" href="36-planos-frontend.html" data-task="36">
+      <span class="task-num">36</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Conectar os planos
+        <span class="task-desc">planos/page.tsx busca GET /api/plans, CheckoutModal chama POST /api/plans/subscribe.</span>
+      </span>
+      <span class="badge badge-c">Pessoa C</span>
+    </a>
+  </div>
+
+  <footer class="page-footer">
+    Dúvida sobre ambiente, convenções de código ou divisão de tarefas? Veja o
+    <a href="../GUIA_DESENVOLVIMENTO.md">guia de desenvolvimento</a>.
+  </footer>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>
