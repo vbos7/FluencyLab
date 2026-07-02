@@ -10,7 +10,7 @@ O time é composto por 4 pessoas. O backend é em **PHP puro** (sem framework) +
 
 **Stack do backend:**
 - PHP 8.4 (Apache, via Docker)
-- MySQL 8.0 (Docker)
+- MySQL local (XAMPP/MAMP — sem container separado)
 - Sem Composer, sem frameworks — PHP e as funções nativas já são o suficiente
 
 ---
@@ -66,6 +66,7 @@ backend/
 
 ### Pré-requisitos
 - Docker Desktop instalado e rodando.
+- XAMPP ou MAMP com MySQL rodando localmente na porta 3306.
 - Git.
 
 ### Primeiro setup
@@ -73,13 +74,32 @@ backend/
 ```bash
 git clone git@github.com:vbos7/FluencyLab.git
 cd FluencyLab
+```
 
-# 1. Subir os containers
+**1. Criar o banco e o usuário no MySQL local (XAMPP/MAMP)**
+
+Abra o phpMyAdmin ou o terminal do MySQL local e execute:
+
+```sql
+CREATE DATABASE IF NOT EXISTS fluency_lab CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'php_user'@'%' IDENTIFIED BY 'secret';
+GRANT ALL PRIVILEGES ON fluency_lab.* TO 'php_user'@'%';
+FLUSH PRIVILEGES;
+```
+
+**2. Importar o schema (tabelas + dados iniciais)**
+
+```bash
+# No terminal da sua máquina (não dentro do Docker):
+mysql --default-character-set=utf8mb4 -u php_user -psecret fluency_lab < backend/sql/schema.sql
+```
+
+> Se preferir, importe pelo phpMyAdmin: selecione o banco `fluency_lab` → Importar → escolha `backend/sql/schema.sql`.
+
+**3. Subir os containers**
+
+```bash
 docker compose up --build -d
-
-# 2. Criar as tabelas no banco (obrigatório na primeira vez)
-docker compose exec -T mysql mysql --default-character-set=utf8mb4 \
-  -u root -proot fluency_lab < backend/sql/schema.sql
 
 # Acesso:
 # Frontend: http://localhost:3000
@@ -99,12 +119,6 @@ docker compose down
 # Ver logs do PHP
 docker compose logs -f backend
 
-# Resetar o banco (apaga tudo e recria)
-docker compose exec mysql mysql -u root -proot \
-  -e "DROP DATABASE IF EXISTS fluency_lab; CREATE DATABASE fluency_lab;"
-docker compose exec -T mysql mysql --default-character-set=utf8mb4 \
-  -u root -proot fluency_lab < backend/sql/schema.sql
-
 # Testar um endpoint no terminal
 curl -s http://localhost:8000/api/courses.php
 curl -s -X POST http://localhost:8000/api/auth/login.php \
@@ -114,7 +128,7 @@ curl -s -X POST http://localhost:8000/api/auth/login.php \
 
 ### Atenção: charset obrigatório
 
-**Sempre** use `--default-character-set=utf8mb4` ao importar SQL via mysql command line, senão os acentos ficam corrompidos no banco.
+**Sempre** use `--default-character-set=utf8mb4` ao importar SQL, senão os acentos ficam corrompidos no banco.
 
 ---
 
@@ -215,7 +229,7 @@ Mantemos o mesmo padrão do frontend (já estabelecido):
 Você importou SQL sem `--default-character-set=utf8mb4`. Resetar o banco e reimportar com o flag correto.
 
 **"Access denied for user php_user"**
-Após recriar o banco, recrie o usuário: `CREATE USER IF NOT EXISTS 'php_user'@'%' IDENTIFIED BY 'secret'; GRANT ALL ON fluency_lab.* TO 'php_user'@'%';`
+Crie o usuário no MySQL local: `CREATE USER IF NOT EXISTS 'php_user'@'%' IDENTIFIED BY 'secret'; GRANT ALL ON fluency_lab.* TO 'php_user'@'%'; FLUSH PRIVILEGES;`
 
 **CORS — erro "blocked by CORS policy"**
 Confirme que o `cors.php` está sendo incluído no arquivo do endpoint, E que o frontend usa `withCredentials: true` no axios.

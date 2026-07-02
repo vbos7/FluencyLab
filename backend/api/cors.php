@@ -1,4 +1,5 @@
 <?php
+
 /**
  * cors.php — incluído no início de TODOS os endpoints.
  * Faz três coisas:
@@ -6,7 +7,6 @@
  *   2. Inicia a sessão PHP (para ler/gravar $_SESSION)
  *   3. Responde imediatamente a requisições OPTIONS (preflight do browser)
  */
-
 header('Access-Control-Allow-Origin: http://localhost:3000');
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -17,6 +17,7 @@ header('Content-Type: application/json; charset=utf-8');
 // para perguntar "posso fazer essa requisição?". Respondemos 200 e paramos aqui.
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
+
     exit;
 }
 

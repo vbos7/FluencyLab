@@ -1,4 +1,5 @@
 <?php
+
 // Health check — acesse http://localhost:8000 para confirmar que o backend está no ar
 header('Content-Type: application/json');
 echo json_encode([

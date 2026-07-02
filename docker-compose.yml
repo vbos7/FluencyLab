@@ -1,23 +1,4 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: fluencylab-mysql
-    restart: unless-stopped
-    environment:
-      MYSQL_DATABASE: fluency_lab
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_USER: php_user
-      MYSQL_PASSWORD: secret
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   backend:
     build:
       context: ./backend
@@ -26,14 +7,12 @@ services:
     restart: unless-stopped
     volumes:
       - ./backend:/var/www/html
-    depends_on:
-      mysql:
-        condition: service_healthy
     environment:
-      DB_HOST: mysql
-      DB_NAME: fluency_lab
-      DB_USER: php_user
-      DB_PASS: secret
+      DB_HOST: host.docker.internal
+      DB_PORT: 8889
+      DB_NAME: db_fluencylab
+      DB_USER: root
+      DB_PASS: root
     ports:
       - "8000:80"
 
@@ -49,6 +28,3 @@ services:
       - "3000:3000"
     depends_on:
       - backend
-
-volumes:
-  mysql_data:
