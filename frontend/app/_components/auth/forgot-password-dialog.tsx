@@ -293,14 +293,14 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                             <CheckCircle2 className="text-emerald-500" size={32} />
                         </div>
                         <div>
-                            <h3 className="mb-1 text-lg font-extrabold text-slate-900">
+                            <DialogTitle className="mb-1 text-lg font-extrabold text-slate-900">
                                 Senha alterada!
-                            </h3>
-                            <p className="text-sm leading-relaxed text-slate-400">
+                            </DialogTitle>
+                            <DialogDescription className="text-sm leading-relaxed text-slate-400">
                                 Sua senha foi redefinida com sucesso.
                                 <br />
                                 Faça login com sua nova senha.
-                            </p>
+                            </DialogDescription>
                         </div>
                         <button onClick={onClose} className={btnClass}>
                             Ir para o login

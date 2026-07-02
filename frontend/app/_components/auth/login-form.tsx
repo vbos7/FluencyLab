@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { AuthLogo } from "./auth-logo"
 import { EmailIcon, LockIcon, EyeIcon, EyeOffIcon } from "./auth-icons"
 import { ForgotPasswordDialog } from "./forgot-password-dialog"
+import { apiClient } from "@/app/_lib/api"
 
 export function LoginForm() {
     const router = useRouter()
@@ -14,6 +15,29 @@ export function LoginForm() {
     const [showPass, setShowPass] = useState(false)
     const [focused, setFocused] = useState<string | null>(null)
     const [forgotOpen, setForgotOpen] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const [loading, setLoading] = useState(false)
+
+    async function handleLogin() {
+        setError(null)
+
+        if (!email || !password) {
+            setError("Preencha o e-mail e a senha.")
+            return
+        }
+
+        setLoading(true)
+
+        try {
+            await apiClient.post("/auth/login.php", { email, password })
+            localStorage.removeItem("fluency-lab:mode")
+            router.push("/home")
+        } catch {
+            setError("Email ou senha incorretos.")
+        } finally {
+            setLoading(false)
+        }
+    }
 
     useEffect(() => {
         const t = setTimeout(() => setMounted(true), 60)
@@ -94,27 +118,25 @@ export function LoginForm() {
                                 type="button"
                                 onClick={() => setShowPass(!showPass)}
                                 aria-label={showPass ? "Ocultar senha" : "Mostrar senha"}
-                                className="text-slate-400 transition-colors hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded"
+                                className="text-slate-400 transition-colors hover:text-blue-500 focus-visible:rounded focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none"
                             >
                                 {showPass ? <EyeOffIcon /> : <EyeIcon />}
                             </button>
                         </div>
                     </div>
 
+                    {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
+
                     {/* Submit */}
                     <div className={`mt-2 ${fadeUp(200)}`}>
                         <button
-                            onClick={() => {
-                                localStorage.removeItem("fluency-lab:mode")
-                                // Marca primeira entrada para exibir o onboarding na home
-                                localStorage.setItem("fluency-lab:firstLogin", "true")
-                                router.push("/home")
-                            }}
+                            onClick={handleLogin}
+                            disabled={loading}
                             type="button"
-                            className="relative h-12 w-full overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-800 text-sm font-bold text-white shadow-md shadow-blue-400/35 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-400/45 active:scale-[0.98]"
+                            className="relative h-12 w-full overflow-hidden rounded-xl bg-linear-to-br from-blue-500 to-blue-800 text-sm font-bold text-white shadow-md shadow-blue-400/35 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-400/45 active:scale-[0.98]"
                         >
-                            Entrar
-                            <span className="absolute inset-0 -translate-x-full animate-[shimmer_3s_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                            {loading ? "Entrando..." : "Entrar"}
+                            <span className="absolute inset-0 -translate-x-full animate-[shimmer_3s_2s_infinite] bg-linear-to-r from-transparent via-white/10 to-transparent" />
                         </button>
                     </div>
                 </div>
