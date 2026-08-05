@@ -4,15 +4,19 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { AuthLogo } from "./auth-logo"
 import { EmailIcon, LockIcon, UserIcon, EyeIcon, EyeOffIcon } from "./auth-icons"
+import { apiClient } from "@/app/_lib/api"
 
 export function RegisterForm() {
     const router = useRouter()
     const [mounted, setMounted] = useState(false)
+    const [name, setName] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [showPass, setShowPass] = useState(false)
     const [focused, setFocused] = useState<string | null>(null)
+    const [error, setError] = useState<string | null>(null)
+    const [loading, setLoading] = useState(false)
 
     useEffect(() => {
         const t = setTimeout(() => setMounted(true), 60)
@@ -28,6 +32,40 @@ export function RegisterForm() {
         `flex items-center gap-3 bg-[#f0f4ff] rounded-xl px-4 h-12 border transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-300 ${
             focused === name ? "border-blue-400 shadow-sm shadow-blue-100" : "border-transparent"
         }`
+
+    async function handleRegister() {
+        setError(null)
+
+        if (!name || !email || !password) {
+            setError("Preencha todos os campos.")
+            return
+        }
+
+        if (password !== confirmPassword) {
+            setError("As senhas não coincidem.")
+            return
+        }
+
+        if (password.length < 6) {
+            setError("A senha deve ter pelo menos 6 caracteres.")
+            return
+        }
+
+        setLoading(true)
+        try {
+            await apiClient.post("/auth/register.php", {
+                name,
+                email,
+                password,
+                password_confirmation: confirmPassword, // nome que o PHP espera
+            })
+            router.push("/home")
+        } catch {
+            setError("Não foi possível criar a conta. Confira os dados.")
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
         <div
@@ -47,6 +85,8 @@ export function RegisterForm() {
                         <UserIcon active={focused === "nome"} />
                         <input
                             type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
                             onFocus={() => setFocused("nome")}
                             onBlur={() => setFocused(null)}
                             placeholder="Seu nome"
@@ -94,7 +134,7 @@ export function RegisterForm() {
                             type="button"
                             onClick={() => setShowPass(!showPass)}
                             aria-label={showPass ? "Ocultar senha" : "Mostrar senha"}
-                            className="text-slate-400 transition-colors hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded"
+                            className="text-slate-400 transition-colors hover:text-blue-500 focus-visible:rounded focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none"
                         >
                             {showPass ? <EyeOffIcon /> : <EyeIcon />}
                         </button>
@@ -121,7 +161,7 @@ export function RegisterForm() {
                             type="button"
                             onClick={() => setShowPass(!showPass)}
                             aria-label={showPass ? "Ocultar senha" : "Mostrar senha"}
-                            className="text-slate-400 transition-colors hover:text-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:rounded"
+                            className="text-slate-400 transition-colors hover:text-blue-500 focus-visible:rounded focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none"
                         >
                             {showPass ? <EyeOffIcon /> : <EyeIcon />}
                         </button>
@@ -130,14 +170,13 @@ export function RegisterForm() {
 
                 {/* Submit */}
                 <div className={`mt-2 ${fadeUp(200)}`}>
-                    <button
-                        onClick={() => router.push("/login")}
-                        type="button"
-                        className="relative h-12 w-full overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-800 text-sm font-bold text-white shadow-md shadow-blue-400/35 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-400/45 active:scale-[0.98]"
-                    >
-                        Criar conta
-                        <span className="absolute inset-0 -translate-x-full animate-[shimmer_3s_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                    <button 
+                        onClick={handleRegister} 
+                        disabled={loading}
+                        className="relative h-12 w-full overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-800 text-sm font-bold text-white shadow-md shadow-blue-400/35 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-400/45 active:scale-[0.98]">
+                        {loading ? "Criando..." : "Criar conta"}
                     </button>
+                    {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
                 </div>
             </div>
 
