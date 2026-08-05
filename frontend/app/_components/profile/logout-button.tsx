@@ -2,13 +2,19 @@
 
 import { useRouter } from "next/navigation"
 import { LogOut } from "lucide-react"
+import { apiClient } from "@/app/_lib/api"
 
 export function LogoutButton() {
     const router = useRouter()
 
-    function handleLogout() {
-        localStorage.setItem("fluency-lab:mode", "guest")
-        router.push("/practice")
+    async function handleLogout() {
+        try {
+            await apiClient.post("/auth/logout.php")
+        } catch {
+            // mesmo se falhar, continuamos o logout local
+        }
+        // O PHP destruiu a sessão — o browser descartará o cookie PHPSESSID
+        router.push("/login")
     }
 
     return (
