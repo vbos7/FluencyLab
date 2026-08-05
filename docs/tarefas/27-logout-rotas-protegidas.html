@@ -83,8 +83,120 @@ export const config = {
   </section>
 
   <section>
+    <h2>Parte 3 — Endpoint "quem sou eu?" (me.php)</h2>
+    <p>O middleware acima resolve <strong>uma</strong> direção: barra quem <em>não</em> está logado. Falta a direção inversa — quem <strong>já está logado</strong> não deveria ver as telas de <code>/login</code> e <code>/register</code>, e sim ir direto pra <code>/home</code>.</p>
+
+    <div class="callout">
+      <strong>Por que o middleware não resolve isso?</strong> Ele só checa se o cookie <code>PHPSESSID</code> <em>existe</em>. Mas o <code>session_start()</code> (dentro do <code>cors.php</code>) cria esse cookie pra <em>qualquer</em> visitante, mesmo sem login. Então "cookie existe" ≠ "está logado". Pra saber de verdade, precisamos perguntar ao PHP quem é o dono da sessão.
+    </div>
+
+    <p>Criamos um endpoint que lê a sessão e responde com o usuário logado — ou <code>401</code> se não houver ninguém:</p>
+
+    <div class="file-label">backend/api/auth/me.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/../cors.php';
+require_once __DIR__ . '/../db.php';
+
+// O cookie PHPSESSID existe pra qualquer visitante — o que importa
+// é ter $_SESSION['user_id'], gravado só no login/registro.
+if (!isset($_SESSION['user_id'])) {
+    json_out(['error' =&gt; 'Não autenticado'], 401);
+    exit;
+}
+
+// Busca os dados atuais no banco (nome/email podem ter mudado desde o login)
+$stmt = $pdo-&gt;prepare("SELECT id, name, email, role FROM users WHERE id = ?");
+$stmt-&gt;execute([$_SESSION['user_id']]);
+$user = $stmt-&gt;fetch();
+
+// A sessão aponta pra um usuário que não existe mais (ex: conta deletada)
+if (!$user) {
+    session_destroy();
+    json_out(['error' =&gt; 'Não autenticado'], 401);
+    exit;
+}
+
+json_out([
+    'id'    =&gt; (int) $user['id'],
+    'name'  =&gt; $user['name'],
+    'email' =&gt; $user['email'],
+    'role'  =&gt; $user['role'],
+]);</code></pre>
+  </section>
+
+  <section>
+    <h2>Parte 4 — Redirecionar quem já está logado</h2>
+    <p>Agora o frontend pergunta ao <code>me.php</code> <strong>no servidor, antes de renderizar</strong> a página — assim não tem "flash" da tela de login aparecendo por um instante. Adicione um helper no <code>server-api.ts</code> (criado na tarefa 24):</p>
+
+    <div class="file-label">frontend/app/_lib/server-api.ts (adicionar)</div>
+    <pre><code>export type AuthUser = {
+    id: number
+    name: string
+    email: string
+    role: "student" | "admin"
+}
+
+// Retorna o usuário logado ou null. NÃO lança erro no 401 —
+// "não está logado" é uma resposta esperada, não uma falha.
+export async function getCurrentUser(): Promise&lt;AuthUser | null&gt; {
+    const cookieStore = await cookies()
+
+    try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me.php`, {
+            headers: {
+                Accept: "application/json",
+                Cookie: cookieStore.toString(),
+            },
+            cache: "no-store",
+        })
+
+        if (!res.ok) return null // 401 = não logado
+        return res.json()
+    } catch {
+        // Backend fora do ar: trata como "não logado" em vez de quebrar a página
+        return null
+    }
+}</code></pre>
+
+    <p>Depois, transforme as páginas de login e registro em <strong>Server Components assíncronos</strong> e faça o check no topo. Note o <code>async</code> na função e o <code>await</code>:</p>
+
+    <div class="file-label">frontend/app/(auth)/login/page.tsx</div>
+    <pre><code>import { redirect } from "next/navigation"
+import { AuthBackground } from "@/app/_components/auth/auth-background"
+import { LoginForm } from "@/app/_components/auth/login-form"
+import { getCurrentUser } from "@/app/_lib/server-api"
+
+export default async function LoginPage() {
+    // Já logado? Não faz sentido ver a tela de login — manda pra home.
+    const user = await getCurrentUser()
+    if (user) redirect("/home")
+
+    return (
+        &lt;main /* ...classes... */&gt;
+            &lt;AuthBackground /&gt;
+            &lt;LoginForm /&gt;
+        &lt;/main&gt;
+    )
+}</code></pre>
+
+    <div class="callout">
+      Faça <strong>o mesmo</strong> em <code>frontend/app/(auth)/register/page.tsx</code>: adicione <code>async</code>, chame <code>getCurrentUser()</code> e <code>redirect("/home")</code> se houver usuário.
+    </div>
+  </section>
+
+  <section>
     <h2>Como testar</h2>
-    <p>Apague o cookie <code>PHPSESSID</code> (DevTools → Application → Cookies → botão direito → Delete) e tente acessar <code>localhost:3000/home</code> — deve redirecionar pro <code>/login</code>.</p>
+    <p><strong>Direção 1 — deslogado não entra nas rotas internas:</strong> apague o cookie <code>PHPSESSID</code> (DevTools → Application → Cookies → botão direito → Delete) e tente acessar <code>localhost:3000/home</code> — deve redirecionar pro <code>/login</code>.</p>
+    <p><strong>Direção 2 — logado não vê o login:</strong> faça login normalmente, depois digite <code>localhost:3000/login</code> na barra de endereço — deve redirecionar direto pra <code>/home</code>.</p>
+    <p><strong>No terminal</strong>, dá pra conferir o <code>me.php</code> isolado:</p>
+    <pre><code># sem sessão → 401
+curl -i http://localhost:8000/api/auth/me.php
+
+# com sessão (salva o cookie no login, reusa no me)
+curl -c cookies.txt -X POST http://localhost:8000/api/auth/login.php \
+  -H "Content-Type: application/json" \
+  -d '{"email":"ana@test.com","password":"123456"}'
+curl -b cookies.txt http://localhost:8000/api/auth/me.php   # → 200 + dados</code></pre>
   </section>
 
   <div class="task-nav">
