@@ -38,7 +38,8 @@ backend/
 │   ├── auth/
 │   │   ├── register.php     # POST /api/auth/register.php
 │   │   ├── login.php        # POST /api/auth/login.php
-│   │   └── logout.php       # POST /api/auth/logout.php
+│   │   ├── logout.php       # POST /api/auth/logout.php
+│   │   └── me.php           # GET  /api/auth/me.php — usuário da sessão (ou 401)
 │   ├── profile.php          # GET/PUT /api/profile.php
 │   ├── courses.php          # GET /api/courses.php + GET /api/courses.php?slug=X
 │   ├── practice/
