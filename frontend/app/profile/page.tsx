@@ -7,13 +7,12 @@ import { EditProfileDialog } from "@/app/_components/profile/edit-profile-dialog
 import { SettingsDialog } from "@/app/_components/profile/settings-dialog"
 import { FavoriteQuestions } from "@/app/_components/profile/favorite-questions"
 import { LogoutButton } from "@/app/_components/profile/logout-button"
+import { fetchFromApi } from "@/app/_lib/server-api"
 
 import NavLayout from "@/app/_layouts/nav-layout"
 import PremiumCard from "../_components/pricing/PremiumCard"
 
 const USER = {
-    name: "Marcus Vinicius",
-    email: "marcus@fluencylab.com",
     avatarSrc: "https://github.com/shadcn.png",
     rankLabel: "#27 no Ranking Geral",
     stats: [
@@ -25,17 +24,21 @@ const USER = {
     xp: { current: 250, max: 300, level: 4, levelLabel: "Expert" },
 }
 
-export default function ProfilePage() {
+type User = { id: number; name: string; email: string; role: string }
+
+export default async function ProfilePage() {
+    const user = await fetchFromApi<User>("/profile.php")
+    // Campos como xp, rankLabel etc. podem continuar mockados por enquanto
     return (
         <NavLayout>
             <div className="page-enter relative mx-auto mt-10 flex min-h-dvh max-w-5xl flex-col gap-4 bg-white px-4 pb-24 sm:gap-6 sm:px-6 lg:px-8">
                 <ProfileHeader
-                    name={USER.name}
+                    name={user.name}
                     rankLabel={USER.rankLabel}
-                    avatarSlot={<AvatarUpload name={USER.name} avatarSrc={USER.avatarSrc} />}
+                    avatarSlot={<AvatarUpload name={user.name} avatarSrc={USER.avatarSrc} />}
                 >
                     <div className="flex items-center gap-2">
-                        <EditProfileDialog initialName={USER.name} initialEmail={USER.email} />
+                        <EditProfileDialog initialName={user.name} initialEmail={user.email} />
                         <SettingsDialog />
                     </div>
                 </ProfileHeader>
