@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
     name         VARCHAR(100)  NOT NULL,
     email        VARCHAR(150)  NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
+    phone        VARCHAR(20),
     role         ENUM('student','admin') NOT NULL DEFAULT 'student',
     created_at   DATETIME      DEFAULT CURRENT_TIMESTAMP
 );

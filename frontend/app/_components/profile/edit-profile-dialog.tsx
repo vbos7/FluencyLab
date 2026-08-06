@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import axios from "axios"
 import {
     Dialog,
     DialogContent,
@@ -8,10 +9,12 @@ import {
     DialogTitle,
     DialogClose,
 } from "@/app/_components/ui/dialog"
+import { apiClient } from "@/app/_lib/api"
 
 type Props = {
     initialName: string
     initialEmail?: string
+    initialPhone?: string
 }
 
 const inputClass =
@@ -20,12 +23,14 @@ const inputClass =
 const labelClass =
     "block text-[10px] sm:text-xs font-bold text-[#7a94b8] uppercase tracking-wide mb-1"
 
-export function EditProfileDialog({ initialName, initialEmail = "" }: Props) {
+export function EditProfileDialog({ initialName, initialEmail = "", initialPhone = "" }: Props) {
     const [open, setOpen] = useState(false)
+    const [errors, setErrors] = useState<string[]>([])
+    const [saving, setSaving] = useState(false)
     const [form, setForm] = useState({
         nome: initialName,
         email: initialEmail,
-        telefone: "",
+        telefone: initialPhone,
         senhaAtual: "",
         novaSenha: "",
         confirmarSenha: "",
@@ -35,10 +40,31 @@ export function EditProfileDialog({ initialName, initialEmail = "" }: Props) {
         setForm({ ...form, [e.target.name]: e.target.value })
     }
 
-    function handleSave() {
-        // TODO: chamada de API
-        console.log("Dados salvos:", form)
-        setOpen(false)
+    async function handleSave() {
+        setErrors([])
+        setSaving(true)
+        try {
+            await apiClient.put("/profile.php", {
+                name: form.nome,
+                email: form.email,
+                phone: form.telefone,
+                // Campos de senha: o backend só troca a senha se new_password vier preenchido
+                current_password: form.senhaAtual,
+                new_password: form.novaSenha,
+                new_password_confirmation: form.confirmarSenha,
+            })
+            setOpen(false)
+            window.location.reload() // recarrega para mostrar os dados atualizados
+        } catch (err) {
+            // O PHP devolve { errors: [...] } com status 422 quando a validação falha
+            if (axios.isAxiosError(err) && err.response?.data?.errors) {
+                setErrors(err.response.data.errors)
+            } else {
+                setErrors(["Não foi possível salvar. Tente novamente."])
+            }
+        } finally {
+            setSaving(false)
+        }
     }
 
     return (
@@ -126,6 +152,15 @@ export function EditProfileDialog({ initialName, initialEmail = "" }: Props) {
                         </div>
                     </div>
 
+                    {/* Erros de validação vindos do backend */}
+                    {errors.length > 0 && (
+                        <ul className="mt-1 flex flex-col gap-1 rounded-xl bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+                            {errors.map((e, i) => (
+                                <li key={i}>• {e}</li>
+                            ))}
+                        </ul>
+                    )}
+
                     {/* Ações */}
                     <div className="mt-1 flex gap-2.5 sm:gap-3">
                         <DialogClose asChild>
@@ -135,9 +170,10 @@ export function EditProfileDialog({ initialName, initialEmail = "" }: Props) {
                         </DialogClose>
                         <button
                             onClick={handleSave}
-                            className="flex-1 rounded-xl bg-[#2563eb] py-2 text-xs font-bold text-white shadow-[0_4px_14px_rgba(37,99,235,0.30)] transition-colors hover:bg-[#1d4ed8] active:scale-95 sm:py-2.5 sm:text-sm"
+                            disabled={saving}
+                            className="flex-1 rounded-xl bg-[#2563eb] py-2 text-xs font-bold text-white shadow-[0_4px_14px_rgba(37,99,235,0.30)] transition-colors hover:bg-[#1d4ed8] active:scale-95 disabled:opacity-60 sm:py-2.5 sm:text-sm"
                         >
-                            Salvar Alterações
+                            {saving ? "Salvando..." : "Salvar Alterações"}
                         </button>
                     </div>
                 </DialogContent>

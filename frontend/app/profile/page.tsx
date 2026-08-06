@@ -24,7 +24,7 @@ const USER = {
     xp: { current: 250, max: 300, level: 4, levelLabel: "Expert" },
 }
 
-type User = { id: number; name: string; email: string; role: string }
+type User = { id: number; name: string; email: string; phone: string | null; role: string }
 
 export default async function ProfilePage() {
     const user = await fetchFromApi<User>("/profile.php")
@@ -38,7 +38,11 @@ export default async function ProfilePage() {
                     avatarSlot={<AvatarUpload name={user.name} avatarSrc={USER.avatarSrc} />}
                 >
                     <div className="flex items-center gap-2">
-                        <EditProfileDialog initialName={user.name} initialEmail={user.email} />
+                        <EditProfileDialog
+                            initialName={user.name}
+                            initialEmail={user.email}
+                            initialPhone={user.phone ?? ""}
+                        />
                         <SettingsDialog />
                     </div>
                 </ProfileHeader>
