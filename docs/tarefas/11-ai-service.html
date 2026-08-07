@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 11 — Serviço de correção por IA (cURL)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 11</span>
+    <span class="badge badge-b">Aluno C</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Serviço de correção por IA (cURL)</h1>
+
+  <p>Aqui o PHP vai <strong>fazer uma requisição HTTP pra outro servidor</strong> (a OpenAI) usando a função <code>curl_init()</code>. É a mesma ideia que você faria com o comando <code>curl</code> no terminal — só que em PHP.</p>
+
+  <section>
+    <h2>Conseguir a chave da OpenAI</h2>
+    <ol>
+      <li>Crie uma conta em <a href="https://platform.openai.com" target="_blank" rel="noopener">platform.openai.com</a>.</li>
+      <li>Vá em "API keys" e crie uma chave.</li>
+      <li>Adicione no <code>docker-compose.yml</code>, na seção <code>environment</code> do serviço <code>backend</code>:</li>
+    </ol>
+    <pre><code>environment:
+  DB_HOST: mysql
+  # ...
+  OPENAI_API_KEY: sk-sua-chave-aqui</code></pre>
+    <div class="callout warn">
+      <strong>Nunca commite a chave real</strong> no git. Guarde ela só no <code>docker-compose.yml</code> local, que já deve estar no <code>.gitignore</code> — ou num arquivo <code>.env</code> separado.
+    </div>
+  </section>
+
+  <section>
+    <h2>O arquivo AiService.php</h2>
+    <div class="file-label">backend/api/practice/AiService.php</div>
+    <pre><code>&lt;?php
+class AiService
+{
+    private string $apiKey;
+
+    public function __construct()
+    {
+        $this-&gt;apiKey = getenv('OPENAI_API_KEY') ?: '';
+    }
+
+    public function corrigirTraducao(string $pt, string $enRef, string $resposta): array
+    {
+        // cURL é a forma do PHP fazer chamadas HTTP pra outras APIs
+        $ch = curl_init('https://api.openai.com/v1/chat/completions');
+
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER =&gt; true,
+            CURLOPT_POST           =&gt; true,
+            CURLOPT_HTTPHEADER     =&gt; [
+                'Authorization: Bearer ' . $this-&gt;apiKey,
+                'Content-Type: application/json',
+            ],
+            CURLOPT_POSTFIELDS =&gt; json_encode([
+                'model'           =&gt; 'gpt-4o-mini',  // modelo barato
+                'temperature'     =&gt; 0.3,
+                'response_format' =&gt; ['type' =&gt; 'json_object'],
+                'messages'        =&gt; [
+                    ['role' =&gt; 'system', 'content' =&gt; 'Você é um professor de inglês. Responda em JSON.'],
+                    ['role' =&gt; 'user',   'content' =&gt; $this-&gt;montarPrompt($pt, $enRef, $resposta)],
+                ],
+            ]),
+            CURLOPT_TIMEOUT =&gt; 30,
+        ]);
+
+        $resposta_api = curl_exec($ch);
+        curl_close($ch);
+
+        $dados   = json_decode($resposta_api, true);
+        $content = $dados['choices'][0]['message']['content'] ?? null;
+
+        if (!$content) throw new \Exception('Resposta vazia da OpenAI');
+
+        return json_decode($content, true);
+    }
+
+    private function montarPrompt(string $pt, string $enRef, string $resposta): string
+    {
+        return "Corrija a tradução:\n"
+            . "Português: {$pt}\n"
+            . "Referência: {$enRef}\n"
+            . "Aluno: {$resposta}\n\n"
+            . "Retorne JSON: {\"is_correct\":bool,\"score\":0-100,\"overall_comment\":\"...\","
+            . "\"mistakes\":[{\"type\":\"...\",\"original\":\"...\",\"suggestion\":\"...\",\"explanation_pt\":\"...\"}],"
+            . "\"corrected_sentence\":\"...\",\"positive_points\":[\"...\"]}";
+    }
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>Como testar sem expor uma rota</h2>
+    <pre><code>docker compose exec backend php -r "
+  require_once '/var/www/html/api/practice/AiService.php';
+  \$ai = new AiService();
+  print_r(\$ai->corrigirTraducao(
+    'Eu gostaria de um café, por favor.',
+    'I would like a coffee, please.',
+    'I want a coffee please'
+  ));
+"</code></pre>
+    <p>Deve imprimir o array PHP com a resposta da IA. Se der erro de API key, confirme que o <code>OPENAI_API_KEY</code> está no docker-compose e reinicie o container (<code>docker compose restart backend</code>).</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="10-frases.html">← Tarefa 10</a>
+    <a href="12-check-answer.html">Tarefa 12 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="11" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

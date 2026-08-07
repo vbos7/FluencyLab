@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 24 — Como o Next.js fala com o PHP</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header"><span class="task-num-big">Tarefa 24</span></div>
+  <h1>Fundamentos do frontend — Como o Next.js fala com o PHP</h1>
+
+  <p>O backend está pronto, mas o frontend ainda mostra dados mockados. Esta tarefa configura o "telefone" entre o Next.js e o PHP. <strong>Todo o time deve ler antes de começar as tarefas 25-36.</strong></p>
+
+  <section>
+    <h2>1. Sessão PHP + cookie automático</h2>
+    <p>O PHP, quando você chama <code>session_start()</code>, cria automaticamente um cookie chamado <code>PHPSESSID</code> no browser. O browser guarda esse cookie e o envia em <strong>toda</strong> requisição seguinte pra o mesmo servidor — sem você precisar fazer nada. É exatamente como <code>$_SESSION</code> funciona em qualquer site PHP normal, só que aqui o "site" é o Next.js rodando separado.</p>
+    <p>A única configuração extra necessária é dizer pro axios que ele deve enviar cookies nas requisições cross-origin (<code>localhost:3000</code> → <code>localhost:8000</code>):</p>
+    <pre><code>withCredentials: true</code></pre>
+    <p>Só isso. Sem guardar token manualmente, sem <code>Authorization: Bearer</code>, sem <code>js-cookie</code>.</p>
+  </section>
+
+  <section>
+    <h2>2. Instalar axios</h2>
+    <pre><code>cd frontend
+npm install axios</code></pre>
+  </section>
+
+  <section>
+    <h2>3. Cliente para Client Components ("use client")</h2>
+    <div class="file-label">frontend/app/_lib/api.ts</div>
+    <pre><code>"use client"
+
+import axios from "axios"
+
+export const apiClient = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_API_URL,
+    headers: { Accept: "application/json" },
+    withCredentials: true,   // envia o cookie PHPSESSID em todo request
+})</code></pre>
+    <p>Pronto. Quando o PHP criar a sessão no login, o cookie vai pro browser, e em todo request seguinte via <code>apiClient</code> esse cookie já viaja junto.</p>
+  </section>
+
+  <section>
+    <h2>4. Cliente para Server Components (fetchFromApi)</h2>
+    <p>Server Components rodam no servidor do Next.js — não têm acesso ao browser nem ao cookie diretamente. Para eles, precisamos encaminhar o cookie da requisição incoming:</p>
+
+    <div class="file-label">frontend/app/_lib/server-api.ts</div>
+    <pre><code>import { cookies } from "next/headers"
+
+export async function fetchFromApi&lt;T = unknown&gt;(path: string): Promise&lt;T&gt; {
+    const cookieStore = await cookies()
+    const cookieHeader = cookieStore.toString()   // ex: "PHPSESSID=abc123"
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
+        headers: {
+            Accept: "application/json",
+            Cookie: cookieHeader,   // repassa o cookie do usuário pro PHP
+        },
+        cache: "no-store",
+    })
+
+    if (!res.ok) throw new Error(`Erro ao buscar ${path}: ${res.status}`)
+    return res.json()
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>5. Variável de ambiente</h2>
+    <p>O endereço da API já está no <code>docker-compose.yml</code>. Pra rodar o Next.js localmente fora do Docker (<code>npm run dev</code>), crie também:</p>
+    <div class="file-label">frontend/.env.local</div>
+    <pre><code>NEXT_PUBLIC_API_URL=http://localhost:8000/api</code></pre>
+    <div class="callout warn">
+      <strong>Atenção nas URLs dos endpoints</strong>: como o backend é PHP puro (sem router), as URLs incluem a extensão <code>.php</code>:<br>
+      <code>/api/auth/login.php</code>, <code>/api/courses.php</code>, <code>/api/practice/phrases.php</code>, etc.
+    </div>
+  </section>
+
+  <div class="task-nav">
+    <a href="21-admin-frases.html">← Tarefa 21 (backend)</a>
+    <a href="25-login-frontend.html">Tarefa 25 →</a>
+  </div>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

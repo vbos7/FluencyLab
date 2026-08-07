@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 20 — Gerenciar usuários (admin, extra)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 20</span>
+    <span class="badge badge-a">Aluno A</span>
+    <span class="badge badge-extra">Extra</span>
+  </div>
+  <h1>Gerenciar usuários (admin)</h1>
+
+  <p>Junta tudo: GET (listar), PUT (editar), DELETE (apagar) no mesmo arquivo, diferenciados pelo método HTTP.</p>
+
+  <section>
+    <h2>O arquivo (resumo do padrão)</h2>
+    <div class="file-label">backend/api/admin/users.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/../cors.php';
+require_once __DIR__ . '/../db.php';
+
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    json_out(['error' =&gt; 'Acesso restrito a administradores'], 403);
+    exit;
+}
+
+$method = $_SERVER['REQUEST_METHOD'];
+
+// GET — lista todos os usuários
+if ($method === 'GET') {
+    $stmt = $pdo-&gt;query("SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC");
+    json_out($stmt-&gt;fetchAll());
+    exit;
+}
+
+// PUT ?id=5 — edita role ou nome
+if ($method === 'PUT') {
+    $id    = (int) ($_GET['id'] ?? 0);
+    $body  = json_decode(file_get_contents('php://input'), true);
+    $role  = $body['role'] ?? null;
+    $name  = $body['name'] ?? null;
+
+    $fields = []; $params = [];
+    if ($name)  { $fields[] = 'name = ?';  $params[] = $name; }
+    if ($role)  { $fields[] = 'role = ?';  $params[] = $role; }
+    if (empty($fields) || !$id) { json_out(['error' =&gt; 'Dados inválidos'], 422); exit; }
+
+    $params[] = $id;
+    $pdo-&gt;prepare("UPDATE users SET " . implode(', ', $fields) . " WHERE id = ?")-&gt;execute($params);
+
+    $stmt = $pdo-&gt;prepare("SELECT id, name, email, role FROM users WHERE id = ?");
+    $stmt-&gt;execute([$id]);
+    json_out($stmt-&gt;fetch());
+    exit;
+}
+
+// DELETE ?id=5
+if ($method === 'DELETE') {
+    $id = (int) ($_GET['id'] ?? 0);
+    if (!$id) { json_out(['error' =&gt; 'ID obrigatório'], 422); exit; }
+    $pdo-&gt;prepare("DELETE FROM users WHERE id = ?")-&gt;execute([$id]);
+    json_out(null, 204);
+    exit;
+}
+
+json_out(['error' =&gt; 'Método não permitido'], 405);</code></pre>
+  </section>
+
+  <div class="task-nav">
+    <a href="19-admin-stats.html">← Tarefa 19</a>
+    <a href="21-admin-frases.html">Tarefa 21 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="20" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fundamentos — O que é uma API em PHP puro</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header"><span class="task-num-big">📖 Leitura</span></div>
+  <h1>Fundamentos — O que é uma API em PHP puro</h1>
+
+  <p>Você já sabe receber dados de um formulário HTML com <code>$_POST</code> e devolver HTML de volta. Uma <strong>API</strong> (Application Programming Interface) faz exatamente a mesma coisa — só que em vez de devolver HTML formatado pra uma pessoa ver, devolve <strong>JSON</strong> pra outro programa ler. O Next.js (frontend) é esse "outro programa".</p>
+
+  <section>
+    <h2>1. O arquivo PHP como "endpoint"</h2>
+    <p>No projeto deste curso, cada arquivo PHP é uma URL. Sem frameworks, sem roteadores. Se você criar <code>backend/api/cursos.php</code>, ele fica acessível em <code>http://localhost:8000/api/cursos.php</code>. Simples assim.</p>
+
+    <div class="callout">
+      <strong>Endpoint</strong> é o nome bonito pra "uma URL que a gente pode chamar de um programa". <code>GET http://localhost:8000/api/cursos.php</code> = endpoint de listar cursos.
+    </div>
+  </section>
+
+  <section>
+    <h2>2. De $GET/$POST para JSON</h2>
+    <p>Você já usou <code>$_POST['campo']</code> pra ler dados de um formulário HTML. O Next.js não manda formulários — ele manda <strong>JSON</strong> no corpo da requisição. Pra ler isso em PHP:</p>
+
+    <pre><code>// Lê o corpo JSON que o Next.js mandou
+$body = json_decode(file_get_contents('php://input'), true);
+
+// Agora $body é um array PHP normal:
+$email = $body['email'];
+$senha = $body['password'];</code></pre>
+
+    <p>E pra devolver a resposta, em vez de <code>echo "&lt;p&gt;Bem-vindo&lt;/p&gt;"</code>:</p>
+
+    <pre><code>header('Content-Type: application/json; charset=utf-8');
+echo json_encode(['sucesso' => true, 'usuario' => $nome]);</code></pre>
+
+    <div class="callout tip">
+      <strong>json_encode() converte array PHP → texto JSON</strong><br>
+      <code>['id' => 1, 'nome' => 'Ana']</code> vira <code>{"id":1,"nome":"Ana"}</code>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. PDO — conexão com o banco do jeito seguro</h2>
+    <p>Você provavelmente viu <code>mysqli_connect()</code> ou <code>mysqli_query($conn, "SELECT ...")</code>. PDO é parecido, mas tem uma vantagem enorme: <strong>prepared statements</strong>, que protegem contra SQL Injection:</p>
+
+    <pre><code>// PERIGOSO — SQL Injection possível:
+$resultado = mysqli_query($conn, "SELECT * FROM users WHERE email = '$email'");
+
+// SEGURO com PDO — o ? é um placeholder, o banco insere o valor de forma segura:
+$stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+$stmt->execute([$email]);
+$usuario = $stmt->fetch(); // array: ['id' => 1, 'email' => 'ana@...']</code></pre>
+
+    <p>O <code>?</code> no SQL é substituído pelo valor que você passa no <code>execute()</code>. O banco garante que esse valor é tratado como dado, nunca como código SQL.</p>
+  </section>
+
+  <section>
+    <h2>4. $_SESSION — você já conhece isso</h2>
+    <p>Sessão PHP funciona exatamente como você aprendeu: <code>session_start()</code> no topo, <code>$_SESSION['chave'] = valor</code> pra guardar. A diferença é que o Next.js e o PHP rodam em <em>portas diferentes</em> — o browser manda o cookie de sessão (<code>PHPSESSID</code>) automaticamente nas requisições graças ao <code>withCredentials: true</code> que será configurado no Next.js.</p>
+
+    <pre><code>session_start();
+$_SESSION['user_id'] = 5;  // guarda quem está logado
+// Na próxima requisição do mesmo usuário:
+$id = $_SESSION['user_id']; // ainda está aqui</code></pre>
+  </section>
+
+  <section>
+    <h2>5. CORS — por que os browsers bloqueiam</h2>
+    <p>Por segurança, o browser <strong>bloqueia</strong> requests de <code>localhost:3000</code> (Next.js) para <code>localhost:8000</code> (PHP) — portas diferentes = origens diferentes. A solução é o PHP dizer "pode, eu aceito chamadas de localhost:3000":</p>
+
+    <pre><code>header('Access-Control-Allow-Origin: http://localhost:3000');
+header('Access-Control-Allow-Credentials: true');</code></pre>
+
+    <p>Esse header já está em <code>api/cors.php</code>, que você inclui no começo de todo endpoint.</p>
+
+    <div class="callout warn">
+      <strong>Preflight (OPTIONS)</strong> — antes de toda requisição POST/PUT/DELETE, o browser manda uma requisição "OPTIONS" perguntando "posso?". É preciso responder 200 OK nessa requisição. Está tratado em <code>cors.php</code> também.
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Padrão de cada arquivo de endpoint</h2>
+    <p>Todo endpoint do projeto segue este esqueleto — você vai repetir isso em cada tarefa:</p>
+
+    <pre><code>&lt;?php
+require_once __DIR__ . '/../cors.php';   // CORS + session_start()
+require_once __DIR__ . '/../db.php';     // $pdo (conexão com banco)
+
+// 1. Verificar o método HTTP
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    json_out(['error' => 'Método não permitido']);
+    exit;
+}
+
+// 2. Verificar se está logado (quando necessário)
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    json_out(['error' => 'Não autenticado']);
+    exit;
+}
+
+// 3. Ler dados do body JSON
+$body = json_decode(file_get_contents('php://input'), true);
+
+// 4. Fazer algo com o banco
+$stmt = $pdo->prepare("SELECT * FROM tabela WHERE campo = ?");
+$stmt->execute([$valor]);
+$resultado = $stmt->fetchAll();
+
+// 5. Devolver JSON
+json_out($resultado);</code></pre>
+  </section>
+
+  <section>
+    <h2>Pronto pra começar?</h2>
+    <p>A <a href="01-schema-sql.html">tarefa 01</a> já está feita — o schema SQL com todas as tabelas. Leia ela antes de continuar. A <a href="02-arquivos-compartilhados.html">tarefa 02</a> mostra o que está nos arquivos compartilhados (<code>cors.php</code> e <code>db.php</code>).</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="index.html">← Lista de tarefas</a>
+    <a href="01-schema-sql.html">Tarefa 01 →</a>
+  </div>
+
+</div>
+</body>
+</html>

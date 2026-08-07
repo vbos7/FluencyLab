@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 02 — Arquivos compartilhados (db.php + cors.php)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 02</span>
+    <span class="badge badge-a">Aluno A</span>
+    <span class="badge badge-done">✓ Já está pronto</span>
+  </div>
+  <h1>Arquivos compartilhados (db.php + cors.php)</h1>
+
+  <p>Esses dois arquivos já foram criados. Leia esta página pra entender o que cada um faz — você vai ver eles no <code>require_once</code> de todo endpoint daqui pra frente.</p>
+
+  <section>
+    <h2>api/db.php — a conexão com o banco</h2>
+
+    <div class="file-label">backend/api/db.php</div>
+    <pre><code>&lt;?php
+$pdo = new PDO(
+    'mysql:host=' . getenv('DB_HOST') . ';dbname=' . getenv('DB_NAME') . ';charset=utf8mb4',
+    getenv('DB_USER'),
+    getenv('DB_PASS'),
+    [
+        PDO::ATTR_ERRMODE            =&gt; PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE =&gt; PDO::FETCH_ASSOC,
+    ]
+);</code></pre>
+
+    <ul>
+      <li><code>getenv('DB_HOST')</code> lê a variável de ambiente <code>DB_HOST</code> que o Docker injeta (definida no <code>docker-compose.yml</code>).</li>
+      <li><code>PDO::ERRMODE_EXCEPTION</code> faz o PHP jogar uma exceção se der erro SQL, em vez de falhar silenciosamente.</li>
+      <li><code>PDO::FETCH_ASSOC</code> faz o <code>fetch()</code> devolver arrays com chaves pelo nome (<code>$row['email']</code>) em vez de índice numérico (<code>$row[1]</code>).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>api/cors.php — CORS + sessão + função json_out()</h2>
+
+    <div class="file-label">backend/api/cors.php</div>
+    <pre><code>&lt;?php
+header('Access-Control-Allow-Origin: http://localhost:3000');
+header('Access-Control-Allow-Credentials: true');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+header('Content-Type: application/json; charset=utf-8');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+session_set_cookie_params(['samesite' =&gt; 'Lax', 'httponly' =&gt; false, 'secure' =&gt; false, 'path' =&gt; '/']);
+session_start();
+
+function json_out(mixed $data, int $status = 200): void
+{
+    http_response_code($status);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+}</code></pre>
+
+    <ul>
+      <li><code>json_out()</code> é uma função auxiliar que todos os endpoints usam em vez de <code>echo json_encode()</code> diretamente — ela garante que acentos saiam certos no JSON.</li>
+      <li><code>session_set_cookie_params</code> — <strong>antes</strong> de <code>session_start()</code>, configura como o cookie de sessão se comporta. <code>SameSite=Lax</code> permite que o cookie viaje entre <code>localhost:3000</code> e <code>localhost:8000</code>.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Como incluir nos endpoints</h2>
+    <p>No começo de cada arquivo PHP de endpoint:</p>
+    <pre><code>// Num arquivo em api/ (ex: api/courses.php)
+require_once __DIR__ . '/cors.php';
+require_once __DIR__ . '/db.php';
+
+// Num arquivo em api/auth/ ou api/practice/ etc.
+require_once __DIR__ . '/../cors.php';
+require_once __DIR__ . '/../db.php';</code></pre>
+    <p><code>__DIR__</code> é o caminho da pasta onde o arquivo atual está. <code>/../</code> sobe um nível.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="01-schema-sql.html">← Tarefa 01</a>
+    <a href="03-registro.html">Tarefa 03 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="02" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

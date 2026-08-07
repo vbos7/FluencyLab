@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 31 — Detalhe do curso e aulas</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 31</span>
+    <span class="badge badge-b">Aluno B</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Detalhe do curso e aulas</h1>
+
+  <p>Hoje existem três páginas estáticas separadas: <code>cursos/basico/page.tsx</code>, <code>cursos/intermediario/page.tsx</code>, <code>cursos/avancado/page.tsx</code>. Com a API devolvendo o curso pelo <code>slug</code>, podemos unificar as três numa rota dinâmica <code>cursos/[slug]/page.tsx</code>.</p>
+
+  <section>
+    <h2>Passo 1 — Criar a rota dinâmica</h2>
+    <p>Apague as pastas <code>basico/</code>, <code>intermediario/</code> e <code>avancado/</code> dentro de <code>app/cursos/</code>. Crie:</p>
+
+    <div class="file-label">frontend/app/cursos/[slug]/page.tsx</div>
+    <pre><code>import { fetchFromApi } from "@/app/_lib/server-api"
+import { CourseLessons } from "@/app/_components/cursos/course-lessons"
+
+type Lesson = { id: number; title: string; duration: string; youtube_id: string }
+type CourseDetail = { slug: string; title: string; lessons: Lesson[] }
+
+export default async function CursoDetalhePage({
+    params,
+}: {
+    params: Promise&lt;{ slug: string }&gt;
+}) {
+    const { slug } = await params
+    const course = await fetchFromApi&lt;CourseDetail&gt;(`/courses.php?slug=${slug}`)
+
+    return &lt;CourseLessons course={course} /&gt;
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>Passo 2 — Extrair a parte interativa</h2>
+    <p>As páginas atuais têm <code>"use client"</code> porque controlam qual aula está tocando (<code>useState(0)</code>). Extraia essa parte pra um novo componente client:</p>
+
+    <div class="file-label">frontend/app/_components/cursos/course-lessons.tsx</div>
+    <pre><code>"use client"
+import { useState } from "react"
+
+type Lesson = { id: number; title: string; duration: string; youtube_id: string }
+
+export function CourseLessons({ course }: { course: { title: string; lessons: Lesson[] } }) {
+    const [aulaAtiva, setAulaAtiva] = useState(0)
+    const aula = course.lessons[aulaAtiva]
+
+    return (
+        &lt;div&gt;
+            {/* Use course.title, aula.title, aula.youtube_id */}
+            {/* O map de aulas vira course.lessons.map(...) */}
+            {/* Nomes de campo mudaram: titulo → title, youtubeId → youtube_id */}
+        &lt;/div&gt;
+    )
+}</code></pre>
+    <p>Cole o JSX das páginas antigas dentro desse componente, adaptando os nomes de campo.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="30-cursos-frontend.html">← Tarefa 30</a>
+    <a href="32-practice-frases-frontend.html">Tarefa 32 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="31" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

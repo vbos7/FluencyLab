@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 30 — Listar cursos</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 30</span>
+    <span class="badge badge-b">Aluno B</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Listar cursos no frontend</h1>
+
+  <p>Leia a <a href="24-cliente-api.html">tarefa 24</a> antes de começar (Server Components, fetchFromApi, withCredentials). A página <code>cursos/page.tsx</code> hoje tem <code>"use client"</code> desnecessário (não usa nenhum hook de browser) e um array de cursos fixo no código. Vamos remover o <code>"use client"</code> e buscar dados reais.</p>
+
+  <section>
+    <h2>Resultado esperado</h2>
+    <div class="file-label">frontend/app/cursos/page.tsx</div>
+    <pre><code>import Link from "next/link"
+import NavLayout from "../_layouts/nav-layout"
+import { fetchFromApi } from "@/app/_lib/server-api"
+
+type Course = { id: number; slug: string; title: string; description: string; level: string }
+
+export default async function CursosPage() {
+    const courses = await fetchFromApi&lt;Course[]&gt;("/courses.php")
+
+    return (
+        &lt;NavLayout&gt;
+            {/* ... */}
+            {courses.map((course) =&gt; (
+                &lt;Link key={course.slug} href={`/cursos/${course.slug}`}&gt;
+                    {/* use course.title, course.description */}
+                &lt;/Link&gt;
+            ))}
+        &lt;/NavLayout&gt;
+    )
+}</code></pre>
+
+    <div class="callout warn">
+      <strong>Campos visuais (cores, ícones) não estão no banco</strong>. O array antigo tinha <code>cor</code>, <code>emoji</code>, <code>shadow</code>. Crie um objeto de mapeamento local baseado no <code>slug</code>: <code>const visuais = { basico: { cor: "green", emoji: "🌱" }, ... }</code> e use <code>visuais[course.slug]</code> para acessar os estilos.
+    </div>
+  </section>
+
+  <div class="task-nav">
+    <a href="29-admin-frontend.html">← Tarefa 29</a>
+    <a href="31-curso-detalhe-frontend.html">Tarefa 31 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="30" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

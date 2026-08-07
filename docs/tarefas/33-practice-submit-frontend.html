@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 33 — Submeter e exibir a correção por IA</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 33</span>
+    <span class="badge badge-b">Aluno C</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Submeter e exibir a correção por IA</h1>
+
+  <p>A função <code>handleVerify</code> em <code>practice-controller.tsx</code> hoje calcula a correção localmente (Levenshtein — o protótipo de apresentação). Aqui você troca pela chamada real ao PHP que chama a OpenAI.</p>
+
+  <section>
+    <h2>Função adaptadora (converte resposta da IA para o formato da tela)</h2>
+    <pre><code>type AiFeedback = {
+    is_correct: boolean; score: number; overall_comment: string
+    mistakes: { type: string; original: string; suggestion: string; explanation_pt: string }[]
+    corrected_sentence: string; positive_points: string[]
+}
+
+function adaptAiFeedback(ai: AiFeedback, xp: number): Feedback {
+    const status = ai.score &gt;= 95 ? "perfect" : ai.score &gt;= 70 ? "good" : ai.score &gt;= 40 ? "partial" : "needs_work"
+    const titles = { perfect: "Perfeito!", good: "Muito bem!", partial: "Quase lá!", needs_work: "Continue praticando" }
+    return {
+        status,
+        title: titles[status],
+        message: ai.overall_comment,
+        corrections: ai.mistakes.map((m) =&gt; ({ wrong: m.original, correct: m.suggestion, explanation: m.explanation_pt })),
+        xp,
+    }
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>handleVerify assíncrona</h2>
+    <pre><code>import { apiClient } from "@/app/_lib/api"
+
+const [loading, setLoading] = useState(false)
+
+const handleVerify = async () =&gt; {
+    if (!answer.trim()) return
+    setLoading(true)
+
+    try {
+        const response = await apiClient.post("/practice/check-answer.php", {
+            phrase_id: phrase.id,
+            answer,
+        })
+        const fb = adaptAiFeedback(response.data.feedback, response.data.xp_earned)
+        setFeedback(fb)
+        setEarnedXp(fb.xp)
+        setShowXpToast(true)
+        setTimeout(() =&gt; setShowXpToast(false), 2000)
+    } catch (err) {
+        console.error("Erro ao corrigir:", err)
+    } finally {
+        setLoading(false)
+    }
+}</code></pre>
+    <p>Encontre o botão que chama <code>handleVerify</code> (provavelmente em <code>answer-form.tsx</code>) e adicione <code>disabled={loading}</code> + texto "Corrigindo..." enquanto aguarda.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="32-practice-frases-frontend.html">← Tarefa 32</a>
+    <a href="34-progress-frontend.html">Tarefa 34 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="33" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

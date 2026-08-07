@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 35 — Conectar o ranking</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 35</span>
+    <span class="badge badge-c">Aluno D</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Conectar o ranking</h1>
+
+  <p><code>ranking/page.tsx</code> é Server Component. Troque <code>USERS_LEADERBOARD</code> pela API:</p>
+
+  <div class="file-label">frontend/app/ranking/page.tsx</div>
+  <pre><code>import { fetchFromApi } from "@/app/_lib/server-api"
+
+type LeaderboardUser = { id: number; name: string; xp: number; level: number }
+
+export default async function RankingPage() {
+    const leaderboard = await fetchFromApi&lt;LeaderboardUser[]&gt;("/ranking.php")
+    // Já vem ordenado por XP e com level calculado — não precisa mais do .sort() nem getLevel()
+}</code></pre>
+
+  <div class="task-nav">
+    <a href="34-progress-frontend.html">← Tarefa 34</a>
+    <a href="36-planos-frontend.html">Tarefa 36 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="35" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

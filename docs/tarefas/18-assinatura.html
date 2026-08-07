@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 18 — Assinar plano</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 18</span>
+    <span class="badge badge-c">Aluno D</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Assinar plano</h1>
+
+  <p>Última tarefa de dados do seu módulo. Recebe um <code>plan_id</code>, valida se o plano existe, e registra a assinatura na tabela pivô <code>user_plan</code>.</p>
+
+  <section>
+    <h2>O arquivo</h2>
+    <div class="file-label">backend/api/plans-subscribe.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/cors.php';
+require_once __DIR__ . '/db.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { json_out(['error' =&gt; 'Método não permitido'], 405); exit; }
+if (!isset($_SESSION['user_id']))           { json_out(['error' =&gt; 'Não autenticado'], 401);      exit; }
+
+$body   = json_decode(file_get_contents('php://input'), true);
+$planId = (int) ($body['plan_id'] ?? 0);
+
+if (!$planId) { json_out(['errors' =&gt; ['plan_id obrigatório']], 422); exit; }
+
+$stmt = $pdo-&gt;prepare("SELECT * FROM plans WHERE id = ?");
+$stmt-&gt;execute([$planId]);
+$plan = $stmt-&gt;fetch();
+
+if (!$plan) { json_out(['error' =&gt; 'Plano não encontrado'], 404); exit; }
+
+// Data de expiração: null = vitalício, senão daqui 1 mês
+$expiresAt = ($plan['billing_period'] === 'lifetime')
+    ? null
+    : date('Y-m-d H:i:s', strtotime('+1 month'));
+
+$pdo-&gt;prepare(
+    "INSERT INTO user_plan (user_id, plan_id, expires_at) VALUES (?, ?, ?)"
+)-&gt;execute([$_SESSION['user_id'], $planId, $expiresAt]);
+
+json_out(['success' =&gt; true, 'plan' =&gt; $plan['name']], 201);</code></pre>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl -s -b /tmp/cookies.txt -X POST http://localhost:8000/api/plans-subscribe.php \
+  -H "Content-Type: application/json" \
+  -d '{"plan_id":2}'</code></pre>
+    <p>Deve devolver <code>{"success":true,"plan":"Pro"}</code>.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="17-planos.html">← Tarefa 17</a>
+    <a href="19-admin-stats.html">Tarefa 19 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="18" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

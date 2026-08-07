@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 04 — Login com sessão</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 04</span>
+    <span class="badge badge-a">Aluno A</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Login com sessão</h1>
+
+  <p>Mesma estrutura da <a href="03-registro.html">tarefa 03</a>. O novo aqui é <code>password_verify()</code> e uma dica de segurança importante.</p>
+
+  <section>
+    <h2>O arquivo</h2>
+
+    <div class="file-label">backend/api/auth/login.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/../cors.php';
+require_once __DIR__ . '/../db.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    json_out(['error' =&gt; 'Método não permitido'], 405);
+    exit;
+}
+
+$body     = json_decode(file_get_contents('php://input'), true);
+$email    = trim($body['email']    ?? '');
+$password = $body['password']      ?? '';
+
+if (empty($email) || empty($password)) {
+    json_out(['errors' =&gt; ['Email e senha são obrigatórios']], 422);
+    exit;
+}
+
+$stmt = $pdo-&gt;prepare("SELECT id, name, email, password_hash, role FROM users WHERE email = ?");
+$stmt-&gt;execute([$email]);
+$user = $stmt-&gt;fetch();
+
+// password_verify() compara a senha com o hash salvo
+if (!$user || !password_verify($password, $user['password_hash'])) {
+    json_out(['errors' =&gt; ['Credenciais inválidas']], 401);
+    exit;
+}
+
+$_SESSION['user_id'] = $user['id'];
+$_SESSION['role']    = $user['role'];
+
+json_out([
+    'success' =&gt; true,
+    'user' =&gt; [
+        'id'    =&gt; (int)$user['id'],
+        'name'  =&gt; $user['name'],
+        'email' =&gt; $user['email'],
+        'role'  =&gt; $user['role'],
+    ],
+]);</code></pre>
+
+    <div class="callout warn">
+      <strong>Por que "Credenciais inválidas" e não "Email não encontrado"?</strong><br>
+      Se você disser especificamente qual campo está errado, alguém mal-intencionado consegue descobrir quais emails estão cadastrados só tentando fazer login com vários. A mensagem genérica impede isso.
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar (salvando o cookie)</h2>
+    <pre><code># O -c salva o cookie PHPSESSID num arquivo
+curl -s -c /tmp/cookies.txt -X POST http://localhost:8000/api/auth/login.php \
+  -H "Content-Type: application/json" \
+  -d '{"email":"ana@test.com","password":"123456"}'</code></pre>
+    <p>Guarde o arquivo de cookie (<code>/tmp/cookies.txt</code>) — você vai precisar dele pra testar rotas protegidas nas próximas tarefas com o flag <code>-b /tmp/cookies.txt</code>.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="03-registro.html">← Tarefa 03</a>
+    <a href="05-logout.html">Tarefa 05 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="04" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

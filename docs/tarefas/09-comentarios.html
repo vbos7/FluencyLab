@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 09 — Comentários de aula (extra)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 09</span>
+    <span class="badge badge-b">Aluno B</span>
+    <span class="badge badge-extra">Extra</span>
+  </div>
+  <h1>Comentários de aula</h1>
+
+  <div class="callout">
+    <strong>Pode deixar pra depois</strong> — os comentários no frontend são só visuais hoje (não persistem). Pule pra <a href="10-frases.html">tarefa 10</a> se quiser ir logo pra prática com IA.
+  </div>
+
+  <section>
+    <h2>O que fazer (resumo)</h2>
+    <ol>
+      <li>Adicionar uma tabela <code>comments</code> ao schema SQL: <code>id</code>, <code>lesson_id</code> (FOREIGN KEY), <code>user_id</code> (FOREIGN KEY), <code>text</code> TEXT, <code>created_at</code>.</li>
+      <li>Criar <code>api/lessons/comments.php</code> (ou adicionar em <code>api/courses.php</code> com <code>?lesson_id=</code>).</li>
+      <li>GET sem sessão: retorna comentários daquela aula.</li>
+      <li>POST com sessão: insere um comentário, associando ao <code>$_SESSION['user_id']</code> — nunca deixe o cliente mandar o <code>user_id</code>, sempre pegue da sessão.</li>
+    </ol>
+    <pre><code>INSERT INTO comments (lesson_id, user_id, text)
+VALUES (?, $_SESSION['user_id'], ?)</code></pre>
+  </section>
+
+  <div class="task-nav">
+    <a href="08-detalhe-curso.html">← Tarefa 08</a>
+    <a href="10-frases.html">Tarefa 10 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="09" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

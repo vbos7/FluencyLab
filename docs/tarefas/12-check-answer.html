@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 12 — Submeter e corrigir tradução</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 12</span>
+    <span class="badge badge-b">Aluno C</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Submeter e corrigir tradução</h1>
+
+  <p>O endpoint central do app — une tudo: sessão, banco, e IA. O usuário manda uma tradução, a IA corrige, salvamos o resultado e calculamos o XP.</p>
+
+  <section>
+    <h2>O arquivo</h2>
+    <div class="file-label">backend/api/practice/check-answer.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/../cors.php';
+require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/AiService.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') { json_out(['error' =&gt; 'Método não permitido'], 405); exit; }
+if (!isset($_SESSION['user_id']))           { json_out(['error' =&gt; 'Não autenticado'], 401);      exit; }
+
+$body      = json_decode(file_get_contents('php://input'), true);
+$phraseId  = (int) ($body['phrase_id'] ?? 0);
+$resposta  = trim($body['answer']    ?? '');
+
+if (!$phraseId || empty($resposta)) { json_out(['errors' =&gt; ['phrase_id e answer obrigatórios']], 422); exit; }
+
+$stmt = $pdo-&gt;prepare("SELECT * FROM phrases WHERE id = ?");
+$stmt-&gt;execute([$phraseId]);
+$frase = $stmt-&gt;fetch();
+if (!$frase) { json_out(['error' =&gt; 'Frase não encontrada'], 404); exit; }
+
+// Chama a IA (pode demorar 1-3 segundos)
+try {
+    $ai       = new AiService();
+    $feedback = $ai-&gt;corrigirTraducao($frase['pt'], $frase['en'], $resposta);
+} catch (\Exception $e) {
+    json_out(['error' =&gt; 'Erro na IA: ' . $e-&gt;getMessage()], 500);
+    exit;
+}
+
+$score = (int) ($feedback['score'] ?? 0);
+$xp    = calcularXp($score);
+
+// Salva a tentativa no banco
+$pdo-&gt;prepare(
+    "INSERT INTO attempts (user_id, phrase_id, answer_given, ai_feedback, is_correct, score, xp_earned)
+     VALUES (?, ?, ?, ?, ?, ?, ?)"
+)-&gt;execute([
+    $_SESSION['user_id'], $phraseId, $resposta,
+    json_encode($feedback), $feedback['is_correct'] ? 1 : 0, $score, $xp,
+]);
+
+// Se acertou, credita pontos de ranking
+if ($feedback['is_correct']) {
+    $pdo-&gt;prepare("INSERT INTO ranking_points (user_id, points, reason) VALUES (?, ?, ?)")
+        -&gt;execute([$_SESSION['user_id'], $xp, 'Exercício correto']);
+}
+
+json_out(['feedback' =&gt; $feedback, 'xp_earned' =&gt; $xp]);
+
+function calcularXp(int $score): int {
+    if ($score &gt;= 95) return 25;
+    if ($score &gt;= 70) return 15;
+    if ($score &gt;= 40) return 8;
+    return 3;
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl -s -b /tmp/cookies.txt -X POST http://localhost:8000/api/practice/check-answer.php \
+  -H "Content-Type: application/json" \
+  -d '{"phrase_id":1,"answer":"I want a coffee please"}'</code></pre>
+    <p>Vai demorar 1-3 segundos (a IA está corrigindo). Retorna o feedback completo com <code>score</code>, <code>mistakes</code>, <code>positive_points</code>, etc.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="11-ai-service.html">← Tarefa 11</a>
+    <a href="13-stats.html">Tarefa 13 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="12" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

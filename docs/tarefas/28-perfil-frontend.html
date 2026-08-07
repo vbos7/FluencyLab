@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 28 — Conectar o perfil</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 28</span>
+    <span class="badge badge-a">Aluno A</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Conectar o perfil</h1>
+
+  <section>
+    <h2>Parte 1 — Buscar dados reais (Server Component)</h2>
+    <div class="file-label">frontend/app/profile/page.tsx</div>
+    <pre><code>import { fetchFromApi } from "@/app/_lib/server-api"
+
+type User = { id: number; name: string; email: string; phone: string | null; role: string }
+
+export default async function ProfilePage() {
+    const user = await fetchFromApi&lt;User&gt;("/profile.php")
+    // Use user.name, user.email no lugar do objeto USER fixo que existia antes
+    // Campos como xp, rankLabel etc. podem continuar mockados por enquanto
+
+    // Passe os dados reais pro dialog de edição:
+    // &lt;EditProfileDialog
+    //     initialName={user.name}
+    //     initialEmail={user.email}
+    //     initialPhone={user.phone ?? ""}
+    // /&gt;
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>Parte 2 — Salvar edição (Client Component)</h2>
+    <p>Em <code>edit-profile-dialog.tsx</code>, adicione a prop <code>initialPhone</code>, envie todos os campos (incluindo os de senha) e mostre os erros que o backend devolver.</p>
+
+    <div class="file-label">frontend/app/_components/profile/edit-profile-dialog.tsx</div>
+    <pre><code>import axios from "axios"
+import { apiClient } from "@/app/_lib/api"
+
+// ...dentro do componente:
+const [errors, setErrors] = useState&lt;string[]&gt;([])
+const [saving, setSaving] = useState(false)
+
+async function handleSave() {
+    setErrors([])
+    setSaving(true)
+    try {
+        await apiClient.put("/profile.php", {
+            name: form.nome,
+            email: form.email,
+            phone: form.telefone,
+            // O backend só troca a senha se new_password vier preenchido
+            current_password: form.senhaAtual,
+            new_password: form.novaSenha,
+            new_password_confirmation: form.confirmarSenha,
+        })
+        setOpen(false)
+        window.location.reload()  // recarrega para mostrar dados atualizados
+    } catch (err) {
+        // O PHP devolve { errors: [...] } com status 422
+        if (axios.isAxiosError(err) &amp;&amp; err.response?.data?.errors) {
+            setErrors(err.response.data.errors)
+        } else {
+            setErrors(["Não foi possível salvar. Tente novamente."])
+        }
+    } finally {
+        setSaving(false)
+    }
+}</code></pre>
+
+    <p>E renderize os erros logo antes dos botões de ação:</p>
+    <pre><code>{errors.length &gt; 0 &amp;&amp; (
+    &lt;ul className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-600"&gt;
+        {errors.map((e, i) =&gt; &lt;li key={i}&gt;• {e}&lt;/li&gt;)}
+    &lt;/ul&gt;
+)}</code></pre>
+
+    <div class="callout">
+      <strong>Por que enviar os campos de senha sempre?</strong> O backend checa se <code>new_password</code> está vazio — se estiver, ele ignora a troca de senha e só atualiza nome/email/telefone. Assim o mesmo endpoint serve pros dois casos, sem precisar de duas rotas.
+    </div>
+  </section>
+
+  <div class="task-nav">
+    <a href="27-logout-rotas-protegidas.html">← Tarefa 27</a>
+    <a href="29-admin-frontend.html">Tarefa 29 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="28" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

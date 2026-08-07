@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 29 — Conectar o painel admin (extra)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 29</span>
+    <span class="badge badge-a">Aluno A</span>
+    <span class="badge badge-extra">Extra</span>
+  </div>
+  <h1>Conectar o painel admin</h1>
+
+  <p>Mesmo padrão da tarefa 28 — Server Components buscando dados, Client Components para ações de editar/deletar.</p>
+
+  <ul>
+    <li><code>admin/dashboard/page.tsx</code>: <code>await fetchFromApi("/admin/stats.php")</code></li>
+    <li><code>admin/usuarios/page.tsx</code>: <code>await fetchFromApi("/admin/users.php")</code></li>
+    <li>Para editar/deletar usuário: <code>apiClient.put("/admin/users.php?id=5", {...})</code> e <code>apiClient.delete("/admin/users.php?id=5")</code></li>
+  </ul>
+
+  <div class="task-nav">
+    <a href="28-perfil-frontend.html">← Tarefa 28</a>
+    <a href="30-cursos-frontend.html">Tarefa 30 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="29" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

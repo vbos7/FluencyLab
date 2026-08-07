@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 34 — Conectar o progresso</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 34</span>
+    <span class="badge badge-c">Aluno D</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Conectar o progresso</h1>
+
+  <p><code>progress/page.tsx</code> já é Server Component. Troque os imports de dados fake pelas chamadas reais:</p>
+
+  <div class="file-label">frontend/app/progress/page.tsx</div>
+  <pre><code>import { fetchFromApi } from "@/app/_lib/server-api"
+
+type Stats = { totalPracticed: number; totalCorrect: number; userXp: number }
+type WeeklyPoint = { week: string; xp: number; treinos: number }
+type CalendarDay = { date: string; level: number }
+
+export default async function ProgressPage() {
+    const [stats, weeklyData, calendarData] = await Promise.all([
+        fetchFromApi&lt;Stats&gt;("/user/stats.php"),
+        fetchFromApi&lt;WeeklyPoint[]&gt;("/user/progress-weekly.php"),
+        fetchFromApi&lt;CalendarDay[]&gt;("/user/calendar.php"),
+    ])
+    // Passe stats, weeklyData, calendarData para os componentes
+    // no lugar de FAKE_STATS, FAKE_WEEKLY_DATA etc.
+}</code></pre>
+
+  <div class="callout tip">
+    <strong>Promise.all</strong> busca as 3 rotas em paralelo — mais rápido que 3 awaits sequenciais.
+  </div>
+
+  <div class="task-nav">
+    <a href="33-practice-submit-frontend.html">← Tarefa 33</a>
+    <a href="35-ranking-frontend.html">Tarefa 35 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="34" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

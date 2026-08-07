@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 07 — Listar cursos</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 07</span>
+    <span class="badge badge-b">Aluno B</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Listar cursos</h1>
+
+  <p>Primeira tarefa do seu módulo! Se ainda não leu a <a href="00-fundamentos.html">página de Fundamentos</a> e as tarefas 02, 03, leia antes — o esqueleto de endpoint lá vai ser o padrão aqui também.</p>
+
+  <section>
+    <h2>O que é novo</h2>
+    <ul>
+      <li>Rota <strong>pública</strong> — sem verificar sessão. Qualquer pessoa pode ver a lista de cursos.</li>
+      <li><code>$stmt-&gt;fetchAll()</code> em vez de <code>$stmt-&gt;fetch()</code> — retorna <strong>todas</strong> as linhas, não só a primeira.</li>
+      <li>Inserir as aulas de cada curso com INSERT SQL (dados reais, não mock).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>O arquivo</h2>
+    <div class="file-label">backend/api/courses.php (parte GET sem parâmetro)</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/cors.php';
+require_once __DIR__ . '/db.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    json_out(['error' =&gt; 'Método não permitido'], 405);
+    exit;
+}
+
+// Listagem geral (sem parâmetros)
+if (empty($_GET['slug'])) {
+    $stmt = $pdo-&gt;query("SELECT * FROM courses ORDER BY order_num");
+    json_out($stmt-&gt;fetchAll());
+    exit;
+}
+
+// Detalhe por slug — veja a tarefa 08
+</code></pre>
+
+    <div class="callout">
+      <strong>$pdo-&gt;query() vs $pdo-&gt;prepare()</strong><br>
+      Use <code>query()</code> quando a SQL não tem variáveis (sem perigo de injection). Use <code>prepare()</code> quando precisa de <code>?</code> pra inserir dados do usuário com segurança.
+    </div>
+  </section>
+
+  <section>
+    <h2>Inserir as aulas no banco</h2>
+    <p>Os cursos já vieram do schema.sql. As aulas, você insere agora — crie um INSERT pra cada aula (ou um arquivo <code>sql/seeds-aulas.sql</code>):</p>
+    <pre><code>INSERT INTO lessons (course_id, title, duration, youtube_id, order_num) VALUES
+(1, 'Aula 1 — Alfabeto em inglês', '8:08', 'X5TdMsc4YCg', 1),
+(1, 'Aula 2 — Números e cores',    '10:10','YOUTUBE_ID',  2),
+(1, 'Aula 3 — Dias da semana',     '9:05', 'YOUTUBE_ID',  3);
+-- Repita para course_id = 2 (intermediário) e 3 (avançado)</code></pre>
+    <pre><code>docker compose exec -T mysql mysql --default-character-set=utf8mb4 \
+  -u root -proot fluency_lab &lt; backend/sql/seeds-aulas.sql</code></pre>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl http://localhost:8000/api/courses.php</code></pre>
+    <p>Deve devolver os 3 cursos. Sem cookie, sem sessão — é público.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="06-perfil.html">← Tarefa 06</a>
+    <a href="08-detalhe-curso.html">Tarefa 08 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="07" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

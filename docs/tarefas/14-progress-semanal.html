@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 14 — Progresso semanal</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 14</span>
+    <span class="badge badge-c">Aluno D</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Progresso semanal</h1>
+
+  <p>Mesma ideia da tarefa anterior (COUNT/SUM), mas agrupando por semana com <strong>GROUP BY</strong>.</p>
+
+  <section>
+    <h2>O que é novo: GROUP BY</h2>
+    <pre><code>-- Conta quantas tentativas por semana do ano
+SELECT YEARWEEK(created_at, 1) AS semana, COUNT(*) AS total
+FROM attempts
+WHERE user_id = ?
+GROUP BY YEARWEEK(created_at, 1)</code></pre>
+    <p><code>YEARWEEK(data, 1)</code> converte uma data pra o número da semana do ano (ex: 202626 = semana 26 de 2026). <code>GROUP BY</code> agrupa todas as linhas daquela semana antes de contar/somar.</p>
+  </section>
+
+  <section>
+    <h2>O arquivo</h2>
+    <div class="file-label">backend/api/user/progress-weekly.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/../cors.php';
+require_once __DIR__ . '/../db.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') { json_out(['error' =&gt; 'Método não permitido'], 405); exit; }
+if (!isset($_SESSION['user_id']))          { json_out(['error' =&gt; 'Não autenticado'], 401);      exit; }
+
+$stmt = $pdo-&gt;prepare("
+    SELECT
+        YEARWEEK(created_at, 1)     AS ano_semana,
+        COALESCE(SUM(xp_earned), 0) AS xp,
+        COUNT(*)                    AS treinos
+    FROM attempts
+    WHERE user_id = ?
+      AND created_at &gt;= DATE_SUB(NOW(), INTERVAL 12 WEEK)
+    GROUP BY YEARWEEK(created_at, 1)
+    ORDER BY ano_semana
+");
+$stmt-&gt;execute([$_SESSION['user_id']]);
+$rows = $stmt-&gt;fetchAll();
+
+// Garante que sempre devolve 12 semanas (mesmo sem dados)
+$semanas = [];
+for ($i = 11; $i &gt;= 0; $i--) {
+    $semanas[date('YW', strtotime("-{$i} weeks"))] = [
+        'week' =&gt; 'Sem ' . (12 - $i), 'xp' =&gt; 0, 'treinos' =&gt; 0,
+    ];
+}
+foreach ($rows as $row) {
+    if (isset($semanas[$row['ano_semana']])) {
+        $semanas[$row['ano_semana']]['xp']      = (int) $row['xp'];
+        $semanas[$row['ano_semana']]['treinos'] = (int) $row['treinos'];
+    }
+}
+json_out(array_values($semanas));</code></pre>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl -s -b /tmp/cookies.txt http://localhost:8000/api/user/progress-weekly.php</code></pre>
+    <p>Deve devolver 12 objetos, um por semana, com <code>xp</code> e <code>treinos</code>.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="13-stats.html">← Tarefa 13</a>
+    <a href="15-calendario.html">Tarefa 15 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="14" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

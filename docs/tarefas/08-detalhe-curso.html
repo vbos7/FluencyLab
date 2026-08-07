@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 08 — Detalhe do curso + aulas (JOIN)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 08</span>
+    <span class="badge badge-b">Aluno B</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Detalhe do curso + aulas</h1>
+
+  <p>Aqui aparece o conceito mais importante do SQL relacional: o <strong>JOIN</strong>. É como você combina dados de duas tabelas relacionadas numa só consulta.</p>
+
+  <section>
+    <h2>O que é novo: JOIN</h2>
+    <p>Imagine duas tabelas:</p>
+    <pre><code>courses: id=1, slug='basico', title='Inglês Básico'
+lessons: id=1, course_id=1, title='Aula 1 — Alfabeto'
+         id=2, course_id=1, title='Aula 2 — Números'</code></pre>
+    <p>Um <code>JOIN</code> combina elas numa consulta só, relacionando pela coluna em comum (<code>course_id</code> ↔ <code>id</code>):</p>
+    <pre><code>SELECT * FROM courses
+JOIN lessons ON lessons.course_id = courses.id
+WHERE courses.slug = 'basico'</code></pre>
+    <p>Mas neste endpoint, fazemos duas queries separadas — mais fácil de entender e igualmente correto para o volume de dados que temos:</p>
+  </section>
+
+  <section>
+    <h2>Adicionando ao arquivo courses.php</h2>
+    <div class="file-label">backend/api/courses.php (continuação — caso com ?slug=)</div>
+    <pre><code>// Detalhe por slug: GET /api/courses.php?slug=basico
+if (!empty($_GET['slug'])) {
+    $slug = $_GET['slug'];
+
+    $stmt = $pdo-&gt;prepare("SELECT * FROM courses WHERE slug = ?");
+    $stmt-&gt;execute([$slug]);
+    $course = $stmt-&gt;fetch();
+
+    if (!$course) {
+        json_out(['error' =&gt; 'Curso não encontrado'], 404);
+        exit;
+    }
+
+    // Busca as aulas desse curso (a FOREIGN KEY garante que só vêm as aulas certas)
+    $stmt = $pdo-&gt;prepare(
+        "SELECT id, title, duration, youtube_id FROM lessons
+          WHERE course_id = ? ORDER BY order_num"
+    );
+    $stmt-&gt;execute([$course['id']]);
+    $course['lessons'] = $stmt-&gt;fetchAll();
+
+    json_out($course);
+    exit;
+}</code></pre>
+
+    <div class="callout tip">
+      <strong>$course['lessons'] = $stmt-&gt;fetchAll()</strong><br>
+      O PHP permite adicionar chaves novas a um array a qualquer momento. Aqui, "embutimos" o array de aulas dentro do array do curso antes de devolver tudo como JSON — é exatamente o formato que o Next.js espera.
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl "http://localhost:8000/api/courses.php?slug=basico"</code></pre>
+    <p>Deve devolver o curso com um array <code>lessons</code> com as aulas que você inseriu na tarefa 07.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="07-cursos.html">← Tarefa 07</a>
+    <a href="09-comentarios.html">Tarefa 09 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="08" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

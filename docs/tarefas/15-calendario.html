@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 15 — Calendário de atividade</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 15</span>
+    <span class="badge badge-c">Aluno D</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Calendário de atividade</h1>
+
+  <p>Mesmo padrão da tarefa 14, mas agrupando por <strong>dia</strong> em vez de semana. Devolve um "nível de intensidade" pra cada dia (0-3) que o frontend usa pra colorir o heatmap.</p>
+
+  <section>
+    <h2>O arquivo</h2>
+    <div class="file-label">backend/api/user/calendar.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/../cors.php';
+require_once __DIR__ . '/../db.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') { json_out(['error' =&gt; 'Método não permitido'], 405); exit; }
+if (!isset($_SESSION['user_id']))          { json_out(['error' =&gt; 'Não autenticado'], 401);      exit; }
+
+$stmt = $pdo-&gt;prepare("
+    SELECT DATE(created_at) AS date, COUNT(*) AS total
+    FROM attempts
+    WHERE user_id = ?
+      AND created_at &gt;= DATE_SUB(NOW(), INTERVAL 1 YEAR)
+    GROUP BY DATE(created_at)
+");
+$stmt-&gt;execute([$_SESSION['user_id']]);
+
+$resultado = array_map(function ($row) {
+    $count = (int) $row['total'];
+    $level = match (true) {
+        $count &gt;= 6 =&gt; 3,
+        $count &gt;= 3 =&gt; 2,
+        $count &gt;= 1 =&gt; 1,
+        default     =&gt; 0,
+    };
+    return ['date' =&gt; $row['date'], 'level' =&gt; $level];
+}, $stmt-&gt;fetchAll());
+
+json_out($resultado);</code></pre>
+
+    <div class="callout tip">
+      <strong>array_map()</strong> aplica uma função a cada elemento de um array e retorna o resultado. É como um loop, mas mais direto quando você só precisa transformar cada item.
+    </div>
+  </section>
+
+  <div class="task-nav">
+    <a href="14-progress-semanal.html">← Tarefa 14</a>
+    <a href="16-ranking.html">Tarefa 16 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="15" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

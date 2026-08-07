@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 32 — Carregar frases de prática</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 32</span>
+    <span class="badge badge-b">Aluno C</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Carregar frases de prática</h1>
+
+  <p><code>practice/page.tsx</code> já é um Server Component que passa as frases como prop pro <code>PracticeController</code> — a estrutura já está perfeita. Só troque a fonte dos dados.</p>
+
+  <div class="file-label">frontend/app/practice/page.tsx</div>
+  <pre><code>import { fetchFromApi } from "@/app/_lib/server-api"
+import { PracticeController } from "@/app/_components/practice/practice-controller"
+import NavLayout from "@/app/_layouts/nav-layout"
+
+type Phrase = { id: number; pt: string; en: string; difficulty: string; category: string }
+
+export default async function PracticePage() {
+    const phrases = await fetchFromApi&lt;Phrase[]&gt;("/practice/phrases.php")
+    // Não precisa de .flat() — a API já devolve lista achatada, não array de arrays
+
+    return (
+        &lt;NavLayout&gt;
+            &lt;PracticeController phrases={phrases} /&gt;
+        &lt;/NavLayout&gt;
+    )
+}</code></pre>
+
+  <div class="task-nav">
+    <a href="31-curso-detalhe-frontend.html">← Tarefa 31</a>
+    <a href="33-practice-submit-frontend.html">Tarefa 33 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="32" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

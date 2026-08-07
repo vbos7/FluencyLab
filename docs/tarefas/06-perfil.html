@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 06 — Ver e editar perfil</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 06</span>
+    <span class="badge badge-a">Aluno A</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Ver e editar perfil</h1>
+
+  <p>Mesmo padrão das anteriores — mas agora um arquivo responde a <strong>dois</strong> métodos HTTP (<code>GET</code> e <code>PUT</code>) dependendo do que o cliente pede.</p>
+
+  <section>
+    <h2>O que é novo</h2>
+    <ul>
+      <li>O mesmo arquivo responde tanto a <code>GET</code> (ver dados) quanto a <code>PUT</code> (editar).</li>
+      <li><code>UPDATE</code> com prepared statement (no lugar do <code>INSERT</code> que você já viu).</li>
+      <li>Validação do email: formato válido <strong>e</strong> único (mas o próprio usuário pode manter o dele → <code>id != ?</code>).</li>
+      <li><strong>Troca de senha opcional</strong>: confere a senha atual com <code>password_verify()</code> antes de gravar a nova com <code>password_hash()</code>.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Antes: coluna <code>phone</code> na tabela</h2>
+    <p>O perfil agora guarda telefone. Adicione a coluna <code>phone</code> na tabela <code>users</code> (no <code>schema.sql</code>, logo após <code>password_hash</code>):</p>
+    <pre><code>phone VARCHAR(20),</code></pre>
+    <p>Se o banco <strong>já existe</strong>, o <code>CREATE TABLE IF NOT EXISTS</code> não recria a tabela — rode um <code>ALTER</code> pra adicionar a coluna sem perder os dados:</p>
+    <pre><code>ALTER TABLE users ADD COLUMN phone VARCHAR(20) NULL AFTER password_hash;</code></pre>
+  </section>
+
+  <section>
+    <h2>O arquivo</h2>
+    <div class="file-label">backend/api/profile.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/cors.php';
+require_once __DIR__ . '/db.php';
+
+if (!isset($_SESSION['user_id'])) {
+    json_out(['error' =&gt; 'Não autenticado'], 401);
+    exit;
+}
+
+$userId = $_SESSION['user_id'];
+
+// ─── GET: devolve os dados do perfil ───────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $stmt = $pdo-&gt;prepare("SELECT id, name, email, phone, role, created_at FROM users WHERE id = ?");
+    $stmt-&gt;execute([$userId]);
+    json_out($stmt-&gt;fetch());
+    exit;
+}
+
+// ─── PUT: atualiza nome, email, telefone e (opcionalmente) a senha ───
+if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+    $body  = json_decode(file_get_contents('php://input'), true);
+    $name  = trim($body['name']  ?? '');
+    $email = trim($body['email'] ?? '');
+    $phone = trim($body['phone'] ?? '');
+
+    $errors = [];
+
+    if (empty($name)) {
+        $errors[] = 'Nome é obrigatório';
+    }
+    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = 'Email inválido';
+    }
+
+    // Email único — mas o próprio usuário pode manter o dele (id != ?)
+    $stmt = $pdo-&gt;prepare("SELECT id FROM users WHERE email = ? AND id != ?");
+    $stmt-&gt;execute([$email, $userId]);
+    if ($stmt-&gt;fetch()) {
+        $errors[] = 'Este email já está em uso';
+    }
+
+    // Troca de senha é OPCIONAL: só entra no fluxo se "new_password" veio preenchido
+    $newPassword      = $body['new_password'] ?? '';
+    $changingPassword = $newPassword !== '';
+
+    if ($changingPassword) {
+        $currentPassword = $body['current_password'] ?? '';
+        $confirm         = $body['new_password_confirmation'] ?? '';
+
+        // Confere a senha ATUAL antes de deixar trocar (segurança básica)
+        $stmt = $pdo-&gt;prepare("SELECT password_hash FROM users WHERE id = ?");
+        $stmt-&gt;execute([$userId]);
+        $row = $stmt-&gt;fetch();
+
+        if (!password_verify($currentPassword, $row['password_hash'])) {
+            $errors[] = 'Senha atual incorreta';
+        }
+        if (strlen($newPassword) &lt; 6) {
+            $errors[] = 'A nova senha precisa ter pelo menos 6 caracteres';
+        }
+        if ($newPassword !== $confirm) {
+            $errors[] = 'A confirmação da nova senha não coincide';
+        }
+    }
+
+    if (!empty($errors)) {
+        json_out(['errors' =&gt; $errors], 422);
+        exit;
+    }
+
+    // Monta o UPDATE incluindo a senha só quando ela está sendo trocada
+    if ($changingPassword) {
+        $hash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt = $pdo-&gt;prepare("UPDATE users SET name = ?, email = ?, phone = ?, password_hash = ? WHERE id = ?");
+        $stmt-&gt;execute([$name, $email, $phone, $hash, $userId]);
+    } else {
+        $stmt = $pdo-&gt;prepare("UPDATE users SET name = ?, email = ?, phone = ? WHERE id = ?");
+        $stmt-&gt;execute([$name, $email, $phone, $userId]);
+    }
+
+    // Devolve o perfil atualizado (sem o hash, claro)
+    $stmt = $pdo-&gt;prepare("SELECT id, name, email, phone, role FROM users WHERE id = ?");
+    $stmt-&gt;execute([$userId]);
+    json_out(['success' =&gt; true, 'user' =&gt; $stmt-&gt;fetch()]);
+    exit;
+}
+
+json_out(['error' =&gt; 'Método não permitido'], 405);</code></pre>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code># Ver perfil (GET) — repare no campo "phone"
+curl -s -b /tmp/cookies.txt http://localhost:8000/api/profile.php
+
+# Editar nome + telefone (PUT, sem trocar senha)
+curl -s -b /tmp/cookies.txt -X PUT http://localhost:8000/api/profile.php \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Ana Silva","email":"ana@test.com","phone":"+55 11 98888-7777"}'
+
+# Trocar a senha (senha atual errada → 422 "Senha atual incorreta")
+curl -s -b /tmp/cookies.txt -X PUT http://localhost:8000/api/profile.php \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Ana Silva","email":"ana@test.com","phone":"",
+       "current_password":"123456","new_password":"nova123",
+       "new_password_confirmation":"nova123"}'</code></pre>
+  </section>
+
+  <div class="task-nav">
+    <a href="05-logout.html">← Tarefa 05</a>
+    <a href="07-cursos.html">Tarefa 07 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="06" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

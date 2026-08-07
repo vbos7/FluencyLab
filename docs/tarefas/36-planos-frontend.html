@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 36 — Conectar os planos</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 36</span>
+    <span class="badge badge-c">Aluno D</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Conectar os planos</h1>
+
+  <p>Última tarefa! <code>planos/page.tsx</code> é Client Component com array fixo. Converta para Server Component e conecte o checkout.</p>
+
+  <section>
+    <h2>Listagem (Server Component)</h2>
+    <p>Remova <code>"use client"</code> e busque os planos reais:</p>
+    <pre><code>import { fetchFromApi } from "@/app/_lib/server-api"
+type Plan = { id: number; name: string; price: number; description: string; features: {label:string;included:boolean}[] }
+
+export default async function PlanosPage() {
+    const plans = await fetchFromApi&lt;Plan[]&gt;("/plans.php")
+    // renderize plans ao invés dos arrays fixos (featuresF, featuresP)
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>Checkout (substituir o setTimeout fake)</h2>
+    <p>Em <code>checkout-modal.tsx</code>, adicione uma prop <code>planId</code> e troque o <code>setTimeout</code>:</p>
+    <pre><code>import { apiClient } from "@/app/_lib/api"
+
+async function handleSubmit() {
+    setLoading(true)
+    try {
+        await apiClient.post("/plans-subscribe.php", { plan_id: planId })
+        setSuccess(true)
+    } catch {
+        console.error("Erro ao assinar plano")
+    } finally {
+        setLoading(false)
+    }
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>🎉 Projeto conectado de ponta a ponta!</h2>
+    <p>Com essa tarefa, tudo que estava mockado agora vem do banco de dados — passando pelo PHP, com correção de exercícios por IA real. Bom trabalho!</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="35-ranking-frontend.html">← Tarefa 35</a>
+    <a href="index.html">← Lista de tarefas</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="36" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

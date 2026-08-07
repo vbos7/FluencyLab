@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 26 — Conectar o registro</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 26</span>
+    <span class="badge badge-a">Aluno A</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Conectar o registro</h1>
+
+  <p>Mesmo padrão da tarefa 25, com uma pegadinha: o formulário atual em <code>register-form.tsx</code> não tem um campo de <strong>nome</strong>, mas o backend exige (<code>RegisterRequest</code> na tarefa 03). Você vai precisar adicionar o campo.</p>
+
+  <section>
+    <h2>Passos</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h3>Adicionar o campo nome</h3>
+        <p>Em <code>register-form.tsx</code>, adicione o estado e o input de nome, seguindo o mesmo padrão do campo de email que já existe no arquivo:</p>
+        <pre><code>const [name, setName] = useState("")
+// e o input correspondente com value={name} onChange={(e) => setName(e.target.value)}</code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h3>Função de registro</h3>
+        <pre><code>import { apiClient } from "@/app/_lib/api"
+
+async function handleRegister() {
+    setError(null)
+    setLoading(true)
+    try {
+        await apiClient.post("/auth/register.php", {
+            name,
+            email,
+            password,
+            password_confirmation: confirmPassword,  // nome que o PHP espera
+        })
+        router.push("/home")
+    } catch {
+        setError("Não foi possível criar a conta. Confira os dados.")
+    } finally {
+        setLoading(false)
+    }
+}</code></pre>
+        <div class="callout warn">
+          <strong>password_confirmation</strong> — o PHP verifica um campo com exatamente esse nome. Se você mandar <code>confirmPassword</code> ou <code>confirm_password</code>, a validação vai falhar.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="task-nav">
+    <a href="25-login-frontend.html">← Tarefa 25</a>
+    <a href="27-logout-rotas-protegidas.html">Tarefa 27 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="26" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

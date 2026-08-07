@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 25 — Conectar o login</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 25</span>
+    <span class="badge badge-a">Aluno A</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Conectar o login</h1>
+
+  <p>O <code>LoginForm</code> em <code>frontend/app/_components/auth/login-form.tsx</code> hoje só navega pra <code>/home</code> sem chamar nenhuma API. Aqui você troca isso por uma chamada real.</p>
+
+  <section>
+    <h2>Onde mexer</h2>
+    <p>No componente, o botão "Entrar" hoje é:</p>
+    <pre><code>onClick={() =&gt; {
+    localStorage.removeItem("fluency-lab:mode")
+    router.push("/home")
+}}</code></pre>
+    <p>Troque por:</p>
+  </section>
+
+  <section>
+    <h2>Código da função de login</h2>
+    <div class="file-label">frontend/app/_components/auth/login-form.tsx</div>
+    <pre><code>import { apiClient } from "@/app/_lib/api"
+
+const [error, setError]   = useState&lt;string | null&gt;(null)
+const [loading, setLoading] = useState(false)
+
+async function handleLogin() {
+    setError(null)
+    setLoading(true)
+
+    try {
+        await apiClient.post("/auth/login.php", { email, password })
+        // O PHP criou a sessão e o browser recebeu o cookie PHPSESSID
+        // Não precisamos guardar nada manualmente!
+        localStorage.removeItem("fluency-lab:mode")
+        router.push("/home")
+    } catch {
+        setError("Email ou senha incorretos.")
+    } finally {
+        setLoading(false)
+    }
+}</code></pre>
+
+    <pre><code>&lt;button onClick={handleLogin} disabled={loading}&gt;
+    {loading ? "Entrando..." : "Entrar"}
+&lt;/button&gt;
+{error &amp;&amp; &lt;p className="text-red-500 text-sm mt-2"&gt;{error}&lt;/p&gt;}</code></pre>
+
+    <div class="callout tip">
+      <strong>Por que não guardamos o cookie?</strong>
+      O browser faz isso automaticamente. Quando o PHP responde com o header <code>Set-Cookie: PHPSESSID=...</code>, o browser guarda e envia em todo request seguinte — o <code>withCredentials: true</code> do axios (configurado na tarefa 24) é o que autoriza isso cross-origin.
+    </div>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <p>Cadastre um usuário (pelo curl da tarefa 03 ou pela tela de registro depois da tarefa 26) e faça login pela tela. Abra DevTools → Application → Cookies → <code>localhost</code> e confirme que o cookie <code>PHPSESSID</code> aparece.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="24-cliente-api.html">← Tarefa 24</a>
+    <a href="26-registro-frontend.html">Tarefa 26 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="25" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefas do Backend — FluencyLab</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-header">
+    <h1>🚀 Tarefas do Backend — FluencyLab</h1>
+    <p>Backend em PHP puro + MySQL. Cada card é uma tarefa real, na ordem certa. Clique pra abrir o guia passo a passo.</p>
+  </header>
+
+  <div class="progress-summary">
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progress-bar-fill"></div>
+    </div>
+    <span class="progress-count" id="progress-count">0 / 0 tarefas concluídas</span>
+  </div>
+
+  <div class="task-list" style="margin-bottom: 30px;">
+    <a class="task-card" href="00-fundamentos.html">
+      <span class="task-num">📖</span>
+      <span class="task-title">Fundamentos — O que é uma API em PHP puro
+        <span class="task-desc">Leitura antes de começar: PDO, $_SESSION, json_encode, CORS — por que cada um existe.</span>
+      </span>
+      <span class="badge badge-todo">Comece aqui</span>
+    </a>
+  </div>
+
+  <p class="group-title">Auth e Perfil — Aluno A</p>
+  <div class="task-list">
+
+    <a class="task-card" href="01-schema-sql.html" data-task="01">
+      <span class="task-num">01</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Criar as tabelas no banco (SQL)
+        <span class="task-desc">CREATE TABLE com PRIMARY KEY e FOREIGN KEY — a estrutura do banco inteira.</span>
+      </span>
+      <span class="badge badge-a">Aluno A</span>
+      <span class="badge badge-done">✓ Feito</span>
+    </a>
+
+    <a class="task-card" href="02-arquivos-compartilhados.html" data-task="02">
+      <span class="task-num">02</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Arquivos compartilhados (db.php + cors.php)
+        <span class="task-desc">A conexão PDO e os headers CORS que todos os outros arquivos vão incluir.</span>
+      </span>
+      <span class="badge badge-a">Aluno A</span>
+      <span class="badge badge-done">✓ Feito</span>
+    </a>
+
+    <a class="task-card" href="03-registro.html" data-task="03">
+      <span class="task-num">03</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Registro de usuário
+        <span class="task-desc">api/auth/register.php — recebe JSON, valida, usa password_hash(), grava no banco.</span>
+      </span>
+      <span class="badge badge-a">Aluno A</span>
+    </a>
+
+    <a class="task-card" href="04-login.html" data-task="04">
+      <span class="task-num">04</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Login com sessão
+        <span class="task-desc">api/auth/login.php — password_verify(), $_SESSION['user_id'].</span>
+      </span>
+      <span class="badge badge-a">Aluno A</span>
+    </a>
+
+    <a class="task-card" href="05-logout.html" data-task="05">
+      <span class="task-num">05</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Logout
+        <span class="task-desc">api/auth/logout.php — session_destroy().</span>
+      </span>
+      <span class="badge badge-a">Aluno A</span>
+    </a>
+
+    <a class="task-card" href="06-perfil.html" data-task="06">
+      <span class="task-num">06</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Ver e editar perfil
+        <span class="task-desc">api/profile.php — GET devolve dados, PUT atualiza name/email.</span>
+      </span>
+      <span class="badge badge-a">Aluno A</span>
+    </a>
+  </div>
+
+  <p class="group-title">Cursos e Aulas — Aluno B</p>
+  <div class="task-list">
+
+    <a class="task-card" href="07-cursos.html" data-task="07">
+      <span class="task-num">07</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Listar cursos
+        <span class="task-desc">api/courses.php sem parâmetro — SELECT * FROM courses.</span>
+      </span>
+      <span class="badge badge-b">Aluno B</span>
+    </a>
+
+    <a class="task-card" href="08-detalhe-curso.html" data-task="08">
+      <span class="task-num">08</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Detalhe do curso + aulas (JOIN)
+        <span class="task-desc">api/courses.php?slug=basico — primeiro JOIN da sua vida.</span>
+      </span>
+      <span class="badge badge-b">Aluno B</span>
+    </a>
+
+    <a class="task-card" href="09-comentarios.html" data-task="09" data-optional="1">
+      <span class="task-num">09</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Comentários de aula <span class="badge badge-extra" style="margin-left:6px;">extra</span>
+        <span class="task-desc">Pode ficar pra depois — GET/POST de comentários por aula.</span>
+      </span>
+      <span class="badge badge-b">Aluno B</span>
+    </a>
+  </div>
+
+  <p class="group-title">Prática e Correção por IA — Aluno C</p>
+  <div class="task-list">
+
+    <a class="task-card" href="10-frases.html" data-task="10">
+      <span class="task-num">10</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Listar frases de prática
+        <span class="task-desc">api/practice/phrases.php — com filtros ?category= e ?difficulty=.</span>
+      </span>
+      <span class="badge badge-b">Aluno C</span>
+    </a>
+
+    <a class="task-card" href="11-ai-service.html" data-task="11">
+      <span class="task-num">11</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Serviço de correção por IA (cURL)
+        <span class="task-desc">AiService.php — chamando a API da OpenAI com cURL, sem Composer.</span>
+      </span>
+      <span class="badge badge-b">Aluno C</span>
+    </a>
+
+    <a class="task-card" href="12-check-answer.html" data-task="12">
+      <span class="task-num">12</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Submeter e corrigir tradução
+        <span class="task-desc">api/practice/check-answer.php — usa o AiService, grava em attempts, calcula XP.</span>
+      </span>
+      <span class="badge badge-b">Aluno C</span>
+    </a>
+  </div>
+
+  <p class="group-title">Progresso, Ranking e Planos — Aluno D</p>
+  <div class="task-list">
+
+    <a class="task-card" href="13-stats.html" data-task="13">
+      <span class="task-num">13</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Estatísticas do usuário
+        <span class="task-desc">api/user/stats.php — COUNT(*) e SUM() em cima da tabela attempts.</span>
+      </span>
+      <span class="badge badge-c">Aluno D</span>
+    </a>
+
+    <a class="task-card" href="14-progress-semanal.html" data-task="14">
+      <span class="task-num">14</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Progresso semanal
+        <span class="task-desc">api/user/progress-weekly.php — GROUP BY semana.</span>
+      </span>
+      <span class="badge badge-c">Aluno D</span>
+    </a>
+
+    <a class="task-card" href="15-calendario.html" data-task="15">
+      <span class="task-num">15</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Calendário de atividade
+        <span class="task-desc">api/user/calendar.php — GROUP BY dia, nível de intensidade.</span>
+      </span>
+      <span class="badge badge-c">Aluno D</span>
+    </a>
+
+    <a class="task-card" href="16-ranking.html" data-task="16">
+      <span class="task-num">16</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Leaderboard (ranking)
+        <span class="task-desc">api/ranking.php — LEFT JOIN + SUM + ORDER BY, cálculo de nível.</span>
+      </span>
+      <span class="badge badge-c">Aluno D</span>
+    </a>
+
+    <a class="task-card" href="17-planos.html" data-task="17">
+      <span class="task-num">17</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Planos (Free/Pro)
+        <span class="task-desc">api/plans.php — SELECT simples + JSON decode das features.</span>
+      </span>
+      <span class="badge badge-c">Aluno D</span>
+    </a>
+
+    <a class="task-card" href="18-assinatura.html" data-task="18">
+      <span class="task-num">18</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Assinar plano
+        <span class="task-desc">api/plans-subscribe.php — INSERT em user_plan com data de expiração.</span>
+      </span>
+      <span class="badge badge-c">Aluno D</span>
+    </a>
+  </div>
+
+  <p class="group-title">Extras / Admin — Aluno A (depois)</p>
+  <div class="task-list">
+
+    <a class="task-card" href="19-admin-stats.html" data-task="19" data-optional="1">
+      <span class="task-num">19</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Estatísticas do admin <span class="badge badge-extra" style="margin-left:6px;">extra</span>
+        <span class="task-desc">api/admin/stats.php — totais globais, só admin acessa.</span>
+      </span>
+      <span class="badge badge-a">Aluno A</span>
+    </a>
+
+    <a class="task-card" href="20-admin-usuarios.html" data-task="20" data-optional="1">
+      <span class="task-num">20</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Gerenciar usuários (admin) <span class="badge badge-extra" style="margin-left:6px;">extra</span>
+        <span class="task-desc">api/admin/users.php — GET/PUT/DELETE de usuários.</span>
+      </span>
+      <span class="badge badge-a">Aluno A</span>
+    </a>
+
+    <a class="task-card" href="21-admin-frases.html" data-task="21" data-optional="1">
+      <span class="task-num">21</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Listar frases (admin) <span class="badge badge-extra" style="margin-left:6px;">extra</span>
+        <span class="task-desc">api/admin/phrases.php — com contagem de tentativas por frase.</span>
+      </span>
+      <span class="badge badge-a">Aluno A</span>
+    </a>
+  </div>
+
+  <p class="group-title">🔌 Integração com o Frontend (Next.js) — mesma pessoa do backend</p>
+  <div class="task-list" style="margin-bottom: 16px;">
+    <a class="task-card" href="24-cliente-api.html">
+      <span class="task-num">📖</span>
+      <span class="task-title">Fundamentos do frontend — como o Next.js fala com o PHP
+        <span class="task-desc">Leitura + setup: axios com withCredentials, Server vs Client Components, cookie de sessão.</span>
+      </span>
+      <span class="badge badge-todo">Comece aqui</span>
+    </a>
+  </div>
+
+  <p class="group-title" style="margin-top: 0;">Auth, Perfil e Admin no frontend — Aluno A</p>
+  <div class="task-list">
+    <a class="task-card" href="25-login-frontend.html" data-task="25">
+      <span class="task-num">25</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Conectar o login
+        <span class="task-desc">LoginForm chamando /api/auth/login.php — cookie de sessão criado automaticamente.</span>
+      </span>
+      <span class="badge badge-a">Aluno A</span>
+    </a>
+    <a class="task-card" href="26-registro-frontend.html" data-task="26">
+      <span class="task-num">26</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Conectar o registro
+        <span class="task-desc">RegisterForm chamando /api/auth/register.php.</span>
+      </span>
+      <span class="badge badge-a">Aluno A</span>
+    </a>
+    <a class="task-card" href="27-logout-rotas-protegidas.html" data-task="27">
+      <span class="task-num">27</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Logout e proteger rotas
+        <span class="task-desc">LogoutButton + middleware.ts checando o cookie PHPSESSID.</span>
+      </span>
+      <span class="badge badge-a">Aluno A</span>
+    </a>
+    <a class="task-card" href="28-perfil-frontend.html" data-task="28">
+      <span class="task-num">28</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Conectar o perfil
+        <span class="task-desc">profile/page.tsx buscando /api/profile.php, dialog salvando via PUT.</span>
+      </span>
+      <span class="badge badge-a">Aluno A</span>
+    </a>
+    <a class="task-card" href="29-admin-frontend.html" data-task="29" data-optional="1">
+      <span class="task-num">29</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Conectar o painel admin <span class="badge badge-extra" style="margin-left:6px;">extra</span></span>
+      <span class="badge badge-a">Aluno A</span>
+    </a>
+  </div>
+
+  <p class="group-title">Cursos e Prática no frontend — Aluno B / Aluno C</p>
+  <div class="task-list">
+    <a class="task-card" href="30-cursos-frontend.html" data-task="30">
+      <span class="task-num">30</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Listar cursos
+        <span class="task-desc">cursos/page.tsx buscando /api/courses.php.</span>
+      </span>
+      <span class="badge badge-b">Aluno B</span>
+    </a>
+    <a class="task-card" href="31-curso-detalhe-frontend.html" data-task="31">
+      <span class="task-num">31</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Detalhe do curso e aulas
+        <span class="task-desc">cursos/[slug]/page.tsx buscando /api/courses.php?slug=X.</span>
+      </span>
+      <span class="badge badge-b">Aluno B</span>
+    </a>
+    <a class="task-card" href="32-practice-frases-frontend.html" data-task="32">
+      <span class="task-num">32</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Carregar frases de prática
+        <span class="task-desc">practice/page.tsx buscando /api/practice/phrases.php.</span>
+      </span>
+      <span class="badge badge-b">Aluno C</span>
+    </a>
+    <a class="task-card" href="33-practice-submit-frontend.html" data-task="33">
+      <span class="task-num">33</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Submeter e exibir a correção por IA
+        <span class="task-desc">PracticeController chamando /api/practice/check-answer.php com a correção real.</span>
+      </span>
+      <span class="badge badge-b">Aluno C</span>
+    </a>
+  </div>
+
+  <p class="group-title">Progress, Ranking e Planos no frontend — Aluno D</p>
+  <div class="task-list">
+    <a class="task-card" href="34-progress-frontend.html" data-task="34">
+      <span class="task-num">34</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Conectar o progresso
+        <span class="task-desc">progress/page.tsx buscando stats, weekly e calendar.</span>
+      </span>
+      <span class="badge badge-c">Aluno D</span>
+    </a>
+    <a class="task-card" href="35-ranking-frontend.html" data-task="35">
+      <span class="task-num">35</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Conectar o ranking
+        <span class="task-desc">ranking/page.tsx buscando /api/ranking.php.</span>
+      </span>
+      <span class="badge badge-c">Aluno D</span>
+    </a>
+    <a class="task-card" href="36-planos-frontend.html" data-task="36">
+      <span class="task-num">36</span>
+      <input type="checkbox" class="task-checkbox" title="Marcar como concluída">
+      <span class="task-title">Conectar os planos
+        <span class="task-desc">planos/page.tsx buscando /api/plans.php, checkout chamando /api/plans-subscribe.php.</span>
+      </span>
+      <span class="badge badge-c">Aluno D</span>
+    </a>
+  </div>
+
+  <footer class="page-footer">
+    Dúvida sobre ambiente, convenções ou divisão de tarefas? Veja o
+    <a href="../GUIA_DESENVOLVIMENTO.md">guia de desenvolvimento</a>.
+  </footer>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

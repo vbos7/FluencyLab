@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 13 — Estatísticas do usuário</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 13</span>
+    <span class="badge badge-c">Aluno D</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Estatísticas do usuário</h1>
+
+  <p>Seu módulo é focado em <strong>consultas SQL de agregação</strong> — somar e contar dados que já existem no banco. Não tem lógica de negócio complexa, mas é onde o SQL realmente brilha. Leia a <a href="00-fundamentos.html">página de Fundamentos</a> antes, especialmente a parte de PDO.</p>
+
+  <section>
+    <h2>Funções SQL novas: COUNT e SUM</h2>
+    <pre><code>-- Conta quantas linhas existem para user_id = 5
+SELECT COUNT(*) FROM attempts WHERE user_id = 5
+
+-- Soma a coluna xp_earned de todas as tentativas desse usuário
+SELECT SUM(xp_earned) FROM attempts WHERE user_id = 5
+
+-- Conta apenas as corretas
+SELECT COUNT(*) FROM attempts WHERE user_id = 5 AND is_correct = 1</code></pre>
+    <p>Podemos fazer tudo numa query só com <code>CASE WHEN</code>:</p>
+    <pre><code>SELECT
+    COUNT(*) AS totalPracticed,
+    SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) AS totalCorrect,
+    COALESCE(SUM(xp_earned), 0) AS userXp
+FROM attempts
+WHERE user_id = ?</code></pre>
+    <p><code>COALESCE(SUM(...), 0)</code>: se não houver nenhuma tentativa, <code>SUM()</code> retorna <code>NULL</code>. O <code>COALESCE</code> substitui <code>NULL</code> por 0.</p>
+  </section>
+
+  <section>
+    <h2>O arquivo</h2>
+    <div class="file-label">backend/api/user/stats.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/../cors.php';
+require_once __DIR__ . '/../db.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') { json_out(['error' =&gt; 'Método não permitido'], 405); exit; }
+if (!isset($_SESSION['user_id']))          { json_out(['error' =&gt; 'Não autenticado'], 401);      exit; }
+
+$stmt = $pdo-&gt;prepare("
+    SELECT
+        COUNT(*) AS totalPracticed,
+        SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) AS totalCorrect,
+        COALESCE(SUM(xp_earned), 0) AS userXp
+    FROM attempts WHERE user_id = ?
+");
+$stmt-&gt;execute([$_SESSION['user_id']]);
+$row = $stmt-&gt;fetch();
+
+json_out([
+    'totalPracticed' =&gt; (int) $row['totalPracticed'],
+    'totalCorrect'   =&gt; (int) $row['totalCorrect'],
+    'userXp'         =&gt; (int) $row['userXp'],
+]);</code></pre>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl -s -b /tmp/cookies.txt http://localhost:8000/api/user/stats.php</code></pre>
+    <p>Pratica algumas frases (tarefa 12) e teste de novo — os números devem mudar.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="12-check-answer.html">← Tarefa 12</a>
+    <a href="14-progress-semanal.html">Tarefa 14 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="13" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>

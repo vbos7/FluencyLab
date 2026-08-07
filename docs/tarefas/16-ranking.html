@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarefa 16 — Leaderboard (ranking)</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="wrap task-page">
+
+  <a class="back-link" href="index.html">← Voltar para a lista de tarefas</a>
+
+  <div class="task-header">
+    <span class="task-num-big">Tarefa 16</span>
+    <span class="badge badge-c">Aluno D</span>
+    <span class="badge badge-todo">Pendente</span>
+  </div>
+  <h1>Leaderboard (ranking)</h1>
+
+  <p>A consulta mais "SQL" do módulo: <strong>LEFT JOIN</strong> + <strong>SUM</strong> + <strong>GROUP BY</strong> + <strong>ORDER BY</strong> numa tacada só.</p>
+
+  <section>
+    <h2>O que é novo: LEFT JOIN</h2>
+    <pre><code>SELECT u.id, u.name, COALESCE(SUM(rp.points), 0) AS xp
+FROM users u
+LEFT JOIN ranking_points rp ON rp.user_id = u.id
+GROUP BY u.id, u.name
+ORDER BY xp DESC</code></pre>
+    <p><code>LEFT JOIN</code> inclui todos os usuários mesmo que não tenham nenhum ponto em <code>ranking_points</code> (aparecem com <code>xp = 0</code>). Um <code>INNER JOIN</code> normal excluiria esses usuários.</p>
+  </section>
+
+  <section>
+    <h2>O arquivo</h2>
+    <div class="file-label">backend/api/ranking.php</div>
+    <pre><code>&lt;?php
+require_once __DIR__ . '/cors.php';
+require_once __DIR__ . '/db.php';
+
+// Público — qualquer pessoa pode ver o ranking
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') { json_out(['error' =&gt; 'Método não permitido'], 405); exit; }
+
+$stmt = $pdo-&gt;query("
+    SELECT u.id, u.name, COALESCE(SUM(rp.points), 0) AS xp
+    FROM users u
+    LEFT JOIN ranking_points rp ON rp.user_id = u.id
+    GROUP BY u.id, u.name
+    ORDER BY xp DESC
+    LIMIT 30
+");
+
+$lista = array_map(function ($user) {
+    $xp    = (int) $user['xp'];
+    $nivel = 1;
+    while ($xp &gt;= $nivel * 150) $nivel++;   // nível N exige N×150 de XP
+    return ['id' =&gt; $user['id'], 'name' =&gt; $user['name'], 'xp' =&gt; $xp, 'level' =&gt; $nivel];
+}, $stmt-&gt;fetchAll());
+
+json_out($lista);</code></pre>
+  </section>
+
+  <section>
+    <h2>Como testar</h2>
+    <pre><code>curl http://localhost:8000/api/ranking.php</code></pre>
+    <p>Sem cookie — é público. Pratica algumas frases com dois usuários diferentes pra ver a disputa de posições.</p>
+  </section>
+
+  <div class="task-nav">
+    <a href="15-calendario.html">← Tarefa 15</a>
+    <a href="17-planos.html">Tarefa 17 →</a>
+  </div>
+  <button class="mark-done-btn" id="mark-done-btn" data-task="16" style="margin-top:16px;">Marcar como concluído</button>
+
+</div>
+<script src="assets/progress.js"></script>
+</body>
+</html>
