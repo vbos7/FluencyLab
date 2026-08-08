@@ -1,16 +1,27 @@
 -- FluencyLab — Schema do banco de dados
 --
--- IMPORTANTE: use a flag --default-character-set=utf8mb4 para evitar
--- problemas de encoding com acentos no MySQL!
+-- Este arquivo é a ÚNICA fonte de verdade do banco. Não altere tabelas na mão:
+-- edite aqui, commite, e cada aluno roda o comando abaixo depois do pull.
 --
--- Execute com (IMPORTANTE: a flag charset deve vir logo após "mysql"):
---   docker compose exec -T mysql mysql --default-character-set=utf8mb4 \
---     -u root -proot fluency_lab < backend/sql/schema.sql
+--   ./scripts/db-reset.sh
 --
--- Para resetar o banco do zero (apaga tudo e recria):
---   docker compose exec mysql mysql -u root -proot \
---     -e "DROP DATABASE IF EXISTS fluency_lab; CREATE DATABASE fluency_lab;"
---   e rode o schema de novo com o comando acima.
+-- O script dropa o banco e roda este arquivo do zero. Parece agressivo, mas é
+-- o que garante que a estrutura fique igual em todas as máquinas: um
+-- "CREATE TABLE IF NOT EXISTS" NÃO adiciona coluna nova em tabela que já
+-- existe — ele simplesmente não faz nada, e o erro só aparece em runtime.
+--
+-- Como o banco está sempre vazio quando este arquivo roda, os INSERTs do fim
+-- não precisam de proteção contra duplicata.
+--
+-- Na primeira vez você nem precisa do script: o docker-compose monta este
+-- arquivo em /docker-entrypoint-initdb.d/, então o `docker compose up` já
+-- sobe com o banco pronto.
+
+-- Declara o encoding DESTE arquivo para o servidor. Sem isto, o cliente mysql
+-- assume latin1 quando roda sem locale definido (é o caso do init automático
+-- do container) e converte os bytes UTF-8 mais uma vez, gravando "InglÃªs"
+-- no lugar de "Inglês". Tem que vir antes de qualquer INSERT com acento.
+SET NAMES utf8mb4;
 
 -- ─── MÓDULO A — Auth/Perfil ──────────────────────────────────────────────────
 
@@ -104,9 +115,10 @@ CREATE TABLE IF NOT EXISTS user_plan (
 
 -- ─── Dados iniciais ───────────────────────────────────────────────────────────
 
--- TRUNCATE para evitar duplicatas em re-execuções
-TRUNCATE TABLE plans;
-TRUNCATE TABLE courses;
+-- Nada de TRUNCATE aqui: o MySQL recusa truncar tabela referenciada por uma
+-- foreign key (erro 1701), e tanto `plans` quanto `courses` são referenciadas
+-- por `user_plan` e `lessons`. Como o db-reset.sh sempre roda com o banco
+-- recém-criado, não há duplicata possível.
 
 INSERT INTO courses (slug, title, description, level, order_num) VALUES
 ('basico',       'Inglês Básico',        'Vocabulário essencial, cumprimentos e frases do dia a dia.',        'basico',       1),
