@@ -7,11 +7,17 @@
  *   2. Inicia a sessão PHP (para ler/gravar $_SESSION)
  *   3. Responde imediatamente a requisições OPTIONS (preflight do browser)
  */
+<<<<<<< HEAD
 require_once __DIR__ . '/env.php';
 
 // Origem do Next.js autorizada a chamar esta API. O default cobre o
 // `npm run dev` padrão; mude APP_ORIGIN no .env se usar outra porta.
 header('Access-Control-Allow-Origin: ' . env('APP_ORIGIN', 'http://localhost:3000'));
+=======
+// APP_ORIGIN vem do docker-compose.yml e acompanha a FRONTEND_PORT.
+// O default cobre quem roda o PHP fora do Docker.
+header('Access-Control-Allow-Origin: ' . (getenv('APP_ORIGIN') ?: 'http://localhost:3000'));
+>>>>>>> a55ceeb (feat: adicionar arquivo .env.example, configurar docker-compose e script de reset do banco)
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
