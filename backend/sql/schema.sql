@@ -1,21 +1,28 @@
 -- FluencyLab — Schema do banco de dados
 --
--- Este arquivo é a ÚNICA fonte de verdade do banco. Não altere tabelas na mão:
--- edite aqui, commite, e cada aluno roda o comando abaixo depois do pull.
+-- Este arquivo é a fonte de verdade da estrutura do banco. Pode ser rodado
+-- várias vezes sem quebrar (tabelas usam IF NOT EXISTS, seeds usam
+-- ON DUPLICATE KEY UPDATE).
 --
+-- No banco COMPARTILHADO (DBaaS), aplique assim — uma pessoa roda, vale para todos:
+--   mysql -h fluencylab.mysql.dbaas.com.br -u SEU_USUARIO -p \
+--     --default-character-set=utf8mb4 SEU_BANCO < backend/sql/schema.sql
+--
+-- No banco local do docker compose:
 --   ./scripts/db-reset.sh
 --
--- O script dropa o banco e roda este arquivo do zero. Parece agressivo, mas é
--- o que garante que a estrutura fique igual em todas as máquinas: um
--- "CREATE TABLE IF NOT EXISTS" NÃO adiciona coluna nova em tabela que já
--- existe — ele simplesmente não faz nada, e o erro só aparece em runtime.
+-- ATENÇÃO À LIMITAÇÃO: "CREATE TABLE IF NOT EXISTS" não altera tabela que já
+-- existe. Se você ADICIONAR UMA COLUNA aqui, ela não aparece num banco já
+-- criado — rodar este arquivo não vai dar erro, simplesmente não faz nada, e o
+-- bug só aparece em runtime. Nesse caso escreva também o ALTER TABLE:
+--   ALTER TABLE users ADD COLUMN phone VARCHAR(20);
+-- rode no compartilhado, e mantenha a coluna aqui para quem criar do zero.
 --
--- Como o banco está sempre vazio quando este arquivo roda, os INSERTs do fim
--- não precisam de proteção contra duplicata.
---
--- Na primeira vez você nem precisa do script: o docker-compose monta este
--- arquivo em /docker-entrypoint-initdb.d/, então o `docker compose up` já
--- sobe com o banco pronto.
+-- Consequência disso que já mordeu: se o banco compartilhado tiver sido criado
+-- ANTES de `plans.name` virar UNIQUE, os seeds duplicam a cada reaplicação.
+-- Sintoma: SELECT COUNT(*) FROM plans devolve mais que 2. Correção, uma vez só:
+--   DELETE p1 FROM plans p1 JOIN plans p2 ON p1.name = p2.name AND p1.id > p2.id;
+--   ALTER TABLE plans ADD UNIQUE (name);
 
 -- Declara o encoding DESTE arquivo para o servidor. Sem isto, o cliente mysql
 -- assume latin1 quando roda sem locale definido (é o caso do init automático
@@ -95,7 +102,8 @@ CREATE TABLE IF NOT EXISTS ranking_points (
 
 CREATE TABLE IF NOT EXISTS plans (
     id             INT AUTO_INCREMENT PRIMARY KEY,
-    name           VARCHAR(50)    NOT NULL,
+    -- UNIQUE para o seed lá embaixo poder usar ON DUPLICATE KEY UPDATE
+    name           VARCHAR(50)    NOT NULL UNIQUE,
     price          DECIMAL(10,2)  NOT NULL,
     description    TEXT,
     features       JSON,                         -- lista de features incluídas
@@ -115,16 +123,25 @@ CREATE TABLE IF NOT EXISTS user_plan (
 
 -- ─── Dados iniciais ───────────────────────────────────────────────────────────
 
--- Nada de TRUNCATE aqui: o MySQL recusa truncar tabela referenciada por uma
--- foreign key (erro 1701), e tanto `plans` quanto `courses` são referenciadas
--- por `user_plan` e `lessons`. Como o db-reset.sh sempre roda com o banco
--- recém-criado, não há duplicata possível.
+-- Nada de TRUNCATE: o MySQL recusa truncar tabela referenciada por foreign key
+-- (erro 1701), e `plans` e `courses` são referenciadas por `user_plan` e `lessons`.
+--
+-- ON DUPLICATE KEY UPDATE em vez de INSERT puro para o arquivo poder rodar de
+-- novo sem quebrar: na primeira vez insere, nas seguintes atualiza o conteúdo.
+-- É o que permite corrigir um texto de curso aqui e reaplicar no banco
+-- compartilhado sem duplicar linha nem dar erro 1062.
 
 INSERT INTO courses (slug, title, description, level, order_num) VALUES
 ('basico',       'Inglês Básico',        'Vocabulário essencial, cumprimentos e frases do dia a dia.',        'basico',       1),
 ('intermediario','Inglês Intermediário', 'Gramática, tempos verbais e conversação mais fluente.',             'intermediario',2),
-('avancado',     'Inglês Avançado',      'Expressões idiomáticas, escrita formal e fluência avançada.',       'avancado',     3);
+('avancado',     'Inglês Avançado',      'Expressões idiomáticas, escrita formal e fluência avançada.',       'avancado',     3)
+ON DUPLICATE KEY UPDATE
+    title = VALUES(title), description = VALUES(description),
+    level = VALUES(level), order_num = VALUES(order_num);
 
 INSERT INTO plans (name, price, description, billing_period) VALUES
 ('Free', 0.00, 'Acesso gratuito com recursos básicos', 'monthly'),
-('Pro',  4.99, 'Acesso completo vitalício',            'lifetime');
+('Pro',  4.99, 'Acesso completo vitalício',            'lifetime')
+ON DUPLICATE KEY UPDATE
+    price = VALUES(price), description = VALUES(description),
+    billing_period = VALUES(billing_period);

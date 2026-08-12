@@ -4,8 +4,11 @@ services:
     container_name: fluencylab-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASS:-root}
-      MYSQL_DATABASE: ${DB_NAME:-fluency_lab}
+      # Fixos de propósito: este é o banco LOCAL do container, descartável.
+      # Não use as variáveis do .env aqui — lá ficam as credenciais do banco
+      # compartilhado, e misturar os dois só gera confusão sobre em qual você está.
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: fluency_lab
     ports:
       # 3307 no host para não colidir com um MySQL já instalado na máquina
       # (MAMP usa 8889, Homebrew usa 3306). Dentro da rede do compose é 3306.
@@ -39,9 +42,9 @@ services:
       # interna (3306), não a publicada no host.
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_NAME: ${DB_NAME:-fluency_lab}
+      DB_NAME: fluency_lab
       DB_USER: root
-      DB_PASS: ${DB_PASS:-root}
+      DB_PASS: root
       # Origem autorizada no CORS. Só precisa mudar se você trocar FRONTEND_PORT.
       APP_ORIGIN: http://localhost:${FRONTEND_PORT:-3000}
     depends_on:
