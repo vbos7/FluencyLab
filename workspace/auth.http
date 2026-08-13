@@ -1,0 +1,32 @@
+### Fluency Lab — Auth endpoints
+@baseUrl = http://localhost:8000/api
+
+### Registrar novo usuário
+# @name register
+POST {{baseUrl}}/auth/register.php
+Content-Type: application/json
+
+{
+  "name": "João Silva",
+  "email": "joao@example.com",
+  "password": "senha123",
+  "password_confirmation": "senha123"
+}
+
+### Login
+# @name login
+POST {{baseUrl}}/auth/login.php
+Content-Type: application/json
+
+{
+  "email": "joao@example.com",
+  "password": "senha123"
+}
+
+### Quem sou eu (requer sessão ativa do login/registro)
+# @name me
+GET {{baseUrl}}/auth/me.php
+
+### Logout
+# @name logout
+POST {{baseUrl}}/auth/logout.php

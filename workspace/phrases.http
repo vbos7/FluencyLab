@@ -1,0 +1,18 @@
+### Fluency Lab — Practice / Phrases endpoints
+@baseUrl = http://localhost:8000/api
+
+### Listar todas as frases
+# @name allPhrases
+GET {{baseUrl}}/practice/phrases.php
+
+### Filtrar por categoria
+# @name phrasesByCategory
+GET {{baseUrl}}/practice/phrases.php?category=Trabalho
+
+### Filtrar por dificuldade
+# @name phrasesByDifficulty
+GET {{baseUrl}}/practice/phrases.php?difficulty=easy
+
+### Filtrar por categoria + dificuldade
+# @name phrasesFiltered
+GET {{baseUrl}}/practice/phrases.php?category=Trabalho&difficulty=easy
