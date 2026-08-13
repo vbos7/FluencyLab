@@ -1,0 +1,126 @@
+-- FluencyLab — Frases de prática (seed da tabela `phrases`)
+--
+-- Gerado a partir de frontend/app/_lib/practice.ts, que era a fonte temporária
+-- enquanto o endpoint de frases não existia. A partir daqui o banco é a fonte.
+--
+-- 100 frases em 10 categorias:
+-- Cotidiano, Trabalho, Viagem, Restaurante, Estudo, Tecnologia, Saúde, Compras, Emoções, Emergência.
+--
+-- Como aplicar no banco compartilhado:
+--   mysql -h SEU_HOST -u SEU_USUARIO -p --default-character-set=utf8mb4 \
+--     SEU_BANCO < backend/sql/seed-phrases.sql
+--
+-- Pode rodar mais de uma vez: o ON DUPLICATE KEY UPDATE atualiza a frase
+-- existente em vez de duplicar ou dar erro de chave primária. Nenhuma linha é
+-- apagada, então as tentativas já registradas em `attempts` continuam válidas.
+
+-- Declara o encoding do arquivo. Sem isto o cliente mysql pode assumir latin1
+-- e gravar "Saúde" como "SaÃºde".
+SET NAMES utf8mb4;
+
+INSERT INTO phrases (id, pt, en, difficulty, category) VALUES
+    (1, 'Eu sou bonito', 'I''m beautiful', 'easy', 'Cotidiano'),
+    (2, 'Eu estou feliz', 'I am happy', 'easy', 'Cotidiano'),
+    (3, 'Eu estou cansado', 'I am tired', 'easy', 'Cotidiano'),
+    (4, 'Eu acordo cedo todos os dias', 'I wake up early every day', 'medium', 'Cotidiano'),
+    (5, 'Eu gosto de ouvir música', 'I like listening to music', 'medium', 'Cotidiano'),
+    (6, 'Eu moro com minha família', 'I live with my family', 'medium', 'Cotidiano'),
+    (7, 'Eu tento melhorar um pouco a cada dia', 'I try to improve a little every day', 'hard', 'Cotidiano'),
+    (8, 'Às vezes eu prefiro ficar em casa', 'Sometimes I prefer to stay at home', 'hard', 'Cotidiano'),
+    (9, 'Eu sempre procuro aprender coisas novas', 'I always try to learn new things', 'hard', 'Cotidiano'),
+    (10, 'Minha rotina muda dependendo do dia', 'My routine changes depending on the day', 'hard', 'Cotidiano'),
+    (11, 'Eu estou no trabalho', 'I am at work', 'easy', 'Trabalho'),
+    (12, 'Eu começo às oito', 'I start at eight', 'easy', 'Trabalho'),
+    (13, 'Eu gosto do meu trabalho', 'I like my job', 'easy', 'Trabalho'),
+    (14, 'Eu preciso terminar este relatório', 'I need to finish this report', 'medium', 'Trabalho'),
+    (15, 'A reunião começa em dez minutos', 'The meeting starts in ten minutes', 'medium', 'Trabalho'),
+    (16, 'Nós estamos trabalhando em um novo projeto', 'We are working on a new project', 'medium', 'Trabalho'),
+    (17, 'Este projeto exige muita atenção', 'This project requires a lot of attention', 'hard', 'Trabalho'),
+    (18, 'Precisamos melhorar nossa comunicação', 'We need to improve our communication', 'hard', 'Trabalho'),
+    (19, 'O prazo final é no final da semana', 'The deadline is at the end of the week', 'hard', 'Trabalho'),
+    (20, 'Estamos analisando novas estratégias', 'We are analyzing new strategies', 'hard', 'Trabalho'),
+    (21, 'Onde fica o aeroporto?', 'Where is the airport?', 'easy', 'Viagem'),
+    (22, 'Eu preciso de um táxi', 'I need a taxi', 'easy', 'Viagem'),
+    (23, 'Meu voo sai hoje', 'My flight leaves today', 'easy', 'Viagem'),
+    (24, 'Eu tenho uma reserva no hotel', 'I have a reservation at the hotel', 'medium', 'Viagem'),
+    (25, 'Quanto custa esta passagem?', 'How much is this ticket?', 'medium', 'Viagem'),
+    (26, 'O voo está atrasado', 'The flight is delayed', 'medium', 'Viagem'),
+    (27, 'Eu perdi minha bagagem no aeroporto', 'I lost my luggage at the airport', 'hard', 'Viagem'),
+    (28, 'Este é meu primeiro voo internacional', 'This is my first international flight', 'hard', 'Viagem'),
+    (29, 'Preciso confirmar minha reserva', 'I need to confirm my reservation', 'hard', 'Viagem'),
+    (30, 'Estamos esperando o embarque começar', 'We are waiting for boarding to start', 'hard', 'Viagem'),
+    (31, 'Eu quero água', 'I want water', 'easy', 'Restaurante'),
+    (32, 'O cardápio por favor', 'The menu please', 'easy', 'Restaurante'),
+    (33, 'A conta por favor', 'The bill please', 'easy', 'Restaurante'),
+    (34, 'Eu gostaria de um café', 'I would like a coffee', 'medium', 'Restaurante'),
+    (35, 'Este prato é muito bom', 'This dish is very good', 'medium', 'Restaurante'),
+    (36, 'Você tem sobremesa?', 'Do you have dessert?', 'medium', 'Restaurante'),
+    (37, 'Este restaurante é muito famoso', 'This restaurant is very famous', 'hard', 'Restaurante'),
+    (38, 'Eu gostaria de experimentar algo novo', 'I would like to try something new', 'hard', 'Restaurante'),
+    (39, 'A comida demorou um pouco', 'The food took a while', 'hard', 'Restaurante'),
+    (40, 'Você pode recomendar um prato?', 'Can you recommend a dish?', 'hard', 'Restaurante'),
+    (41, 'Eu estudo inglês', 'I study English', 'easy', 'Estudo'),
+    (42, 'Eu tenho uma prova', 'I have a test', 'easy', 'Estudo'),
+    (43, 'Eu gosto de aprender', 'I like learning', 'easy', 'Estudo'),
+    (44, 'Eu estou estudando para a prova', 'I am studying for the test', 'medium', 'Estudo'),
+    (45, 'Eu preciso ler este livro', 'I need to read this book', 'medium', 'Estudo'),
+    (46, 'A aula começa agora', 'The class starts now', 'medium', 'Estudo'),
+    (47, 'Eu aprendi algo novo hoje', 'I learned something new today', 'hard', 'Estudo'),
+    (48, 'Este exercício é um pouco difícil', 'This exercise is a little difficult', 'hard', 'Estudo'),
+    (49, 'Eu preciso praticar todos os dias', 'I need to practice every day', 'hard', 'Estudo'),
+    (50, 'Estudar idiomas abre muitas portas', 'Studying languages opens many doors', 'hard', 'Estudo'),
+    (51, 'Meu celular acabou a bateria', 'My phone died', 'easy', 'Tecnologia'),
+    (52, 'A internet caiu', 'The internet is down', 'easy', 'Tecnologia'),
+    (53, 'Meu computador está lento', 'My computer is slow', 'easy', 'Tecnologia'),
+    (54, 'Eu esqueci minha senha', 'I forgot my password', 'medium', 'Tecnologia'),
+    (55, 'O aplicativo não abre', 'The app won''t open', 'medium', 'Tecnologia'),
+    (56, 'Eu preciso atualizar o sistema', 'I need to update the system', 'medium', 'Tecnologia'),
+    (57, 'Este site está fora do ar', 'This website is down', 'hard', 'Tecnologia'),
+    (58, 'Eu preciso reiniciar o computador', 'I need to restart the computer', 'hard', 'Tecnologia'),
+    (59, 'Eu baixei um arquivo grande', 'I downloaded a large file', 'hard', 'Tecnologia'),
+    (60, 'Estamos testando uma nova ferramenta', 'We are testing a new tool', 'hard', 'Tecnologia'),
+    (61, 'Eu estou doente', 'I am sick', 'easy', 'Saúde'),
+    (62, 'Eu tenho febre', 'I have a fever', 'easy', 'Saúde'),
+    (63, 'Eu tenho dor de cabeça', 'I have a headache', 'easy', 'Saúde'),
+    (64, 'Eu preciso descansar', 'I need to rest', 'medium', 'Saúde'),
+    (65, 'Eu estou me sentindo melhor', 'I am feeling better', 'medium', 'Saúde'),
+    (66, 'Eu preciso de um médico', 'I need a doctor', 'medium', 'Saúde'),
+    (67, 'Eu marquei uma consulta', 'I scheduled an appointment', 'hard', 'Saúde'),
+    (68, 'Eu preciso tomar este remédio', 'I need to take this medicine', 'hard', 'Saúde'),
+    (69, 'Estou tentando cuidar melhor da minha saúde', 'I am trying to take better care of my health', 'hard', 'Saúde'),
+    (70, 'Exercício físico é importante', 'Physical exercise is important', 'hard', 'Saúde'),
+    (71, 'Quanto custa isso?', 'How much is this?', 'easy', 'Compras'),
+    (72, 'Eu quero comprar isso', 'I want to buy this', 'easy', 'Compras'),
+    (73, 'Você aceita cartão?', 'Do you accept card?', 'easy', 'Compras'),
+    (74, 'Tem desconto?', 'Is there a discount?', 'medium', 'Compras'),
+    (75, 'Eu estou apenas olhando', 'I am just looking', 'medium', 'Compras'),
+    (76, 'Você tem outro tamanho?', 'Do you have another size?', 'medium', 'Compras'),
+    (77, 'Eu gostaria de experimentar isso', 'I would like to try this', 'hard', 'Compras'),
+    (78, 'Este produto parece muito bom', 'This product looks very good', 'hard', 'Compras'),
+    (79, 'Estou comparando os preços', 'I am comparing prices', 'hard', 'Compras'),
+    (80, 'Eu volto depois para comprar', 'I will come back later to buy it', 'hard', 'Compras'),
+    (81, 'Eu estou feliz', 'I am happy', 'easy', 'Emoções'),
+    (82, 'Eu estou triste', 'I am sad', 'easy', 'Emoções'),
+    (83, 'Eu estou nervoso', 'I am nervous', 'easy', 'Emoções'),
+    (84, 'Eu estou animado', 'I am excited', 'medium', 'Emoções'),
+    (85, 'Eu estou preocupado', 'I am worried', 'medium', 'Emoções'),
+    (86, 'Eu estou relaxado', 'I am relaxed', 'medium', 'Emoções'),
+    (87, 'Eu estou muito motivado hoje', 'I am very motivated today', 'hard', 'Emoções'),
+    (88, 'Estou tentando manter a calma', 'I am trying to stay calm', 'hard', 'Emoções'),
+    (89, 'Às vezes eu me sinto perdido', 'Sometimes I feel lost', 'hard', 'Emoções'),
+    (90, 'Eu estou aprendendo a controlar minhas emoções', 'I am learning to control my emotions', 'hard', 'Emoções'),
+    (91, 'Me ajude', 'Help me', 'easy', 'Emergência'),
+    (92, 'Chame a polícia', 'Call the police', 'easy', 'Emergência'),
+    (93, 'Chame uma ambulância', 'Call an ambulance', 'easy', 'Emergência'),
+    (94, 'Eu preciso de ajuda agora', 'I need help now', 'medium', 'Emergência'),
+    (95, 'Alguém está ferido', 'Someone is injured', 'medium', 'Emergência'),
+    (96, 'Há um incêndio', 'There is a fire', 'medium', 'Emergência'),
+    (97, 'Eu perdi meus documentos', 'I lost my documents', 'hard', 'Emergência'),
+    (98, 'Meu carro quebrou na estrada', 'My car broke down on the road', 'hard', 'Emergência'),
+    (99, 'Eu preciso falar com um policial', 'I need to speak to a police officer', 'hard', 'Emergência'),
+    (100, 'Por favor me ajude imediatamente', 'Please help me immediately', 'hard', 'Emergência')
+ON DUPLICATE KEY UPDATE
+    pt         = VALUES(pt),
+    en         = VALUES(en),
+    difficulty = VALUES(difficulty),
+    category   = VALUES(category);
