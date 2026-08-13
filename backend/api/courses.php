@@ -53,3 +53,5 @@ try {
     json_out(['error' => 'Erro interno no servidor'], 500);
     exit;
 }
+
+?>
