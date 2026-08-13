@@ -29,6 +29,7 @@ if ($host === '' || $name === '' || $user === '') {
     ], JSON_UNESCAPED_UNICODE));
 }
 
+
 $pdo = new PDO(
     "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4",
     $user,
@@ -40,3 +41,4 @@ $pdo = new PDO(
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]
 );
+ ?>
