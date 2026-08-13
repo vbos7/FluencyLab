@@ -1,6 +1,5 @@
 -- FluencyLab — Schema do banco de dados
 --
-<<<<<<< HEAD
 -- Este arquivo é a fonte de verdade da estrutura do banco. Pode ser rodado
 -- várias vezes sem quebrar (tabelas usam IF NOT EXISTS, seeds usam
 -- ON DUPLICATE KEY UPDATE).
@@ -24,24 +23,6 @@
 -- Sintoma: SELECT COUNT(*) FROM plans devolve mais que 2. Correção, uma vez só:
 --   DELETE p1 FROM plans p1 JOIN plans p2 ON p1.name = p2.name AND p1.id > p2.id;
 --   ALTER TABLE plans ADD UNIQUE (name);
-=======
--- Este arquivo é a ÚNICA fonte de verdade do banco. Não altere tabelas na mão:
--- edite aqui, commite, e cada aluno roda o comando abaixo depois do pull.
---
---   ./scripts/db-reset.sh
---
--- O script dropa o banco e roda este arquivo do zero. Parece agressivo, mas é
--- o que garante que a estrutura fique igual em todas as máquinas: um
--- "CREATE TABLE IF NOT EXISTS" NÃO adiciona coluna nova em tabela que já
--- existe — ele simplesmente não faz nada, e o erro só aparece em runtime.
---
--- Como o banco está sempre vazio quando este arquivo roda, os INSERTs do fim
--- não precisam de proteção contra duplicata.
---
--- Na primeira vez você nem precisa do script: o docker-compose monta este
--- arquivo em /docker-entrypoint-initdb.d/, então o `docker compose up` já
--- sobe com o banco pronto.
->>>>>>> a55ceeb (feat: adicionar arquivo .env.example, configurar docker-compose e script de reset do banco)
 
 -- Declara o encoding DESTE arquivo para o servidor. Sem isto, o cliente mysql
 -- assume latin1 quando roda sem locale definido (é o caso do init automático
@@ -142,7 +123,6 @@ CREATE TABLE IF NOT EXISTS user_plan (
 
 -- ─── Dados iniciais ───────────────────────────────────────────────────────────
 
-<<<<<<< HEAD
 -- Nada de TRUNCATE: o MySQL recusa truncar tabela referenciada por foreign key
 -- (erro 1701), e `plans` e `courses` são referenciadas por `user_plan` e `lessons`.
 --
@@ -150,12 +130,6 @@ CREATE TABLE IF NOT EXISTS user_plan (
 -- novo sem quebrar: na primeira vez insere, nas seguintes atualiza o conteúdo.
 -- É o que permite corrigir um texto de curso aqui e reaplicar no banco
 -- compartilhado sem duplicar linha nem dar erro 1062.
-=======
--- Nada de TRUNCATE aqui: o MySQL recusa truncar tabela referenciada por uma
--- foreign key (erro 1701), e tanto `plans` quanto `courses` são referenciadas
--- por `user_plan` e `lessons`. Como o db-reset.sh sempre roda com o banco
--- recém-criado, não há duplicata possível.
->>>>>>> a55ceeb (feat: adicionar arquivo .env.example, configurar docker-compose e script de reset do banco)
 
 INSERT INTO courses (slug, title, description, level, order_num) VALUES
 ('basico',       'Inglês Básico',        'Vocabulário essencial, cumprimentos e frases do dia a dia.',        'basico',       1),
