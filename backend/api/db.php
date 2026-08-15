@@ -14,6 +14,10 @@
  * Sem padrão para as credenciais de propósito: se o .env estiver faltando, o erro
  * é "access denied" na hora, e não uma conexão silenciosa num banco errado.
  */
+
+
+
+
 require_once __DIR__ . '/env.php';
 
 $host = env('DB_HOST');
