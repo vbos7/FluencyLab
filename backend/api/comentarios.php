@@ -1,4 +1,5 @@
 <?php
+
 require_once __DIR__ . '/cors.php';
 require_once __DIR__ . '/db.php';
 
@@ -24,11 +25,17 @@ try {
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // POST /api/comentarios.php  Body: { lesson_id, user_id, content, parent_id? }
+        // Precisa estar logado — user_id vem da sessão, não do body
+        if (empty($_SESSION['user_id'])) {
+            json_out(['error' => 'Você precisa estar logado para comentar'], 401);
+            exit;
+        }
+
+        // POST /api/comentarios.php  Body: { lesson_id, content, parent_id? }
         $input = json_decode(file_get_contents("php://input"), true);
 
-        if (empty($input['lesson_id']) || empty($input['user_id']) || empty($input['content'])) {
-            json_out(['error' => 'lesson_id, user_id e content são obrigatórios'], 400);
+        if (empty($input['lesson_id']) || empty($input['content'])) {
+            json_out(['error' => 'lesson_id e content são obrigatórios'], 400);
             exit;
         }
 
@@ -38,7 +45,7 @@ try {
         );
         $stmt->execute([
             $input['lesson_id'],
-            $input['user_id'],
+            $_SESSION['user_id'], // 👈 vem da sessão, não do body
             $input['parent_id'] ?? null,
             trim($input['content'])
         ]);
@@ -53,5 +60,3 @@ try {
     error_log($e->getMessage());
     json_out(['error' => 'Erro interno no servidor'], 500);
 }
-
-?>

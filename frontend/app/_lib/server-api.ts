@@ -1,26 +1,23 @@
 import { cookies } from "next/headers"
 
-export async function fetchFromApi<T = unknown>(path: string): Promise<T> {
-    const cookieStore = await cookies()
-    const cookieHeader = cookieStore.toString() // ex: "PHPSESSID=abc123"
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
+const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:8000/api";
+
+export async function fetchFromApi<T>(path: string): Promise<T> {
+    const cookieStore = await cookies();
+
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+       cache: "no-store",
         headers: {
-            Accept: "application/json",
-            Cookie: cookieHeader, // repassa o cookie do usuário pro PHP
+            Cookie: cookieStore.toString(), // sempre busca dado fresco; troque depois se quiser cache
         },
-        cache: "no-store",
-    })
+    });
 
-    if (!res.ok) throw new Error(`Erro ao buscar ${path}: ${res.status}`)
-    return res.json()
-}
+    if (!res.ok) {
+        throw new Error(`Erro ao buscar ${path}: ${res.status}`);
+    }
 
-export type AuthUser = {
-    id: number
-    name: string
-    email: string
-    role: "student" | "admin"
+    return res.json();
 }
 
 /**

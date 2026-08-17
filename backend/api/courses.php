@@ -11,8 +11,12 @@ try {
     // Listagem geral: GET /api/cursos.php
     if (empty($_GET['slug'])) {
         $stmt = $pdo->query(
-            "SELECT id, slug, title, description, level, order_num
-             FROM courses ORDER BY order_num"
+            "SELECT c.id, c.slug, c.title, c.description, c.level, c.order_num,
+                COUNT(l.id) AS total_lessons
+         FROM courses c
+         LEFT JOIN lessons l ON l.course_id = c.id
+         GROUP BY c.id
+         ORDER BY c.order_num"
         );
         json_out($stmt->fetchAll());
         exit;

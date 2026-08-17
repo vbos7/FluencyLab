@@ -9,6 +9,8 @@ import { FAKE_STATS, computeStats } from "@/app/_lib/progress"
 import { CoursesCard } from "@/app/_components/home/courses-card";
 import CursosPage from "../cursos/page"
 import ProModal from "@/app/_components/pro-modal";
+import { User } from "../_lib/utils"
+import { fetchFromApi } from "../_lib/server-api"
 
 
 const USER = {
@@ -19,7 +21,11 @@ const USER = {
     streak: 7,
 }
 
-export default function HomePage() {
+type Users = { id: number; name: string; email: string; phone: string | null; role: string }
+
+export default async function HomePage() {
+
+    const user = await fetchFromApi<Users>("/profile.php")
     const stats = computeStats(FAKE_STATS)
 
     return (
@@ -27,7 +33,7 @@ export default function HomePage() {
             <ProModal />
             <OnboardingDialog />
             <div className="page-enter relative mx-auto min-h-dvh max-w-5xl bg-white px-4 pb-24 sm:px-6 lg:px-8">
-                <WelcomeHeader name={USER.name} />
+                <WelcomeHeader name={user.name} />
 
                 <div className="m-5 flex flex-col">
                     <LevelCard
