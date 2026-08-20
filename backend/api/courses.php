@@ -7,8 +7,28 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     exit;
 }
 
+// Verifica se o usuário logado tem plano premium ativo (e não expirado)
+function usuarioTemPremium(PDO $pdo): bool {
+    if (empty($_SESSION['user_id'])) {
+        return false; // nem logado, então não é premium
+    }
+
+   $stmt = $pdo->prepare(
+        "SELECT up.id
+         FROM user_plan up
+         JOIN plans p ON p.id = up.plan_id
+         WHERE up.user_id = ?
+           AND up.status = 'active'
+           AND p.name = 'Pro'
+           AND (up.expires_at IS NULL OR up.expires_at > NOW())
+         LIMIT 1"
+    );
+    
+    $stmt->execute([$_SESSION['user_id']]);
+    return (bool) $stmt->fetch();
+}
+
 try {
-    // Listagem geral: GET /api/cursos.php
     if (empty($_GET['slug'])) {
         $stmt = $pdo->query(
             "SELECT c.id, c.slug, c.title, c.description, c.level, c.order_num,
@@ -22,7 +42,6 @@ try {
         exit;
     }
 
-    // Detalhe por slug: GET /api/cursos.php?slug=basico
     $slug = $_GET['slug'];
 
     $stmt = $pdo->prepare(
@@ -37,25 +56,36 @@ try {
         exit;
     }
 
-    // Busca as aulas desse curso
     $stmt = $pdo->prepare(
-        "SELECT id, title, duration, youtube_id, order_num
+        "SELECT id, title, duration, youtube_id, order_num, is_free
          FROM lessons WHERE course_id = ? ORDER BY order_num"
     );
     $stmt->execute([$course['id']]);
-    $course['lessons'] = $stmt->fetchAll();
+    $lessons = $stmt->fetchAll();
 
-    // Campos calculados, já prontos pro front usar
-    $course['total_lessons'] = count($course['lessons']);
-    $course['total_duration'] = array_sum(array_column($course['lessons'], 'duration'));
+    $temPremium = usuarioTemPremium($pdo);
+
+    // Remove o youtube_id de aulas bloqueadas, pra ninguém "roubar" o vídeo pelo Network
+    foreach ($lessons as &$lesson) {
+        $lesson['is_free'] = (bool) $lesson['is_free'];
+        $lesson['locked'] = !$lesson['is_free'] && !$temPremium;
+
+        if ($lesson['locked']) {
+            $lesson['youtube_id'] = null; // esconde o vídeo de quem não tem acesso
+        }
+    }
+    unset($lesson);
+
+    $course['lessons'] = $lessons;
+    $course['total_lessons'] = count($lessons);
+    $course['total_duration'] = array_sum(array_column($lessons, 'duration'));
+    $course['user_has_premium'] = $temPremium;
 
     json_out($course);
     exit;
 
 } catch (PDOException $e) {
-    error_log($e->getMessage()); // erro real só no log do servidor
+    error_log($e->getMessage());
     json_out(['error' => 'Erro interno no servidor'], 500);
     exit;
 }
-
-?>

@@ -116,7 +116,7 @@ export default async function CursosPage() {
           </div>
 
         </div>
-
+            
       </main>
     </NavLayout>
   );
