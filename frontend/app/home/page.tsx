@@ -5,7 +5,7 @@ import { LevelCard } from "@/app/_components/home/level-card"
 import { PracticeCard } from "@/app/_components/home/practice-card"
 import { RankingTop3 } from "@/app/_components/home/ranking-top3"
 import { StatsCards } from "@/app/_components/progress/stats-cards"
-import { FAKE_STATS, computeStats } from "@/app/_lib/progress"
+import { computeStats, type DashboardData } from "@/app/_lib/progress"
 import { CoursesCard } from "@/app/_components/home/courses-card";
 import CursosPage from "../cursos/page"
 import ProModal from "@/app/_components/pro-modal";
@@ -26,7 +26,8 @@ type Users = { id: number; name: string; email: string; phone: string | null; ro
 export default async function HomePage() {
 
     const user = await fetchFromApi<Users>("/profile.php")
-    const stats = computeStats(FAKE_STATS)
+    const dashboardData = await fetchFromApi<DashboardData>("/dashboard.php")
+    const stats = computeStats(dashboardData)
 
     return (
         <NavLayout>
@@ -53,8 +54,6 @@ export default async function HomePage() {
                     <CoursesCard />
 
                     <PracticeCard xp={USER.xp} xpNeeded={USER.xpNeeded} level={USER.level} />
-
-                    
 
                     <RankingTop3 />
                 </div>
