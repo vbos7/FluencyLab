@@ -337,7 +337,7 @@ const notaMudou = nota !== notaOriginal;
                                             </p>
                                         </div>
                                         <Link
-                                            href="/premium"
+                                            href="/planos"
                                             className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition"
                                         >
                                             <Crown size={15} />
