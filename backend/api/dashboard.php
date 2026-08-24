@@ -1,6 +1,7 @@
 <?php
-require_once __DIR__ . '/cors.php';
-require_once __DIR__ . '/db.php';
+
+require_once __DIR__.'/cors.php';
+require_once __DIR__.'/db.php';
 
 if (empty($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
@@ -12,38 +13,38 @@ $userId = $_SESSION['user_id'];
 try {
     // Treinos + taxa de acerto + tempo total
     $stmt = $pdo->prepare(
-        "SELECT
+        'SELECT
             COUNT(*) AS total_treinos,
             ROUND(SUM(is_correct) / COUNT(*) * 100) AS taxa_acerto,
             COALESCE(SUM(time_spent_seconds), 0) AS tempo_total_segundos
          FROM attempts
-         WHERE user_id = ?"
+         WHERE user_id = ?'
     );
     $stmt->execute([$userId]);
     $stats = $stmt->fetch();
 
     // XP total — fonte única: ranking_points
-    $stmt = $pdo->prepare("SELECT COALESCE(SUM(points), 0) AS xp_total FROM ranking_points WHERE user_id = ?");
+    $stmt = $pdo->prepare('SELECT COALESCE(SUM(points), 0) AS xp_total FROM ranking_points WHERE user_id = ?');
     $stmt->execute([$userId]);
     $xp = $stmt->fetch();
 
     // Consistência: atividades por dia (usado no heatmap)
     $stmt = $pdo->prepare(
-        "SELECT DATE(created_at) AS dia, COUNT(*) AS atividades
+        'SELECT DATE(created_at) AS dia, COUNT(*) AS atividades
          FROM attempts
          WHERE user_id = ?
          GROUP BY DATE(created_at)
-         ORDER BY dia"
+         ORDER BY dia'
     );
     $stmt->execute([$userId]);
     $consistencia = $stmt->fetchAll();
 
     // ── Semanal: treinos por semana (últimas 12) ──
     $stmt = $pdo->prepare(
-        "SELECT YEARWEEK(created_at, 3) AS week_key, COUNT(*) AS treinos
+        'SELECT YEARWEEK(created_at, 3) AS week_key, COUNT(*) AS treinos
          FROM attempts
          WHERE user_id = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 12 WEEK)
-         GROUP BY week_key"
+         GROUP BY week_key'
     );
     $stmt->execute([$userId]);
     $treinosPorSemana = [];
@@ -53,10 +54,10 @@ try {
 
     // ── Semanal: XP por semana (últimas 12) ──
     $stmt = $pdo->prepare(
-        "SELECT YEARWEEK(earned_at, 3) AS week_key, SUM(points) AS xp
+        'SELECT YEARWEEK(earned_at, 3) AS week_key, SUM(points) AS xp
          FROM ranking_points
          WHERE user_id = ? AND earned_at >= DATE_SUB(CURDATE(), INTERVAL 12 WEEK)
-         GROUP BY week_key"
+         GROUP BY week_key'
     );
     $stmt->execute([$userId]);
     $xpPorSemana = [];

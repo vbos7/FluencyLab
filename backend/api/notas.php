@@ -1,6 +1,7 @@
 <?php
-require_once __DIR__ . '/cors.php';
-require_once __DIR__ . '/db.php';
+
+require_once __DIR__.'/cors.php';
+require_once __DIR__.'/db.php';
 
 if (empty($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
@@ -19,7 +20,7 @@ try {
         }
 
         $stmt = $pdo->prepare(
-            "SELECT content, updated_at FROM lesson_notes WHERE user_id = ? AND lesson_id = ?"
+            'SELECT content, updated_at FROM lesson_notes WHERE user_id = ? AND lesson_id = ?'
         );
         $stmt->execute([$userId, $_GET['lesson_id']]);
         $nota = $stmt->fetch();
@@ -43,9 +44,9 @@ try {
 
         // ON DUPLICATE KEY UPDATE: se já existe (mesmo user_id + lesson_id), atualiza em vez de duplicar
         $stmt = $pdo->prepare(
-            "INSERT INTO lesson_notes (user_id, lesson_id, content)
+            'INSERT INTO lesson_notes (user_id, lesson_id, content)
              VALUES (?, ?, ?)
-             ON DUPLICATE KEY UPDATE content = VALUES(content)"
+             ON DUPLICATE KEY UPDATE content = VALUES(content)'
         );
         $stmt->execute([$userId, $input['lesson_id'], $content]);
 

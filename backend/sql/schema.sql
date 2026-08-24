@@ -57,12 +57,29 @@ CREATE TABLE IF NOT EXISTS lessons (
     id         INT AUTO_INCREMENT PRIMARY KEY,
     course_id  INT          NOT NULL,
     title      VARCHAR(100) NOT NULL,
-    duration   VARCHAR(20),                     -- "8:08", "10:30" etc.
+    duration   INT          NOT NULL DEFAULT 0,  -- duração em SEGUNDOS (o front formata p/ "8:08")
     youtube_id VARCHAR(50),
+    is_free    TINYINT(1)   NOT NULL DEFAULT 0,  -- 1 = aula liberada p/ todos; 0 = só assinante Pro
     order_num  INT          DEFAULT 0,
+    -- Uma aula por (curso, posição). Além de organizar, permite o seed lá embaixo
+    -- usar ON DUPLICATE KEY UPDATE e reaplicar sem duplicar aula.
+    UNIQUE KEY uq_lessons_course_order (course_id, order_num),
     -- FOREIGN KEY: toda lesson DEVE ter um course válido.
     -- ON DELETE CASCADE: se o curso for apagado, as aulas dele somem junto.
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+);
+
+-- Marca quais aulas cada usuário concluiu. Alimenta o progresso.php e a barra de
+-- progresso na página do curso. O UNIQUE garante uma marcação por aula e faz o
+-- INSERT IGNORE do endpoint funcionar (marcar 2x não duplica).
+CREATE TABLE IF NOT EXISTS lesson_progress (
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    user_id      INT NOT NULL,
+    lesson_id    INT NOT NULL,
+    completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_lesson_progress (user_id, lesson_id),
+    FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE
 );
 
 -- ─── MÓDULO C — Prática/IA ───────────────────────────────────────────────────
@@ -84,6 +101,7 @@ CREATE TABLE IF NOT EXISTS attempts (
     is_correct  TINYINT(1)  NOT NULL,            -- 1 = correto, 0 = errado
     score       TINYINT UNSIGNED NOT NULL,       -- 0 a 100 (nota da IA)
     xp_earned   SMALLINT UNSIGNED NOT NULL,      -- XP ganho nessa tentativa
+    time_spent_seconds INT UNSIGNED NOT NULL DEFAULT 0, -- tempo gasto no exercício (o dashboard soma isto)
     created_at  DATETIME    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
     FOREIGN KEY (phrase_id) REFERENCES phrases(id) ON DELETE CASCADE
@@ -121,6 +139,44 @@ CREATE TABLE IF NOT EXISTS user_plan (
     FOREIGN KEY (plan_id) REFERENCES plans(id)
 );
 
+-- ─── Migrações para bancos JÁ existentes ─────────────────────────────────────
+-- Os CREATE TABLE acima NÃO alteram tabela que já existe. Este bloco adiciona,
+-- de forma idempotente (checando o information_schema antes), as colunas e
+-- índices novos em bancos criados antes desta versão. É seguro rodar quantas
+-- vezes quiser — quando a coluna já existe, o comando vira um "DO 0" (no-op).
+
+-- lessons.is_free (usada por courses.php)
+SET @ddl := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lessons' AND COLUMN_NAME = 'is_free') = 0,
+    'ALTER TABLE lessons ADD COLUMN is_free TINYINT(1) NOT NULL DEFAULT 0 AFTER youtube_id',
+    'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- lessons.duration: VARCHAR antigo → INT em segundos (o front trata como número)
+SET @ddl := IF(
+    (SELECT DATA_TYPE FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lessons' AND COLUMN_NAME = 'duration') <> 'int',
+    'ALTER TABLE lessons MODIFY COLUMN duration INT NOT NULL DEFAULT 0',
+    'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- lessons: chave única (course_id, order_num) para o seed ser reaplicável
+SET @ddl := IF(
+    (SELECT COUNT(*) FROM information_schema.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lessons' AND INDEX_NAME = 'uq_lessons_course_order') = 0,
+    'ALTER TABLE lessons ADD UNIQUE KEY uq_lessons_course_order (course_id, order_num)',
+    'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- attempts.time_spent_seconds (usada por dashboard.php)
+SET @ddl := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'attempts' AND COLUMN_NAME = 'time_spent_seconds') = 0,
+    'ALTER TABLE attempts ADD COLUMN time_spent_seconds INT UNSIGNED NOT NULL DEFAULT 0 AFTER xp_earned',
+    'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
 -- ─── Dados iniciais ───────────────────────────────────────────────────────────
 
 -- Nada de TRUNCATE: o MySQL recusa truncar tabela referenciada por foreign key
@@ -145,3 +201,82 @@ INSERT INTO plans (name, price, description, billing_period) VALUES
 ON DUPLICATE KEY UPDATE
     price = VALUES(price), description = VALUES(description),
     billing_period = VALUES(billing_period);
+
+-- ─── Seed: aulas de cada curso ───────────────────────────────────────────────
+-- Guarda os ids dos cursos em variáveis (INSERT ... VALUES não aceita subquery
+-- direto na lista de valores, então resolvemos o id antes).
+SET @c_basico := (SELECT id FROM courses WHERE slug = 'basico');
+SET @c_inter  := (SELECT id FROM courses WHERE slug = 'intermediario');
+SET @c_avanc  := (SELECT id FROM courses WHERE slug = 'avancado');
+
+-- duration em SEGUNDOS. is_free = 1 nas primeiras aulas (amostra grátis); as
+-- demais ficam bloqueadas para quem não é Pro. Os youtube_id são exemplos —
+-- troque pelos vídeos reais das aulas quando tiver.
+INSERT INTO lessons (course_id, title, duration, youtube_id, is_free, order_num) VALUES
+(@c_basico, 'Saudações e apresentações',        372, 'juKd26qkNAw', 1, 1),
+(@c_basico, 'Números, cores e datas',           415, 'e8kA9oyMbSo', 1, 2),
+(@c_basico, 'Verbo "to be" na prática',         488, 'koDkQveExzM', 0, 3),
+(@c_basico, 'Vocabulário do dia a dia',         531, 'Y7fVe1Pm3Sw', 0, 4),
+(@c_basico, 'Fazendo perguntas simples',        402, 'sQ7Nkq9bYqE', 0, 5),
+(@c_inter,  'Present Perfect sem mistério',     466, 'yQm6Xql9m3E', 1, 1),
+(@c_inter,  'Phrasal verbs essenciais',         523, 'p5nGZQyKz2A', 0, 2),
+(@c_inter,  'Condicionais (if clauses)',        498, 'wZ8Kx1n3vQ0', 0, 3),
+(@c_inter,  'Conversação: no restaurante',      447, 'r3Tqfm2LpXo', 0, 4),
+(@c_avanc,  'Expressões idiomáticas comuns',    512, 'aB9dLm4nQpE', 1, 1),
+(@c_avanc,  'Inglês para reuniões de trabalho', 605, 'tK1sVn7mQ2c', 0, 2),
+(@c_avanc,  'Escrevendo e-mails formais',       558, 'gH4jWq8pL0s', 0, 3),
+(@c_avanc,  'Pronúncia avançada e conexões',    534, 'nM6bYt3xQ9d', 0, 4)
+ON DUPLICATE KEY UPDATE
+    title = VALUES(title), duration = VALUES(duration),
+    youtube_id = VALUES(youtube_id), is_free = VALUES(is_free);
+
+-- ─── Seed: usuário demo com progresso ────────────────────────────────────────
+-- Para as telas de progresso (curso e dashboard) exibirem dados sem precisar
+-- treinar do zero. Login: demo@fluencylab.com / senha: 123456
+INSERT INTO users (name, email, password_hash, role) VALUES
+('Aluno Demo', 'demo@fluencylab.com', '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'student')
+ON DUPLICATE KEY UPDATE name = VALUES(name), password_hash = VALUES(password_hash);
+
+SET @demo := (SELECT id FROM users WHERE email = 'demo@fluencylab.com');
+
+-- Limpa dados demo antigos para o arquivo poder ser reaplicado sem acumular.
+DELETE FROM lesson_progress WHERE user_id = @demo;
+DELETE FROM ranking_points  WHERE user_id = @demo;
+DELETE FROM attempts        WHERE user_id = @demo;
+
+-- Aulas concluídas: as 2 primeiras do básico + a 1ª do intermediário.
+INSERT INTO lesson_progress (user_id, lesson_id)
+SELECT @demo, id FROM lessons WHERE course_id = @c_basico AND order_num IN (1, 2)
+UNION ALL
+SELECT @demo, id FROM lessons WHERE course_id = @c_inter  AND order_num = 1;
+
+-- Tentativas de prática espalhadas nos últimos ~24 dias — alimenta treinos,
+-- taxa de acerto, tempo total e o heatmap de consistência do dashboard.
+-- INSERT ... SELECT a partir de `phrases`: se o seed-phrases.sql ainda não tiver
+-- rodado, nenhuma linha é inserida (sem erro de foreign key).
+INSERT INTO attempts (user_id, phrase_id, answer_given, ai_feedback, is_correct, score, xp_earned, time_spent_seconds, created_at)
+SELECT @demo, p.id, 'resposta de demonstração', NULL,
+       IF(d.n % 4 = 0, 0, 1),            -- ~75% de acerto
+       IF(d.n % 4 = 0, 55, 90),          -- nota da IA
+       IF(d.n % 4 = 0, 0, 10),           -- XP só quando acerta
+       40 + (d.n * 7) % 80,              -- tempo variando entre 40s e ~120s
+       DATE_SUB(NOW(), INTERVAL d.n DAY)
+FROM (SELECT id FROM phrases ORDER BY id LIMIT 1) p
+CROSS JOIN (
+    SELECT 0 AS n UNION ALL SELECT 1  UNION ALL SELECT 2  UNION ALL SELECT 3  UNION ALL
+    SELECT 5      UNION ALL SELECT 6  UNION ALL SELECT 8  UNION ALL SELECT 10 UNION ALL
+    SELECT 12     UNION ALL SELECT 13 UNION ALL SELECT 15 UNION ALL SELECT 18 UNION ALL
+    SELECT 20     UNION ALL SELECT 22 UNION ALL SELECT 24
+) d;
+
+-- XP no ranking nos mesmos dias em que houve acerto (fonte do xp_total e do
+-- gráfico semanal). 10 pontos por exercício correto.
+INSERT INTO ranking_points (user_id, points, reason, earned_at)
+SELECT @demo, 10, 'Exercício correto', DATE_SUB(NOW(), INTERVAL d.n DAY)
+FROM (
+    SELECT 0 AS n UNION ALL SELECT 1  UNION ALL SELECT 2  UNION ALL SELECT 3  UNION ALL
+    SELECT 5      UNION ALL SELECT 6  UNION ALL SELECT 8  UNION ALL SELECT 10 UNION ALL
+    SELECT 12     UNION ALL SELECT 13 UNION ALL SELECT 15 UNION ALL SELECT 18 UNION ALL
+    SELECT 20     UNION ALL SELECT 22 UNION ALL SELECT 24
+) d
+WHERE d.n % 4 <> 0;

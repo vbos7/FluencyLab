@@ -9,6 +9,7 @@ services:
       # compartilhado, e misturar os dois só gera confusão sobre em qual você está.
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: fluency_lab
+      OPENAI_API_KEY: sk-sua-chave-aqui
     ports:
       # 3307 no host para não colidir com um MySQL já instalado na máquina
       # (MAMP usa 8889, Homebrew usa 3306). Dentro da rede do compose é 3306.
