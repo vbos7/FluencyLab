@@ -1,6 +1,7 @@
 <?php
-require_once __DIR__ . '/cors.php';
-require_once __DIR__ . '/db.php';
+
+require_once __DIR__.'/cors.php';
+require_once __DIR__.'/db.php';
 
 if (empty($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
@@ -19,15 +20,15 @@ try {
         }
 
         $stmt = $pdo->prepare(
-            "SELECT lp.lesson_id
+            'SELECT lp.lesson_id
              FROM lesson_progress lp
              JOIN lessons l ON l.id = lp.lesson_id
-             WHERE lp.user_id = ? AND l.course_id = ?"
+             WHERE lp.user_id = ? AND l.course_id = ?'
         );
         $stmt->execute([$userId, $_GET['course_id']]);
         $concluidas = array_column($stmt->fetchAll(), 'lesson_id');
 
-        $stmt2 = $pdo->prepare("SELECT COUNT(*) AS total FROM lessons WHERE course_id = ?");
+        $stmt2 = $pdo->prepare('SELECT COUNT(*) AS total FROM lessons WHERE course_id = ?');
         $stmt2->execute([$_GET['course_id']]);
         $total = (int) $stmt2->fetch()['total'];
 
@@ -53,7 +54,7 @@ try {
         }
 
         $stmt = $pdo->prepare(
-            "INSERT IGNORE INTO lesson_progress (user_id, lesson_id) VALUES (?, ?)"
+            'INSERT IGNORE INTO lesson_progress (user_id, lesson_id) VALUES (?, ?)'
         );
         $stmt->execute([$userId, $input['lesson_id']]);
 
@@ -70,7 +71,7 @@ try {
         }
 
         $stmt = $pdo->prepare(
-            "DELETE FROM lesson_progress WHERE user_id = ? AND lesson_id = ?"
+            'DELETE FROM lesson_progress WHERE user_id = ? AND lesson_id = ?'
         );
         $stmt->execute([$userId, $_GET['lesson_id']]);
 

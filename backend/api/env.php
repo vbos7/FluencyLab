@@ -32,9 +32,9 @@ function env_arquivo(): array
     }
 
     $valores = [];
-    $caminho = __DIR__ . '/../../.env';
+    $caminho = __DIR__.'/../../.env';
 
-    if (!is_readable($caminho)) {
+    if (! is_readable($caminho)) {
         return $valores;
     }
 
@@ -78,7 +78,7 @@ function env(string $chave, string $padrao = ''): string
         return $valor;
     }
 
-    if (!empty($_SERVER[$chave])) {
+    if (! empty($_SERVER[$chave])) {
         return (string) $_SERVER[$chave];
     }
 
