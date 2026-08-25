@@ -1,10 +1,11 @@
-import { FRASES } from "@/app/_lib/practice"
+import { fetchFromApi } from "@/app/_lib/server-api"
 import { PracticeController } from "@/app/_components/practice/practice-controller"
 import NavLayout from "@/app/_layouts/nav-layout"
 
-export default function PracticePage() {
-    // FRASES é um array de arrays — .flat() achata para um único array indexável
-    const phrases = FRASES.flat()
+type Phrase = { id: number; pt: string; en: string; difficulty: string; category: string }
+
+export default async function PracticePage() {
+    const phrases = await fetchFromApi<Phrase[]>("/practice/phrases.php")
 
     return (
         <NavLayout>
