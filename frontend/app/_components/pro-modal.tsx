@@ -2,14 +2,28 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { X } from "lucide-react";
+import { apiClient } from "@/app/_lib/api";
 
 export default function ProModal() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Aparece após 10 segundos na página
-    const timer = setTimeout(() => setVisible(true), 10000);
+    let timer: ReturnType<typeof setTimeout>;
+
+    // Só agenda o modal se o usuário NÃO tiver um plano Pro ativo —
+    // assinantes não devem ver o upsell "Você está perdendo muito!".
+    apiClient
+      .get("/my-plan.php")
+      .then((res) => {
+        if (!res.data?.active) {
+          timer = setTimeout(() => setVisible(true), 10000);
+        }
+      })
+      .catch(() => {
+        // Falha ao checar (backend fora, etc.): mantém o comportamento padrão
+        timer = setTimeout(() => setVisible(true), 10000);
+      });
+
     return () => clearTimeout(timer);
   }, []);
 

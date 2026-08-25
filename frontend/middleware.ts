@@ -18,5 +18,8 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+    // Ignora assets internos do Next e QUALQUER arquivo estático do /public
+    // (caminhos com extensão, ex.: /img/logo.png). Sem isso, o fetch interno
+    // do otimizador de next/image cai no redirect de login e retorna "received null".
+    matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 }
