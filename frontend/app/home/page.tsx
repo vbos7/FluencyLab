@@ -14,7 +14,7 @@ import { fetchFromApi } from "../_lib/server-api"
 
 
 const USER = {
-    name: "Marcus Vinicius",
+    name: "Marcus Vinicifsdfsdfsdfsdus",
     level: 4,
     xp: 980,
     xpNeeded: 1500,

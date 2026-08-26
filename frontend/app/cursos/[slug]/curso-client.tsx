@@ -15,7 +15,7 @@ import {
     CheckCircle2,
     StickyNote
 } from "lucide-react";
-import NavLayout from "@/app/_layouts/nav-layout";
+
 
 
 type Lesson = {
@@ -195,16 +195,16 @@ const notaMudou = nota !== notaOriginal;
 
     if (!aula) {
         return (
-            <NavLayout>
+            
                 <div className="max-w-3xl mx-auto px-4 py-20 text-center text-gray-500">
                     Este curso ainda não tem aulas cadastradas.
                 </div>
-            </NavLayout>
+            
         );
     }
 
     return (
-        <NavLayout>
+        
             <div className="min-h-screen bg-gray-50">
                 {/* ── DRAWER MOBILE ── */}
                 {drawerAberto && (
@@ -471,6 +471,5 @@ const notaMudou = nota !== notaOriginal;
                     </div>
                 </div>
             </div>
-        </NavLayout>
     );
 }

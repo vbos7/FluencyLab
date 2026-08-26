@@ -14,14 +14,15 @@ const items = [
     
 ]
 
-export function BottomNav() {
+type LoggedUser = { id: number; name: string; email: string; role: string }
+
+export function BottomNav({ user }: { user: LoggedUser | null }) {
     const pathname = usePathname()
     const router = useRouter()
+    const isGuest = !user
     // Derivado diretamente do localStorage — re-calculado a cada navegação
     // porque usePathname() já causa re-render quando a rota muda
-    const isGuest =
-        typeof window !== "undefined" &&
-        localStorage.getItem("fluency-lab:mode") === "guest"
+    
 
     if (pathname === "/login" || pathname === "/register" || pathname === "/") return null
 
