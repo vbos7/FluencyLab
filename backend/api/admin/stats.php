@@ -1,18 +1,12 @@
 <?php
 
-require_once __DIR__.'/../cors.php';
-require_once __DIR__.'/../db.php';
+require_once __DIR__.'/guard.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     json_out(['error' => 'Método não permitido'], 405);
     exit;
 }
-
-// Verificar se está logado E se é admin
-if (! isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    json_out(['error' => 'Acesso restrito a administradores'], 403);
-    exit;
-}
+requireAdmin();
 
 json_out([
     'totalUsers' => (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn(),

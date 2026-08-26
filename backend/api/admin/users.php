@@ -1,12 +1,8 @@
 <?php
 
-require_once __DIR__.'/../cors.php';
-require_once __DIR__.'/../db.php';
+require_once __DIR__.'/guard.php';
 
-if (! isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    json_out(['error' => 'Acesso restrito a administradores'], 403);
-    exit;
-}
+requireAdmin();
 
 $method = $_SERVER['REQUEST_METHOD'];
 
