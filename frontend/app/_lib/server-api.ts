@@ -1,8 +1,8 @@
 import { cookies } from "next/headers"
 
-
 const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:8000/api";
 
+// Usuário autenticado, no formato devolvido por /auth/me.php
 export type AuthUser = {
     id: number
     name: string
@@ -41,7 +41,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     const cookieStore = await cookies()
 
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me.php`, {
+        const res = await fetch(`${API_BASE_URL}/auth/me.php`, {
             headers: {
                 Accept: "application/json",
                 Cookie: cookieStore.toString(),
