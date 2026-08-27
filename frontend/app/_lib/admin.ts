@@ -47,8 +47,18 @@ export type AdminPhrase = {
     pt: string
     en: string
     difficulty: Difficulty
-    category: string
+    category: string // nome da categoria (para exibir)
+    category_id: number // FK para categories (usado no select do formulário)
     total_attempts: number
+}
+
+// ─── Categorias ──────────────────────────────────────────────────────────────
+
+// GET /api/admin/categories.php
+export type AdminCategory = {
+    id: number
+    name: string
+    phrase_count: number
 }
 
 // Rótulo/estilo por dificuldade — o backend guarda em inglês, a UI mostra em PT.
