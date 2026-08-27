@@ -1,10 +1,9 @@
-import { ADMIN_USERS } from "@/app/_lib/admin"
+import type { TopUser } from "@/app/_lib/admin"
 import { cn } from "@/app/_lib/utils"
 
-// Exibe os 5 usuários com maior XP
-export function TopUsers() {
-    // Os 5 primeiros já estão ordenados por XP desc no fake data
-    const top5 = ADMIN_USERS.slice(0, 5)
+// Exibe os usuários com maior XP (já vêm ordenados por XP desc do backend)
+export function TopUsers({ users }: { users: TopUser[] }) {
+    const top5 = users.slice(0, 5)
 
     return (
         <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">

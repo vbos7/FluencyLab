@@ -1,5 +1,5 @@
 import { Users, MessageSquare, Zap, TrendingUp } from "lucide-react"
-import { DASHBOARD_STATS } from "@/app/_lib/admin"
+import type { DashboardStats } from "@/app/_lib/admin"
 import { cn } from "@/app/_lib/utils"
 
 // Configuração de cada card de estatística
@@ -12,43 +12,40 @@ type StatCard = {
     subPositive?: boolean
 }
 
-function buildCards(): StatCard[] {
+function buildCards(stats: DashboardStats): StatCard[] {
     return [
         {
             icon: Users,
             color: "bg-blue-50 text-blue-600",
-            value: DASHBOARD_STATS.totalUsers.toLocaleString("pt-BR"),
+            value: stats.totalUsers.toLocaleString("pt-BR"),
             label: "Usuários cadastrados",
-            sub: `+${DASHBOARD_STATS.newThisMonth} este mês`,
-            subPositive: true,
+            sub: `+${stats.newThisMonth} este mês`,
+            subPositive: stats.newThisMonth > 0,
         },
         {
             icon: MessageSquare,
             color: "bg-violet-50 text-violet-600",
-            value: DASHBOARD_STATS.totalPhrases.toLocaleString("pt-BR"),
+            value: stats.totalPhrases.toLocaleString("pt-BR"),
             label: "Frases cadastradas",
-            sub: "Atualizado hoje",
         },
         {
             icon: TrendingUp,
             color: "bg-emerald-50 text-emerald-600",
-            value: DASHBOARD_STATS.activeToday.toLocaleString("pt-BR"),
+            value: stats.activeToday.toLocaleString("pt-BR"),
             label: "Usuários ativos hoje",
-            sub: "vs 76 ontem",
-            subPositive: true,
         },
         {
             icon: Zap,
             color: "bg-amber-50 text-amber-500",
-            value: DASHBOARD_STATS.totalXP.toLocaleString("pt-BR"),
+            value: stats.totalXP.toLocaleString("pt-BR"),
             label: "XP distribuído",
-            sub: `${DASHBOARD_STATS.avgCompletionRate}% taxa de acerto`,
+            sub: `${stats.avgCompletionRate}% taxa de acerto`,
         },
     ]
 }
 
-export function StatsOverview() {
-    const cards = buildCards()
+export function StatsOverview({ stats }: { stats: DashboardStats }) {
+    const cards = buildCards(stats)
     return (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {cards.map((card) => {

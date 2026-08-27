@@ -14,7 +14,7 @@ import {
 } from "@/app/_components/ui/sidebar"
 import { type NavItem } from "@/app/_lib/utils"
 import Link from "next/link"
-import { LayoutGrid, MessageSquare, Settings2, Trophy, Users } from "lucide-react"
+import { LayoutGrid, MessageSquare, Settings2, Users } from "lucide-react"
 import AppLogo from "./app-logo"
 
 // Itens principais da plataforma

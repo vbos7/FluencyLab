@@ -9,7 +9,7 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from "recharts"
-import { GROWTH_DATA } from "@/app/_lib/admin"
+import type { GrowthPoint } from "@/app/_lib/admin"
 
 // Tooltip customizado do gráfico de crescimento
 function CustomTooltip({
@@ -32,12 +32,12 @@ function CustomTooltip({
     )
 }
 
-export function GrowthChart() {
+export function GrowthChart({ data }: { data: GrowthPoint[] }) {
     return (
         <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
             <h3 className="mb-4 text-sm font-semibold text-slate-700">Crescimento de usuários</h3>
             <ResponsiveContainer width="100%" height={200}>
-                <AreaChart data={GROWTH_DATA} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                     <defs>
                         <linearGradient id="adminUsersGradient" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#2563eb" stopOpacity={0.15} />
