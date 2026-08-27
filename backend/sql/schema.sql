@@ -195,12 +195,24 @@ ON DUPLICATE KEY UPDATE
     title = VALUES(title), description = VALUES(description),
     level = VALUES(level), order_num = VALUES(order_num);
 
-INSERT INTO plans (name, price, description, billing_period) VALUES
-('Free', 0.00, 'Acesso gratuito com recursos básicos', 'monthly'),
-('Pro',  4.99, 'Acesso completo vitalício',            'lifetime')
+INSERT INTO plans (name, price, description, features, billing_period) VALUES
+('Free', 0.00, 'Acesso gratuito com recursos básicos', JSON_ARRAY(
+    JSON_OBJECT('label', 'Traduções ilimitadas por dia', 'included', TRUE),
+    JSON_OBJECT('label', 'Explicação de erros com IA', 'included', TRUE),
+    JSON_OBJECT('label', 'XP, níveis e ranking', 'included', TRUE),
+    JSON_OBJECT('label', 'Escolha de categorias', 'included', FALSE),
+    JSON_OBJECT('label', 'Videoaulas de inglês', 'included', FALSE)
+), 'monthly'),
+('Pro', 4.99, 'Acesso completo vitalício', JSON_ARRAY(
+    JSON_OBJECT('label', 'Tudo do plano Free', 'included', TRUE),
+    JSON_OBJECT('label', 'Favoritos ilimitados', 'included', TRUE, 'highlight', TRUE),
+    JSON_OBJECT('label', 'Escolha de categorias', 'included', TRUE, 'highlight', TRUE),
+    JSON_OBJECT('label', 'Todas as videoaulas', 'included', TRUE, 'highlight', TRUE),
+    JSON_OBJECT('label', 'Relatório semanal completo', 'included', TRUE, 'highlight', TRUE)
+), 'lifetime')
 ON DUPLICATE KEY UPDATE
     price = VALUES(price), description = VALUES(description),
-    billing_period = VALUES(billing_period);
+    features = VALUES(features), billing_period = VALUES(billing_period);
 
 -- ─── Seed: aulas de cada curso ───────────────────────────────────────────────
 -- Guarda os ids dos cursos em variáveis (INSERT ... VALUES não aceita subquery

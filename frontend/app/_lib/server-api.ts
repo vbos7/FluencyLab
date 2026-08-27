@@ -3,6 +3,13 @@ import { cookies } from "next/headers"
 
 const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:8000/api";
 
+export type AuthUser = {
+    id: number
+    name: string
+    email: string
+    role: string
+}
+
 export async function fetchFromApi<T>(path: string): Promise<T> {
     const cookieStore = await cookies();
 
