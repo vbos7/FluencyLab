@@ -2,6 +2,7 @@
 
 require_once __DIR__.'/cors.php';
 require_once __DIR__.'/db.php';
+require_once __DIR__.'/lib/url.php';
 
 if (! isset($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
@@ -12,9 +13,13 @@ $userId = $_SESSION['user_id'];
 
 // ─── GET: devolve os dados do perfil ────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $stmt = $pdo->prepare('SELECT id, name, email, phone, role, created_at FROM users WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, name, email, phone, role, avatar, created_at FROM users WHERE id = ?');
     $stmt->execute([$userId]);
-    json_out($stmt->fetch());
+    $perfil = $stmt->fetch();
+    if ($perfil) {
+        $perfil['avatar'] = avatar_url($perfil['avatar']); // caminho → URL absoluta
+    }
+    json_out($perfil);
     exit;
 }
 
