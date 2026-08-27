@@ -16,6 +16,9 @@ if (! isset($_SESSION['user_id'])) {
 $body = json_decode(file_get_contents('php://input'), true);
 $phraseId = (int) ($body['phrase_id'] ?? 0);
 $resposta = trim($body['answer'] ?? '');
+// Tempo gasto no exercício (segundos). Limitado a [0, 3600] para não inflar o
+// total de estudo caso o aluno deixe a aba aberta.
+$tempoGasto = max(0, min((int) ($body['time_spent_seconds'] ?? 0), 3600));
 
 if (! $phraseId || empty($resposta)) {
     json_out(['errors' => ['phrase_id e answer obrigatórios']], 422);
@@ -49,13 +52,13 @@ try {
     $pdo->beginTransaction();
 
     $pdo->prepare(
-        'INSERT INTO attempts (user_id, phrase_id, answer_given, overall_comment, corrected_sentence, is_correct, score, xp_earned)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO attempts (user_id, phrase_id, answer_given, overall_comment, corrected_sentence, is_correct, score, xp_earned, time_spent_seconds)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
     )->execute([
         $_SESSION['user_id'], $phraseId, $resposta,
         $feedback['overall_comment'] ?? null,
         $feedback['corrected_sentence'] ?? null,
-        $feedback['is_correct'] ? 1 : 0, $score, $xp,
+        $feedback['is_correct'] ? 1 : 0, $score, $xp, $tempoGasto,
     ]);
     $attemptId = (int) $pdo->lastInsertId();
 

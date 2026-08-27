@@ -103,6 +103,9 @@ export function PracticeController({ phrases }: Props) {
     const [justFavorited, setJustFavorited] = useState(false)
     // Referência direta ao textarea para dar foco programaticamente
     const inputRef = useRef<HTMLTextAreaElement>(null)
+    // Momento em que a frase atual foi apresentada — usado para medir o tempo
+    // gasto no exercício (enviado ao backend e somado no "tempo total de estudo")
+    const phraseStartRef = useRef(Date.now())
 
     // Sincroniza favorites com localStorage sempre que mudar
     useEffect(() => {
@@ -120,9 +123,12 @@ export function PracticeController({ phrases }: Props) {
         setError(null)
 
         try {
+            // Segundos entre a frase aparecer e o clique em "Verificar"
+            const timeSpent = Math.round((Date.now() - phraseStartRef.current) / 1000)
             const response = await apiClient.post("/practice/check-answer.php", {
                 phrase_id: phrase.id,
                 answer,
+                time_spent_seconds: timeSpent,
             })
             const fb = adaptAiFeedback(response.data.feedback, response.data.xp_earned)
             setFeedback(fb)
@@ -150,6 +156,7 @@ export function PracticeController({ phrases }: Props) {
         setAnswer("")
         setFeedback(null)
         setError(null)
+        phraseStartRef.current = Date.now() // reinicia o cronômetro para a nova frase
         // Pequeno delay para o textarea já estar visível antes de focar
         setTimeout(() => inputRef.current?.focus(), 100)
     }
@@ -163,6 +170,7 @@ export function PracticeController({ phrases }: Props) {
         setAnswer("")
         setFeedback(null)
         setError(null)
+        phraseStartRef.current = Date.now() // reinicia o cronômetro para a nova frase
     }
 
     // Alterna o favorito: remove se já existe, adiciona se não existe

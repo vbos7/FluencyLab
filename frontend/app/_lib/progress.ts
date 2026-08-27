@@ -20,6 +20,7 @@ export type StatsData = {
     totalPracticed: number
     totalCorrect: number
     userXp: number
+    totalSeconds: number
 }
 
 export type CalendarData = {
@@ -61,14 +62,16 @@ export function computeStats(data: DashboardData): ComputedStats {
 }
 
 export function computeStatsFromApi(data: StatsData): ComputedStats {
+    const totalMinutosCheios = Math.floor(data.totalSeconds / 60)
+
     return {
         totalPracticed: data.totalPracticed,
         completionRate:
             data.totalPracticed > 0
                 ? Math.round((data.totalCorrect / data.totalPracticed) * 100)
                 : 0,
-        totalHours: 0,
-        totalMinutes: 0,
+        totalHours: Math.floor(totalMinutosCheios / 60),
+        totalMinutes: totalMinutosCheios % 60,
         userXp: data.userXp,
     }
 }
