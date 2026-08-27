@@ -29,6 +29,7 @@ export type CalendarData = {
 
 // Formato que vem direto do dashboard.php
 export type DashboardData = {
+    streak: number
     total_treinos: number
     taxa_acerto: number
     tempo_total_segundos: number

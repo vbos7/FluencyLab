@@ -8,34 +8,41 @@ import { SettingsDialog } from "@/app/_components/profile/settings-dialog"
 import { FavoriteQuestions } from "@/app/_components/profile/favorite-questions"
 import { LogoutButton } from "@/app/_components/profile/logout-button"
 import { fetchFromApi } from "@/app/_lib/server-api"
+import { getLevel, getLevelLabel, type LeaderboardUser } from "@/app/_lib/ranking"
+import { type DashboardData } from "@/app/_lib/progress"
 
 import NavLayout from "@/app/_layouts/nav-layout"
 import PremiumCard from "../_components/pricing/PremiumCard"
 
-const USER = {
-    avatarSrc: "https://github.com/shadcn.png",
-    rankLabel: "#27 no Ranking Geral",
-    stats: [
-        { icon: Star,         iconColor: "text-amber-500",  iconBg: "bg-amber-50",   value: "1.250", label: "Pontos" },
-        { icon: Trophy,       iconColor: "text-blue-600",   iconBg: "bg-blue-50",    value: "#27",   label: "Posição" },
-        { icon: Flame,        iconColor: "text-orange-500", iconBg: "bg-orange-50",  value: "64%",   label: "Sequência" },
-        { icon: CircleCheck,  iconColor: "text-emerald-600",iconBg: "bg-emerald-50", value: "135",   label: "Concluídos" },
-    ],
-    xp: { current: 250, max: 300, level: 4, levelLabel: "Expert" },
-}
-
 type User = { id: number; name: string; email: string; phone: string | null; role: string }
 
 export default async function ProfilePage() {
-    const user = await fetchFromApi<User>("/profile.php")
-    // Campos como xp, rankLabel etc. podem continuar mockados por enquanto
+    const [user, dashboardData, leaderboard] = await Promise.all([
+        fetchFromApi<User>("/profile.php"),
+        fetchFromApi<DashboardData>("/dashboard.php"),
+        fetchFromApi<LeaderboardUser[]>("/ranking.php"),
+    ])
+
+    const { level, currentXp, needed } = getLevel(dashboardData.xp_total)
+    const levelLabel = getLevelLabel(level)
+
+    // Posição do usuário atual dentro do leaderboard (1-indexed)
+    const posicao = leaderboard.findIndex((u) => u.id === user.id) + 1
+
+    const stats = [
+        { icon: Star, iconColor: "text-amber-500", iconBg: "bg-amber-50", value: dashboardData.xp_total.toLocaleString(), label: "Pontos" },
+        { icon: Trophy, iconColor: "text-blue-600", iconBg: "bg-blue-50", value: posicao > 0 ? `#${posicao}` : "—", label: "Posição" },
+        { icon: Flame, iconColor: "text-orange-500", iconBg: "bg-orange-50", value: `${dashboardData.streak}`, label: "Sequência" },
+        { icon: CircleCheck, iconColor: "text-emerald-600", iconBg: "bg-emerald-50", value: `${dashboardData.total_treinos}`, label: "Concluídos" },
+    ]
+
     return (
         <NavLayout>
             <div className="page-enter relative mx-auto mt-10 flex min-h-dvh max-w-5xl flex-col gap-4 bg-white px-4 pb-24 sm:gap-6 sm:px-6 lg:px-8">
                 <ProfileHeader
                     name={user.name}
-                    rankLabel={USER.rankLabel}
-                    avatarSlot={<AvatarUpload name={user.name} avatarSrc={USER.avatarSrc} />}
+                    rankLabel={posicao > 0 ? `#${posicao} no Ranking Geral` : "Ainda sem posição"}
+                    avatarSlot={<AvatarUpload name={user.name} avatarSrc="https://github.com/shadcn.png" />}
                 >
                     <div className="flex items-center gap-2">
                         <EditProfileDialog
@@ -47,14 +54,13 @@ export default async function ProfilePage() {
                     </div>
                 </ProfileHeader>
 
-                <StatsGrid stats={USER.stats} />
-
+                <StatsGrid stats={stats} />
 
                 <XpProgress
-                    current={USER.xp.current}
-                    max={USER.xp.max}
-                    level={USER.xp.level}
-                    levelLabel={USER.xp.levelLabel}
+                    current={currentXp}
+                    max={needed}
+                    level={level}
+                    levelLabel={levelLabel}
                 />
 
                 <PremiumCard />
