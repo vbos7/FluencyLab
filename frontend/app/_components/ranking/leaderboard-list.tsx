@@ -29,10 +29,12 @@ export function LeaderboardList({ rows, startIdx }: Props) {
                         </span>
 
                         <Avatar className="size-10 shrink-0 rounded-2xl">
-                            <AvatarImage
-                                src={`https://github.com/${user.github}.png`}
-                                alt={`@${user.github}`}
-                            />
+                            {user.github ? (
+                                <AvatarImage
+                                    src={`https://github.com/${user.github}.png`}
+                                    alt={`@${user.github}`}
+                                />
+                            ) : null}
                             <AvatarFallback
                                 className={cn(
                                     "rounded-none text-sm font-semibold",

@@ -1,22 +1,35 @@
 import { redirect } from "next/navigation";
 import { fetchFromApi } from "@/app/_lib/server-api";
-import { computeStats, buildCalendarMap, generateWeeks, type DashboardData } from "@/app/_lib/progress";
+import {
+    buildCalendarMapFromApi,
+    computeStatsFromApi,
+    generateWeeks,
+    type CalendarData,
+    type StatsData,
+    type WeeklyPoint,
+} from "@/app/_lib/progress";
 import { ConsistencyHeatmap } from "@/app/_components/progress/consistency-heatmap";
 import { WeeklyChart } from "@/app/_components/progress/weekly-chart";
 import { StatsCards } from "@/app/_components/progress/stats-cards";           // idem
 import NavLayout from "@/app/_layouts/nav-layout";
 
 export default async function ProgressPage() {
-    let data: DashboardData;
+    let statsData: StatsData;
+    let weeklyData: WeeklyPoint[];
+    let calendarData: CalendarData[];
 
     try {
-        data = await fetchFromApi<DashboardData>("/dashboard.php");
+        [statsData, weeklyData, calendarData] = await Promise.all([
+            fetchFromApi<StatsData>("/user/stats.php"),
+            fetchFromApi<WeeklyPoint[]>("/user/progress-weekly.php"),
+            fetchFromApi<CalendarData[]>("/user/calendar.php"),
+        ]);
     } catch {
         redirect("/login"); // sem sessão válida, manda pro login
     }
 
-    const stats = computeStats(data);
-    const calendarMap = buildCalendarMap(data.consistencia);
+    const stats = computeStatsFromApi(statsData);
+    const calendarMap = buildCalendarMapFromApi(calendarData);
     const { weeks, currentWeekIdx } = generateWeeks(calendarMap);
 
     return (
@@ -30,7 +43,7 @@ export default async function ProgressPage() {
 
                     <ConsistencyHeatmap weeks={weeks} currentWeekIdx={currentWeekIdx} />
                     <StatsCards stats={stats} />
-                    <WeeklyChart data={data.weekly} />
+                    <WeeklyChart data={weeklyData} />
                 </div>
             </main>
         </NavLayout>
