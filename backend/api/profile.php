@@ -87,4 +87,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     exit;
 }
 
+// ─── DELETE: o usuário exclui a própria conta ───────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+    // Trava de segurança: não deixa sumir com o último admin (trancaria o painel).
+    $stmt = $pdo->prepare('SELECT role FROM users WHERE id = ?');
+    $stmt->execute([$userId]);
+    if ($stmt->fetchColumn() === 'admin') {
+        $totalAdmins = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
+        if ($totalAdmins <= 1) {
+            json_out(['error' => 'Não é possível excluir o único administrador'], 422);
+            exit;
+        }
+    }
+
+    // ON DELETE CASCADE limpa attempts, ranking_points, user_plan etc. do usuário.
+    $pdo->prepare('DELETE FROM users WHERE id = ?')->execute([$userId]);
+    session_destroy();
+    json_out(null, 204);
+    exit;
+}
+
 json_out(['error' => 'Método não permitido'], 405);

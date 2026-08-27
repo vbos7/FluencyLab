@@ -139,6 +139,13 @@ CREATE TABLE IF NOT EXISTS user_plan (
     FOREIGN KEY (plan_id) REFERENCES plans(id)
 );
 
+-- Configurações globais da plataforma (chave/valor), usadas pelo painel admin.
+-- Tudo é guardado como texto; o consumidor converte (ex.: "1"/"0" para boolean).
+CREATE TABLE IF NOT EXISTS settings (
+    setting_key   VARCHAR(50) PRIMARY KEY,
+    setting_value TEXT
+);
+
 -- ─── Migrações para bancos JÁ existentes ─────────────────────────────────────
 -- Os CREATE TABLE acima NÃO alteram tabela que já existe. Este bloco adiciona,
 -- de forma idempotente (checando o information_schema antes), as colunas e
@@ -201,6 +208,17 @@ INSERT INTO plans (name, price, description, billing_period) VALUES
 ON DUPLICATE KEY UPDATE
     price = VALUES(price), description = VALUES(description),
     billing_period = VALUES(billing_period);
+
+-- Valores padrão das configurações. INSERT IGNORE (e não ON DUPLICATE KEY UPDATE)
+-- de propósito: se o admin já alterou algo, reaplicar o schema NÃO reseta o valor.
+INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
+('app_name',          'FluencyLab'),
+('app_description',   'Plataforma de aprendizado de inglês gamificada.'),
+('xp_per_phrase',     '10'),
+('streak_bonus',      '1.5'),
+('ranking_public',    '1'),
+('new_registrations', '1'),
+('maintenance_mode',  '0');
 
 -- ─── Seed: aulas de cada curso ───────────────────────────────────────────────
 -- Guarda os ids dos cursos em variáveis (INSERT ... VALUES não aceita subquery
