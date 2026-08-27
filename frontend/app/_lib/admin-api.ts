@@ -6,6 +6,7 @@
 
 import { apiClient } from "@/app/_lib/api"
 import type {
+    AdminCategory,
     AdminPhrase,
     AdminSettings,
     AdminUser,
@@ -35,7 +36,7 @@ export async function deleteUser(id: number): Promise<void> {
 
 // ─── Frases ────────────────────────────────────────────────────────────────────
 
-export type PhraseInput = { pt: string; en: string; difficulty: Difficulty; category: string }
+export type PhraseInput = { pt: string; en: string; difficulty: Difficulty; category_id: number }
 
 export async function listPhrases(): Promise<AdminPhrase[]> {
     const { data } = await apiClient.get<AdminPhrase[]>("/admin/phrases.php")
@@ -52,6 +53,25 @@ export async function updatePhrase(id: number, payload: PhraseInput): Promise<vo
 
 export async function deletePhrase(id: number): Promise<void> {
     await apiClient.delete(`/admin/phrases.php?id=${id}`)
+}
+
+// ─── Categorias ──────────────────────────────────────────────────────────────
+
+export async function listCategories(): Promise<AdminCategory[]> {
+    const { data } = await apiClient.get<AdminCategory[]>("/admin/categories.php")
+    return data
+}
+
+export async function createCategory(name: string): Promise<void> {
+    await apiClient.post("/admin/categories.php", { name })
+}
+
+export async function updateCategory(id: number, name: string): Promise<void> {
+    await apiClient.put(`/admin/categories.php?id=${id}`, { name })
+}
+
+export async function deleteCategory(id: number): Promise<void> {
+    await apiClient.delete(`/admin/categories.php?id=${id}`)
 }
 
 // ─── Configurações ──────────────────────────────────────────────────────────────

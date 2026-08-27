@@ -19,8 +19,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/app/_components/ui/select"
-import { DIFFICULTY_LABELS, type AdminPhrase, type Difficulty } from "@/app/_lib/admin"
-import { apiErrorMessage, createPhrase, updatePhrase } from "@/app/_lib/admin-api"
+import {
+    DIFFICULTY_LABELS,
+    type AdminCategory,
+    type AdminPhrase,
+    type Difficulty,
+} from "@/app/_lib/admin"
+import {
+    apiErrorMessage,
+    createPhrase,
+    listCategories,
+    updatePhrase,
+} from "@/app/_lib/admin-api"
 
 const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"]
 
@@ -39,7 +49,8 @@ export function PhraseFormDialog({
     const [en, setEn] = useState("")
     const [pt, setPt] = useState("")
     const [difficulty, setDifficulty] = useState<Difficulty>("easy")
-    const [category, setCategory] = useState("")
+    const [categoryId, setCategoryId] = useState("")
+    const [categories, setCategories] = useState<AdminCategory[]>([])
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
 
@@ -48,15 +59,23 @@ export function PhraseFormDialog({
         setEn(editing?.en ?? "")
         setPt(editing?.pt ?? "")
         setDifficulty(editing?.difficulty ?? "easy")
-        setCategory(editing?.category ?? "")
+        setCategoryId(editing?.category_id ? String(editing.category_id) : "")
         setError("")
+        // Carrega as categorias disponíveis para o select toda vez que abre.
+        listCategories()
+            .then(setCategories)
+            .catch((err) => setError(apiErrorMessage(err, "Não foi possível carregar as categorias.")))
     }, [open, editing])
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         setError("")
+        if (!categoryId) {
+            setError("Selecione uma categoria.")
+            return
+        }
         setLoading(true)
-        const payload = { en, pt, difficulty, category }
+        const payload = { en, pt, difficulty, category_id: Number(categoryId) }
         try {
             if (editing) {
                 await updatePhrase(editing.id, payload)
@@ -128,12 +147,18 @@ export function PhraseFormDialog({
 
                         <div className="flex flex-1 flex-col gap-1.5">
                             <Label htmlFor="phrase-category">Categoria</Label>
-                            <Input
-                                id="phrase-category"
-                                value={category}
-                                onChange={(e) => setCategory(e.target.value)}
-                                placeholder="Cotidiano"
-                            />
+                            <Select value={categoryId} onValueChange={setCategoryId}>
+                                <SelectTrigger id="phrase-category" className="h-9 w-full">
+                                    <SelectValue placeholder="Selecione…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {categories.map((c) => (
+                                        <SelectItem key={c.id} value={String(c.id)}>
+                                            {c.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
 
