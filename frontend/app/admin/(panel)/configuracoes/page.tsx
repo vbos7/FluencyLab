@@ -1,8 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
 import AppLayout from "@/app/_layouts/app-layout"
 import { type BreadcrumbItem } from "@/app/_lib/utils"
+import { apiErrorMessage, getSettings, saveSettings } from "@/app/_lib/admin-api"
 import { CardContainer } from "@/app/_components/admin/profile/card-container"
 import { CardRow } from "@/app/_components/admin/profile/card-row"
 import { Button } from "@/app/_components/ui/button"
@@ -63,6 +65,12 @@ function TextAreaRow({
     )
 }
 
+// "1"/"0" (ou "true"/"false") → boolean; ausente cai no padrão informado.
+function toBool(v: string | undefined, fallback: boolean) {
+    if (v === undefined) return fallback
+    return v === "1" || v === "true"
+}
+
 export default function ConfiguracoesPage() {
     const [appName, setAppName] = useState("FluencyLab")
     const [appDesc, setAppDesc] = useState("Plataforma de aprendizado de inglês gamificada.")
@@ -71,16 +79,45 @@ export default function ConfiguracoesPage() {
     const [maintenanceMode, setMaintenanceMode] = useState(false)
     const [newRegistrations, setNewRegistrations] = useState(true)
     const [rankingPublic, setRankingPublic] = useState(true)
+    const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [saved, setSaved] = useState(false)
+    const [error, setError] = useState("")
+
+    // Carrega os valores atuais do backend (mantém os padrões quando ainda não há registro).
+    useEffect(() => {
+        getSettings()
+            .then((s) => {
+                if (s.app_name !== undefined) setAppName(s.app_name)
+                if (s.app_description !== undefined) setAppDesc(s.app_description)
+                if (s.xp_per_phrase !== undefined) setXpPerPhrase(s.xp_per_phrase)
+                if (s.streak_bonus !== undefined) setStreakBonus(s.streak_bonus)
+                setMaintenanceMode(toBool(s.maintenance_mode, false))
+                setNewRegistrations(toBool(s.new_registrations, true))
+                setRankingPublic(toBool(s.ranking_public, true))
+            })
+            .catch((err) => setError(apiErrorMessage(err, "Não foi possível carregar as configurações.")))
+            .finally(() => setLoading(false))
+    }, [])
 
     async function handleSave() {
         setSaving(true)
-        // TODO: PATCH /api/admin/settings
-        await new Promise((r) => setTimeout(r, 800))
-        setSaving(false)
-        setSaved(true)
-        setTimeout(() => setSaved(false), 2500)
+        setError("")
+        try {
+            await saveSettings({
+                app_name: appName,
+                app_description: appDesc,
+                xp_per_phrase: xpPerPhrase,
+                streak_bonus: streakBonus,
+                ranking_public: rankingPublic,
+                new_registrations: newRegistrations,
+                maintenance_mode: maintenanceMode,
+            })
+            toast.success("Configurações salvas.")
+        } catch (err) {
+            setError(apiErrorMessage(err, "Não foi possível salvar as configurações."))
+        } finally {
+            setSaving(false)
+        }
     }
 
     return (
@@ -94,10 +131,16 @@ export default function ConfiguracoesPage() {
                             Gerencie as configurações da plataforma.
                         </p>
                     </div>
-                    <Button onClick={handleSave} disabled={saving} className="shrink-0">
-                        {saving ? "Salvando…" : saved ? "Salvo!" : "Salvar alterações"}
+                    <Button onClick={handleSave} disabled={saving || loading} className="shrink-0">
+                        {saving ? "Salvando…" : "Salvar alterações"}
                     </Button>
                 </div>
+
+                {error && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                        {error}
+                    </div>
+                )}
 
                 {/* Geral */}
                 <CardContainer title="Geral">

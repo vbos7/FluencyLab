@@ -1,7 +1,7 @@
 "use client"
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { ACTIVITY_DATA } from "@/app/_lib/admin"
+import type { ActivityPoint } from "@/app/_lib/admin"
 
 // Tooltip customizado do gráfico de atividade
 function CustomTooltip({
@@ -22,14 +22,14 @@ function CustomTooltip({
     )
 }
 
-export function ActivityChart() {
+export function ActivityChart({ data }: { data: ActivityPoint[] }) {
     return (
         <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
             <h3 className="mb-4 text-sm font-semibold text-slate-700">
                 Sessões diárias (últimas 2 semanas)
             </h3>
             <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={ACTIVITY_DATA} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                     <XAxis
                         dataKey="day"

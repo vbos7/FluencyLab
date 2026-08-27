@@ -1,7 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/app/_components/ui/button"
+import { Input } from "@/app/_components/ui/input"
+import { Label } from "@/app/_components/ui/label"
 import {
     Dialog,
     DialogClose,
@@ -11,6 +14,14 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/app/_components/ui/dialog"
+import {
+    apiErrorMessage,
+    twoFactorConfirm,
+    twoFactorDisable,
+    twoFactorEnable,
+    twoFactorStatus,
+    type TwoFactorSetup,
+} from "@/app/_lib/admin-api"
 import { CardRow } from "./card-row"
 
 // Toggle switch estilizado
@@ -39,31 +50,83 @@ function Toggle({
 
 export function TwoFactorRow() {
     const [enabled, setEnabled] = useState(false)
-    const [setupOpen, setSetupOpen] = useState(false)
-    const [disableOpen, setDisableOpen] = useState(false)
-    const [loading, setLoading] = useState(false)
+    const [ready, setReady] = useState(false) // status carregado
 
-    async function handleEnable() {
+    const [setupOpen, setSetupOpen] = useState(false)
+    const [setup, setSetup] = useState<TwoFactorSetup | null>(null)
+    const [code, setCode] = useState("")
+    const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null)
+
+    const [disableOpen, setDisableOpen] = useState(false)
+    const [password, setPassword] = useState("")
+
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState("")
+
+    // Estado inicial do 2FA.
+    useEffect(() => {
+        twoFactorStatus()
+            .then((s) => setEnabled(s.enabled))
+            .catch(() => {})
+            .finally(() => setReady(true))
+    }, [])
+
+    // Passo 1: gera segredo + QR e abre o diálogo de configuração.
+    async function startEnable() {
+        setError("")
         setLoading(true)
-        // TODO: POST /api/admin/two-factor/enable
-        await new Promise((r) => setTimeout(r, 600))
-        setLoading(false)
-        setEnabled(true)
-        setSetupOpen(true)
+        try {
+            const data = await twoFactorEnable()
+            setSetup(data)
+            setCode("")
+            setRecoveryCodes(null)
+            setSetupOpen(true)
+        } catch (err) {
+            setError(apiErrorMessage(err))
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // Passo 2: confirma o código do app → ativa e revela os códigos de recuperação.
+    async function confirmEnable() {
+        setError("")
+        setLoading(true)
+        try {
+            const codes = await twoFactorConfirm(code.trim())
+            setRecoveryCodes(codes)
+            setEnabled(true)
+            toast.success("Autenticação de dois fatores ativada.")
+        } catch (err) {
+            setError(apiErrorMessage(err))
+        } finally {
+            setLoading(false)
+        }
     }
 
     async function handleDisable() {
+        setError("")
         setLoading(true)
-        // TODO: DELETE /api/admin/two-factor
-        await new Promise((r) => setTimeout(r, 600))
-        setLoading(false)
-        setEnabled(false)
-        setDisableOpen(false)
+        try {
+            await twoFactorDisable(password)
+            setEnabled(false)
+            setDisableOpen(false)
+            setPassword("")
+            toast.success("Autenticação de dois fatores desativada.")
+        } catch (err) {
+            setError(apiErrorMessage(err))
+        } finally {
+            setLoading(false)
+        }
     }
 
     function handleToggle(value: boolean) {
-        if (value) handleEnable()
-        else setDisableOpen(true)
+        if (value) startEnable()
+        else {
+            setError("")
+            setPassword("")
+            setDisableOpen(true)
+        }
     }
 
     return (
@@ -72,61 +135,147 @@ export function TwoFactorRow() {
                 label="Autenticação de dois fatores"
                 description="Proteja sua conta com um código de verificação adicional no login"
             >
-                <Toggle enabled={enabled} onChange={handleToggle} disabled={loading} />
+                <Toggle enabled={enabled} onChange={handleToggle} disabled={loading || !ready} />
             </CardRow>
 
-            {/* Dialog de setup */}
-            <Dialog open={setupOpen} onOpenChange={setSetupOpen}>
+            {/* Diálogo de configuração / ativação */}
+            <Dialog
+                open={setupOpen}
+                onOpenChange={(v) => {
+                    setSetupOpen(v)
+                    if (!v) setError("")
+                }}
+            >
                 <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Configurar autenticação 2FA</DialogTitle>
-                        <DialogDescription>
-                            Escaneie o QR code abaixo com seu aplicativo autenticador (Google
-                            Authenticator, Authy, etc.).
-                        </DialogDescription>
-                    </DialogHeader>
+                    {recoveryCodes ? (
+                        // Etapa final: mostra os códigos de recuperação (uma única vez).
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>Guarde seus códigos de recuperação</DialogTitle>
+                                <DialogDescription>
+                                    Cada código funciona uma única vez, caso você perca o acesso ao
+                                    aplicativo. Guarde-os em local seguro — eles não serão mostrados
+                                    novamente.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid grid-cols-2 gap-2 py-2">
+                                {recoveryCodes.map((c) => (
+                                    <code
+                                        key={c}
+                                        className="rounded-lg bg-slate-100 px-3 py-1.5 text-center font-mono text-sm tracking-wide text-slate-700"
+                                    >
+                                        {c}
+                                    </code>
+                                ))}
+                            </div>
+                            <DialogFooter>
+                                <Button onClick={() => setSetupOpen(false)}>Concluído</Button>
+                            </DialogFooter>
+                        </>
+                    ) : (
+                        // Etapa 1+2: QR/segredo + confirmação do código.
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>Configurar autenticação 2FA</DialogTitle>
+                                <DialogDescription>
+                                    Escaneie o QR code com seu aplicativo autenticador (Google
+                                    Authenticator, Authy, etc.) e insira o código gerado.
+                                </DialogDescription>
+                            </DialogHeader>
 
-                    {/* Placeholder QR code */}
-                    <div className="flex flex-col items-center gap-3 py-2">
-                        <div className="flex size-40 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50">
-                            <p className="px-4 text-center text-xs text-slate-400">
-                                QR Code
-                                <br />
-                                (API necessária)
-                            </p>
-                        </div>
-                        <p className="text-xs text-slate-400">
-                            Ou insira o código manualmente no seu app
-                        </p>
-                        <code className="rounded-lg bg-slate-100 px-3 py-1.5 font-mono text-xs tracking-widest text-slate-700">
-                            XXXX-XXXX-XXXX-XXXX
-                        </code>
-                    </div>
+                            <div className="flex flex-col items-center gap-3 py-2">
+                                {setup?.qr ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        src={setup.qr}
+                                        alt="QR code do 2FA"
+                                        className="size-40 rounded-xl border border-slate-200"
+                                    />
+                                ) : (
+                                    <div className="size-40 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50" />
+                                )}
+                                <p className="text-xs text-slate-400">
+                                    Ou insira o código manualmente no seu app
+                                </p>
+                                <code className="rounded-lg bg-slate-100 px-3 py-1.5 font-mono text-xs tracking-widest text-slate-700">
+                                    {setup?.secret ?? "…"}
+                                </code>
 
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button variant="outline">Cancelar</Button>
-                        </DialogClose>
-                        <Button onClick={() => setSetupOpen(false)}>Concluído</Button>
-                    </DialogFooter>
+                                <div className="mt-2 flex w-full flex-col gap-1.5">
+                                    <Label htmlFor="totp-code">Código do aplicativo</Label>
+                                    <Input
+                                        id="totp-code"
+                                        inputMode="numeric"
+                                        autoComplete="one-time-code"
+                                        placeholder="123456"
+                                        value={code}
+                                        onChange={(e) => setCode(e.target.value)}
+                                    />
+                                    {error && <p className="text-xs text-red-500">{error}</p>}
+                                </div>
+                            </div>
+
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button variant="outline">Cancelar</Button>
+                                </DialogClose>
+                                <Button onClick={confirmEnable} disabled={loading || code.trim() === ""}>
+                                    {loading ? "Verificando…" : "Ativar 2FA"}
+                                </Button>
+                            </DialogFooter>
+                        </>
+                    )}
                 </DialogContent>
             </Dialog>
 
-            {/* Dialog de desativação */}
-            <Dialog open={disableOpen} onOpenChange={setDisableOpen}>
+            {/* Diálogo de desativação */}
+            <Dialog
+                open={disableOpen}
+                onOpenChange={(v) => {
+                    setDisableOpen(v)
+                    if (!v) setError("")
+                }}
+            >
                 <DialogContent>
                     <DialogTitle>Desativar autenticação 2FA?</DialogTitle>
                     <DialogDescription>
-                        Ao desativar, sua conta ficará protegida apenas por senha. Tem certeza?
+                        Confirme com sua senha. Ao desativar, sua conta ficará protegida apenas por
+                        senha.
                     </DialogDescription>
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button variant="outline">Cancelar</Button>
-                        </DialogClose>
-                        <Button variant="destructive" onClick={handleDisable} disabled={loading}>
-                            {loading ? "Desativando…" : "Desativar 2FA"}
-                        </Button>
-                    </DialogFooter>
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault()
+                            handleDisable()
+                        }}
+                        className="mt-4 flex flex-col gap-4"
+                    >
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="disable-2fa-password">Senha</Label>
+                            <Input
+                                id="disable-2fa-password"
+                                type="password"
+                                autoComplete="current-password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                autoFocus
+                            />
+                            {error && <p className="text-xs text-red-500">{error}</p>}
+                        </div>
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button type="button" variant="outline">
+                                    Cancelar
+                                </Button>
+                            </DialogClose>
+                            <Button
+                                type="submit"
+                                variant="destructive"
+                                disabled={loading || password === ""}
+                            >
+                                {loading ? "Desativando…" : "Desativar 2FA"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
         </>

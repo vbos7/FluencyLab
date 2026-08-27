@@ -1,6 +1,8 @@
 "use client"
 
 import { useRef, useState } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
 import { Label } from "@/app/_components/ui/label"
@@ -13,9 +15,11 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/app/_components/ui/dialog"
+import { apiErrorMessage, deleteAccount } from "@/app/_lib/admin-api"
 import { CardRow } from "./card-row"
 
 export function DeleteRow() {
+    const router = useRouter()
     const [open, setOpen] = useState(false)
     const [password, setPassword] = useState("")
     const [error, setError] = useState("")
@@ -31,10 +35,15 @@ export function DeleteRow() {
         }
         setError("")
         setLoading(true)
-        // TODO: DELETE /api/admin/profile
-        await new Promise((r) => setTimeout(r, 800))
-        setLoading(false)
-        setOpen(false)
+        try {
+            await deleteAccount()
+            toast.success("Conta excluída.")
+            // Sessão foi destruída no backend; volta para o login.
+            router.push("/login")
+        } catch (err) {
+            setError(apiErrorMessage(err, "Não foi possível excluir a conta."))
+            setLoading(false)
+        }
     }
 
     return (

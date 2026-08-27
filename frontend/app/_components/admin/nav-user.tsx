@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -15,22 +16,44 @@ import { UserInfo } from "@/app/_components/admin/user-info"
 import { UserMenuContent } from "@/app/_components/admin/user-menu-content"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { type User } from "@/app/_lib/utils"
+import { getProfile } from "@/app/_lib/admin-api"
 import { ChevronsUpDown } from "lucide-react"
 
-// Usuário de demonstração — substituir pelo usuário autenticado quando disponível
-const MOCK_USER: User = {
-    id: 1,
-    name: "Admin",
-    email: "admin@fluencylab.com",
-    email_verified_at: null,
-    created_at: "",
-    updated_at: "",
-}
-
 export function NavUser() {
-    const user = MOCK_USER
     const { state } = useSidebar()
     const isMobile = useIsMobile()
+    const [user, setUser] = useState<User | null>(null)
+
+    // Busca o admin autenticado (mesmo /profile.php usado na página de perfil).
+    useEffect(() => {
+        getProfile()
+            .then((p) =>
+                setUser({
+                    id: p.id,
+                    name: p.name,
+                    email: p.email,
+                    avatar: p.avatar ?? undefined,
+                    email_verified_at: null,
+                    created_at: p.created_at,
+                    updated_at: "",
+                })
+            )
+            .catch(() => {})
+    }, [])
+
+    // Enquanto carrega, mostra um esqueleto simples no rodapé da sidebar.
+    if (!user) {
+        return (
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton size="lg" disabled>
+                        <div className="size-8 animate-pulse rounded-full bg-neutral-200 dark:bg-neutral-700" />
+                        <div className="ml-1 h-3 w-24 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700" />
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
+        )
+    }
 
     return (
         <SidebarMenu>
