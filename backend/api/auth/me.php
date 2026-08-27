@@ -4,6 +4,8 @@ require_once __DIR__.'/../cors.php';
 
 require_once __DIR__.'/../db.php';
 
+require_once __DIR__.'/../lib/url.php';
+
 // Não existe "quem sou eu?" sem sessão ativa.
 // o cookie PHPSESSID existe pra qualquer visitante — o que importa
 // é ter $_SESSION['user_id'], que só é gravado no login/registro.
@@ -14,7 +16,7 @@ if (! isset($_SESSION['user_id'])) {
 }
 
 // Busca os dados atuais no banco (nome/email podem ter mudado desde o login)
-$stmt = $pdo->prepare('SELECT id, name, email, role FROM users WHERE id = ?');
+$stmt = $pdo->prepare('SELECT id, name, email, role, avatar FROM users WHERE id = ?');
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 
@@ -31,4 +33,5 @@ json_out([
     'name' => $user['name'],
     'email' => $user['email'],
     'role' => $user['role'],
+    'avatar' => avatar_url($user['avatar']),
 ]);

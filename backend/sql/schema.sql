@@ -39,7 +39,30 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     phone        VARCHAR(20),
     role         ENUM('student','admin') NOT NULL DEFAULT 'student',
+    -- Caminho/URL do avatar (só o painel admin usa por enquanto).
+    avatar       VARCHAR(255)  NULL,
+    -- 2FA (TOTP) — só admins ativam. O segredo fica CIFRADO em repouso
+    -- (libsodium + APP_KEY); os códigos de recuperação são guardados como
+    -- HASHes (JSON). confirmed_at != NULL significa 2FA ativo e verificado.
+    two_factor_secret          TEXT      NULL,
+    two_factor_recovery_codes  TEXT      NULL,
+    two_factor_confirmed_at    DATETIME  NULL,
     created_at   DATETIME      DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Passkeys (WebAuthn/FIDO2) do login próprio do painel admin. Um usuário pode
+-- ter vários dispositivos. credential_id é o id binário cru devolvido pelo
+-- autenticador; public_key é o PEM usado para validar as assinaturas no login.
+CREATE TABLE IF NOT EXISTS webauthn_credentials (
+    id            INT AUTO_INCREMENT PRIMARY KEY,
+    user_id       INT             NOT NULL,
+    credential_id VARBINARY(255)  NOT NULL UNIQUE,
+    public_key    TEXT            NOT NULL,
+    sign_count    INT UNSIGNED    NOT NULL DEFAULT 0,
+    name          VARCHAR(100)    NULL,          -- apelido do dispositivo ("MacBook", "iPhone")
+    created_at    DATETIME        DEFAULT CURRENT_TIMESTAMP,
+    last_used_at  DATETIME        NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- ─── MÓDULO B — Cursos/Aulas ─────────────────────────────────────────────────
@@ -139,6 +162,13 @@ CREATE TABLE IF NOT EXISTS user_plan (
     FOREIGN KEY (plan_id) REFERENCES plans(id)
 );
 
+-- Configurações globais da plataforma (chave/valor), usadas pelo painel admin.
+-- Tudo é guardado como texto; o consumidor converte (ex.: "1"/"0" para boolean).
+CREATE TABLE IF NOT EXISTS settings (
+    setting_key   VARCHAR(50) PRIMARY KEY,
+    setting_value TEXT
+);
+
 -- ─── Migrações para bancos JÁ existentes ─────────────────────────────────────
 -- Os CREATE TABLE acima NÃO alteram tabela que já existe. Este bloco adiciona,
 -- de forma idempotente (checando o information_schema antes), as colunas e
@@ -174,6 +204,38 @@ SET @ddl := IF(
     (SELECT COUNT(*) FROM information_schema.COLUMNS
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'attempts' AND COLUMN_NAME = 'time_spent_seconds') = 0,
     'ALTER TABLE attempts ADD COLUMN time_spent_seconds INT UNSIGNED NOT NULL DEFAULT 0 AFTER xp_earned',
+    'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- users.avatar (upload de foto no perfil admin)
+SET @ddl := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'avatar') = 0,
+    'ALTER TABLE users ADD COLUMN avatar VARCHAR(255) NULL AFTER role',
+    'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- users.two_factor_secret (segredo TOTP cifrado)
+SET @ddl := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'two_factor_secret') = 0,
+    'ALTER TABLE users ADD COLUMN two_factor_secret TEXT NULL',
+    'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- users.two_factor_recovery_codes (JSON de hashes)
+SET @ddl := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'two_factor_recovery_codes') = 0,
+    'ALTER TABLE users ADD COLUMN two_factor_recovery_codes TEXT NULL',
+    'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- users.two_factor_confirmed_at (2FA ativo quando != NULL)
+SET @ddl := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'two_factor_confirmed_at') = 0,
+    'ALTER TABLE users ADD COLUMN two_factor_confirmed_at DATETIME NULL',
     'SELECT 1');
 PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
 
@@ -213,6 +275,17 @@ INSERT INTO plans (name, price, description, features, billing_period) VALUES
 ON DUPLICATE KEY UPDATE
     price = VALUES(price), description = VALUES(description),
     features = VALUES(features), billing_period = VALUES(billing_period);
+
+-- Valores padrão das configurações. INSERT IGNORE (e não ON DUPLICATE KEY UPDATE)
+-- de propósito: se o admin já alterou algo, reaplicar o schema NÃO reseta o valor.
+INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
+('app_name',          'FluencyLab'),
+('app_description',   'Plataforma de aprendizado de inglês gamificada.'),
+('xp_per_phrase',     '10'),
+('streak_bonus',      '1.5'),
+('ranking_public',    '1'),
+('new_registrations', '1'),
+('maintenance_mode',  '0');
 
 -- ─── Seed: aulas de cada curso ───────────────────────────────────────────────
 -- Guarda os ids dos cursos em variáveis (INSERT ... VALUES não aceita subquery
