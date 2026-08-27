@@ -16,13 +16,13 @@ const items = [
     { href: "/profile", icon: User, label: "Perfil" }
 ]
 
-export function TopNav() {
+type LoggedUser = { id: number; name: string; email: string; role: string }
+
+export function TopNav({ user }: { user: LoggedUser | null }) {
     const pathname = usePathname()
     const router = useRouter()
 
-    const isGuest =
-        typeof window !== "undefined" &&
-        localStorage.getItem("fluency-lab:mode") === "guest"
+    const isGuest = !user
 
     // Logado clica no logo -> vai pra /home; visitante/guest -> landing "/"
     const logoHref = isGuest ? "/" : "/home"
