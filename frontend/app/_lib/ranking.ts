@@ -3,7 +3,7 @@ export type LeaderboardUser = {
     name: string
     xp: number
     level: number
-    github: string
+    github?: string
     isCurrentUser?: boolean
 }
 

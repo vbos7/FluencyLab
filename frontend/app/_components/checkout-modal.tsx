@@ -2,22 +2,33 @@
 
 import { useState } from "react";
 import { X, CheckCircle } from "lucide-react";
+import { apiClient } from "@/app/_lib/api";
 
 type Props = {
+  planId: number;
+  planName: string;
+  price: number;
+  billingPeriod: "monthly" | "lifetime";
   onClose: () => void;
 };
 
-export default function CheckoutModal({ onClose }: Props) {
+export default function CheckoutModal({ planId, planName, price, billingPeriod, onClose }: Props) {
   const [method, setMethod] = useState<"card" | "pix">("card");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setError("");
+    try {
+      await apiClient.post("/plans-subscribe.php", { plan_id: planId });
       setSuccess(true);
-    }, 1800);
+    } catch {
+      setError("Não foi possível assinar o plano. Entre novamente e tente outra vez.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -57,7 +68,7 @@ export default function CheckoutModal({ onClose }: Props) {
             </p>
 
             <div className="mt-5 bg-blue-50 border border-blue-100 rounded-xl px-5 py-3 text-sm font-medium text-blue-700">
-              ✦ Plano Pro ativado com sucesso
+              ✦ Plano {planName} ativado com sucesso
             </div>
 
             <button
@@ -76,10 +87,12 @@ export default function CheckoutModal({ onClose }: Props) {
             {/* Badge do plano */}
             <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center justify-between mb-5">
               <div>
-                <p className="text-xs text-blue-400 mb-0.5">Plano Pro</p>
+                <p className="text-xs text-blue-400 mb-0.5">Plano {planName}</p>
                 <p className="text-blue-900 font-semibold text-lg">
-                  R$ 4,99{" "}
-                  <span className="text-sm font-normal text-blue-400">/vitalício</span>
+                  {price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}{" "}
+                  <span className="text-sm font-normal text-blue-400">
+                    /{billingPeriod === "lifetime" ? "vitalício" : "mês"}
+                  </span>
                 </p>
               </div>
               <span className="text-xs font-medium bg-blue-700 text-blue-100 px-3 py-1 rounded-full">
@@ -183,6 +196,12 @@ export default function CheckoutModal({ onClose }: Props) {
             >
               {loading ? "Processando..." : "Confirmar assinatura →"}
             </button>
+
+            {error && (
+              <p role="alert" className="mt-3 text-center text-xs text-red-600">
+                {error}
+              </p>
+            )}
 
             <p className="text-center text-xs text-gray-400 mt-3 flex items-center justify-center gap-1">
               🔒 Pagamento 100% seguro

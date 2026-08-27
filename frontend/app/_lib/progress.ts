@@ -16,6 +16,17 @@ export type WeeklyPoint = {
     treinos: number
 }
 
+export type StatsData = {
+    totalPracticed: number
+    totalCorrect: number
+    userXp: number
+}
+
+export type CalendarData = {
+    date: string
+    level: number
+}
+
 // Formato que vem direto do dashboard.php
 export type DashboardData = {
     total_treinos: number
@@ -49,6 +60,19 @@ export function computeStats(data: DashboardData): ComputedStats {
     }
 }
 
+export function computeStatsFromApi(data: StatsData): ComputedStats {
+    return {
+        totalPracticed: data.totalPracticed,
+        completionRate:
+            data.totalPracticed > 0
+                ? Math.round((data.totalCorrect / data.totalPracticed) * 100)
+                : 0,
+        totalHours: 0,
+        totalMinutes: 0,
+        userXp: data.userXp,
+    }
+}
+
 // Converte a contagem bruta de atividades/dia em nível de intensidade (0–3) para o heatmap
 function activityLevel(atividades: number): number {
     if (atividades <= 0) return 0
@@ -64,6 +88,10 @@ export function buildCalendarMap(consistencia: DashboardData["consistencia"]): R
         map[item.dia] = activityLevel(item.atividades)
     }
     return map
+}
+
+export function buildCalendarMapFromApi(calendar: CalendarData[]): Record<string, number> {
+    return Object.fromEntries(calendar.map((item) => [item.date, item.level]))
 }
 
 // ─── Helpers do calendário ──────────────────────────────────────────────────────
