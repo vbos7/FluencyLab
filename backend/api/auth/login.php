@@ -35,8 +35,8 @@ if (! $user || ! password_verify($password, $user['password_hash'])) {
 // "pendente" e o front precisa completar em /auth/two-factor-challenge.php com
 // o código do autenticador. Usuários comuns nunca entram aqui (só email+senha).
 if ($user['role'] === 'admin' && $user['two_factor_confirmed_at'] !== null) {
-    // Não gravamos user_id/role ainda — sessão só vira "logada" após o 2º fator.
-    unset($_SESSION['user_id'], $_SESSION['role']);
+    // Não gravamos user_id ainda — sessão só vira "logada" após o 2º fator.
+    unset($_SESSION['user_id']);
     $_SESSION['2fa_pending_user_id'] = (int) $user['id'];
 
     json_out(['two_factor' => true]);
@@ -44,8 +44,9 @@ if ($user['role'] === 'admin' && $user['two_factor_confirmed_at'] !== null) {
     exit;
 }
 
+// O papel NÃO é guardado na sessão: a autorização de admin lê users.role do banco
+// (ver admin/guard.php e /auth/me.php), fonte única de verdade.
 $_SESSION['user_id'] = $user['id'];
-$_SESSION['role'] = $user['role'];
 
 json_out([
     'success' => true,

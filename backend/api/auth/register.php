@@ -60,9 +60,9 @@ $stmt = $pdo->prepare('INSERT INTO users (name, email, password_hash) VALUES (?,
 $stmt->execute([$name, $email, $hash]);
 $userId = $pdo->lastInsertId();
 
-// Inicia a sessão
+// Inicia a sessão. O papel não vai na sessão: a autorização lê users.role do
+// banco (admin/guard.php e /auth/me.php), fonte única de verdade.
 $_SESSION['user_id'] = $userId;
-$_SESSION['role'] = 'student';
 
 json_out([
     'success' => true,

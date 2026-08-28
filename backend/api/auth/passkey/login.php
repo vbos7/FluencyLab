@@ -68,8 +68,9 @@ $pdo->prepare('UPDATE webauthn_credentials SET sign_count = ?, last_used_at = NO
     ->execute([(int) ($novoContador ?? $cred['sign_count']), $cred['id']]);
 
 // Passkey já é forte (posse + verificação do usuário): loga direto, sem 2FA.
+// O papel não vai na sessão: a autorização lê users.role do banco
+// (admin/guard.php e /auth/me.php), fonte única de verdade.
 $_SESSION['user_id'] = (int) $cred['user_id'];
-$_SESSION['role'] = 'admin';
 
 json_out([
     'success' => true,

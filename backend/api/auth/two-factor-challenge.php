@@ -62,10 +62,10 @@ if (! $verified) {
     exit;
 }
 
-// Segundo fator OK → promove a sessão.
+// Segundo fator OK → promove a sessão. O papel vem do banco na autorização
+// (admin/guard.php), então não é guardado aqui.
 unset($_SESSION['2fa_pending_user_id']);
 $_SESSION['user_id'] = (int) $user['id'];
-$_SESSION['role'] = $user['role'];
 
 json_out([
     'success' => true,
