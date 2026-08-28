@@ -15,31 +15,8 @@ import {
     CheckCircle2,
     StickyNote
 } from "lucide-react";
-
-
-
-type Lesson = {
-    id: number;
-    title: string;
-    duration: number;
-    youtube_id: string | null;
-    order_num: number;
-    is_free: boolean;
-    locked: boolean;
-};
-
-type CourseDetail = {
-    id: number;
-    slug: string;
-    title: string;
-    description: string;
-    level: string;
-    lessons: Lesson[];
-    user_has_premium: boolean;
-};
-
-type Comment = { id: number; content: string; user_id: number; user_name: string; created_at: string };
-type LoggedUser = { id: number; name: string; email: string; role: string };
+import { type CourseDetail, type Comment } from "@/app/_lib/courses";
+import { type LoggedUser } from "@/app/_lib/user";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 

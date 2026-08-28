@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import CheckoutModal from "@/app/_components/checkout-modal";
+import { type Feature, type ProPlan } from "@/app/_lib/plans";
 
 const featuresF = [
   { label: "Traduções ilimitadas por dia", included: true },
@@ -26,16 +27,6 @@ const featuresPro = [
   { label: "Relatório semanal completo", included: true, highlight: true },
   { label: "Suporte prioritário", included: true, highlight: true },
 ];
-
-type Feature = { label: string; included: boolean; highlight?: boolean };
-
-// Plano Pro real vindo de /plans.php (price chega como string do DECIMAL).
-export type ProPlan = {
-  id: number;
-  name: string;
-  price: string;
-  billing_period: "monthly" | "lifetime";
-} | null;
 
 function FeatureItem({ f }: { f: Feature }) {
   return (

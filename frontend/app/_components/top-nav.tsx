@@ -6,6 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/app/_components/ui/button"
 import { cn } from "@/app/_lib/utils"
+import { type LoggedUser } from "@/app/_lib/user"
 import ProModal from "@/app/_components/pro-modal";
 
 const items = [
@@ -15,8 +16,6 @@ const items = [
     { href: "/cursos", icon: MonitorPlay, label: "Cursos" },
     { href: "/profile", icon: User, label: "Perfil" }
 ]
-
-type LoggedUser = { id: number; name: string; email: string; role: string }
 
 export function TopNav({ user }: { user: LoggedUser | null }) {
     const pathname = usePathname()

@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { Home, Calendar, Languages, BarChart2, User, BadgeCent } from "lucide-react"
 import { Button } from "@/app/_components/ui/button"
 import { cn } from "@/app/_lib/utils"
+import { type LoggedUser } from "@/app/_lib/user"
 
 const items = [
     { href: "/home", icon: Home, label: "Início" },
@@ -13,8 +14,6 @@ const items = [
     { href: "/profile", icon: User, label: "Perfil" },
     
 ]
-
-type LoggedUser = { id: number; name: string; email: string; role: string }
 
 export function BottomNav({ user }: { user: LoggedUser | null }) {
     const pathname = usePathname()
