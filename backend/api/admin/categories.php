@@ -2,6 +2,7 @@
 
 require_once __DIR__.'/guard.php';
 
+/** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 requireAdmin();
 
 $method = $_SERVER['REQUEST_METHOD'];

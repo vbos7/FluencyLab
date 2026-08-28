@@ -4,6 +4,8 @@ require_once __DIR__.'/../cors.php';
 
 require_once __DIR__.'/../db.php';
 
+/** @var PDO $pdo Conexão criada em db.php (incluído acima). */
+
 require_once __DIR__.'/../lib/url.php';
 
 // Não existe "quem sou eu?" sem sessão ativa.

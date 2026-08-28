@@ -3,6 +3,7 @@
 require_once __DIR__.'/cors.php';
 require_once __DIR__.'/db.php';
 
+/** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // GET /api/comentarios.php?lesson_id=1

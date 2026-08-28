@@ -3,6 +3,8 @@
 require_once __DIR__.'/cors.php';
 require_once __DIR__.'/db.php';
 
+/** @var PDO $pdo Conexão criada em db.php (incluído acima). */
+
 // Público — qualquer pessoa pode ver o ranking
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     json_out(['error' => 'Método não permitido'], 405);

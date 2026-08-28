@@ -15,6 +15,7 @@ require_once __DIR__.'/../../lib/webauthn.php';
 
 use lbuchs\WebAuthn\WebAuthnException;
 
+/** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['error' => 'Método não permitido'], 405);
     exit;

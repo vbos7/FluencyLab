@@ -8,6 +8,8 @@
  */
 
 require_once __DIR__.'/../guard.php';
+
+/** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 require_once __DIR__.'/../../lib/twofactor.php';
 
 requireAdmin();
