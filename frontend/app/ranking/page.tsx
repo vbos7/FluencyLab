@@ -1,4 +1,5 @@
-import { USERS_LEADERBOARD, getLevel } from "@/app/_lib/ranking"
+import { type LeaderboardUser } from "@/app/_lib/ranking"
+import { fetchFromApi } from "@/app/_lib/server-api"
 import { Podium } from "@/app/_components/ranking/podium"
 import { LeaderboardList } from "@/app/_components/ranking/leaderboard-list"
 import { PositionFooter } from "@/app/_components/ranking/position-footer"
@@ -9,11 +10,8 @@ const LIST_SIZE = 10
 // Quantas posições acima do usuário a janela começa (centraliza o usuário na lista)
 const OFFSET = 4
 
-export default function RankingPage() {
-    // Recalcula o nível do usuário atual com base no XP e ordena do maior para o menor
-    const leaderboard = [...USERS_LEADERBOARD]
-        .map((u) => (u.isCurrentUser ? { ...u, level: getLevel(u.xp).level } : u))
-        .sort((a, b) => b.xp - a.xp)
+export default async function RankingPage() {
+    const leaderboard = await fetchFromApi<LeaderboardUser[]>("/ranking.php")
 
     // Posição real do usuário atual no ranking (1-indexed)
     const myPosition = leaderboard.findIndex((u) => u.isCurrentUser) + 1
@@ -46,9 +44,17 @@ export default function RankingPage() {
                     </p>
                 </div>
 
-                <Podium top3={top3} />
-                <LeaderboardList rows={visibleRows} startIdx={startIdx} />
-                <PositionFooter position={myPosition} />
+                {leaderboard.length === 0 ? (
+                    <p className="py-16 text-center text-sm text-slate-400">
+                        O ranking ainda não possui participantes.
+                    </p>
+                ) : (
+                    <>
+                        <Podium top3={top3} />
+                        <LeaderboardList rows={visibleRows} startIdx={startIdx} />
+                        <PositionFooter position={myPosition} />
+                    </>
+                )}
             </main>
         </NavLayout>
     )

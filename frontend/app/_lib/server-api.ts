@@ -1,26 +1,40 @@
 import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 
-export async function fetchFromApi<T = unknown>(path: string): Promise<T> {
-    const cookieStore = await cookies()
-    const cookieHeader = cookieStore.toString() // ex: "PHPSESSID=abc123"
+const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:8000/api";
 
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
-        headers: {
-            Accept: "application/json",
-            Cookie: cookieHeader, // repassa o cookie do usuário pro PHP
-        },
-        cache: "no-store",
-    })
-
-    if (!res.ok) throw new Error(`Erro ao buscar ${path}: ${res.status}`)
-    return res.json()
-}
-
+// Usuário autenticado, no formato devolvido por /auth/me.php
 export type AuthUser = {
     id: number
     name: string
     email: string
-    role: "student" | "admin"
+    role: string
+}
+
+export async function fetchFromApi<T>(path: string): Promise<T> {
+    const cookieStore = await cookies();
+
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+       cache: "no-store",
+        headers: {
+            Cookie: cookieStore.toString(), // sempre busca dado fresco; troque depois se quiser cache
+        },
+    });
+
+    // 401 = sessão ausente/expirada. O middleware só checa a PRESENÇA do cookie
+    // PHPSESSID, então um cookie velho passa por ele e só aqui descobrimos que a
+    // sessão do backend não vale mais. Como todas as chamadas de fetchFromApi
+    // vêm de páginas protegidas (Server Components), o certo é mandar pro login
+    // em vez de estourar a página com um erro.
+    if (res.status === 401) {
+        redirect("/login")
+    }
+
+    if (!res.ok) {
+        throw new Error(`Erro ao buscar ${path}: ${res.status}`);
+    }
+
+    return res.json();
 }
 
 /**
@@ -37,7 +51,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     const cookieStore = await cookies()
 
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me.php`, {
+        const res = await fetch(`${API_BASE_URL}/auth/me.php`, {
             headers: {
                 Accept: "application/json",
                 Cookie: cookieStore.toString(),

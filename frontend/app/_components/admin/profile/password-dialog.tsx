@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
 import { Label } from "@/app/_components/ui/label"
@@ -13,11 +14,13 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/app/_components/ui/dialog"
+import { type User } from "@/app/_lib/utils"
+import { apiErrorMessage, updateProfile } from "@/app/_lib/admin-api"
 import { CardRow } from "./card-row"
 
-type Errors = { current?: string; password?: string; confirm?: string }
+type Errors = { current?: string; password?: string; confirm?: string; form?: string }
 
-export function PasswordRow() {
+export function PasswordRow({ user }: { user: User }) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [errors, setErrors] = useState<Errors>({})
@@ -48,11 +51,23 @@ export function PasswordRow() {
         }
 
         setLoading(true)
-        // TODO: PUT /api/admin/profile/password
-        await new Promise((r) => setTimeout(r, 800))
-        setLoading(false)
-        reset()
-        setOpen(false)
+        try {
+            // PUT /profile.php troca a senha junto com nome/email (mantidos).
+            await updateProfile({
+                name: user.name,
+                email: user.email,
+                current_password: fields.current_password,
+                new_password: fields.password,
+                new_password_confirmation: fields.password_confirmation,
+            })
+            toast.success("Senha alterada.")
+            reset()
+            setOpen(false)
+        } catch (err) {
+            setErrors({ form: apiErrorMessage(err) })
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -128,6 +143,7 @@ export function PasswordRow() {
                                 <p className="text-xs text-red-500">{errors.confirm}</p>
                             )}
                         </div>
+                        {errors.form && <p className="text-xs text-red-500">{errors.form}</p>}
                         <DialogFooter>
                             <DialogClose asChild>
                                 <Button type="button" variant="outline">

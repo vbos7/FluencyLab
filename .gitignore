@@ -8,6 +8,9 @@
 **/.env.*
 !**/.env.example
 
+# Uploads gerados em runtime (avatares do painel admin)
+backend/public/uploads/
+
 .DS_Store
 .idea/
 .claude/

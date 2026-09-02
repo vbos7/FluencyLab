@@ -1,26 +1,34 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
 import { type User } from "@/app/_lib/utils"
+import { apiErrorMessage, updateProfile } from "@/app/_lib/admin-api"
 
-export function NameForm({ user }: { user: User }) {
+export function NameForm({ user, onUpdated }: { user: User; onUpdated?: () => void }) {
     const [name, setName] = useState(user.name)
     const [loading, setLoading] = useState(false)
-    const [saved, setSaved] = useState(false)
+    const [error, setError] = useState("")
 
     const isDirty = name !== user.name
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
         if (!isDirty) return
+        setError("")
         setLoading(true)
-        // TODO: PATCH /api/admin/profile/name
-        await new Promise((r) => setTimeout(r, 800))
-        setLoading(false)
-        setSaved(true)
-        setTimeout(() => setSaved(false), 2500)
+        try {
+            // O PUT /profile.php grava nome + email juntos; mantemos o email atual.
+            await updateProfile({ name, email: user.email })
+            toast.success("Nome atualizado.")
+            onUpdated?.()
+        } catch (err) {
+            setError(apiErrorMessage(err))
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -39,11 +47,12 @@ export function NameForm({ user }: { user: User }) {
                         />
                         {isDirty && (
                             <Button size="sm" type="submit" disabled={loading} className="shrink-0">
-                                {loading ? "Salvando…" : saved ? "Salvo!" : "Salvar"}
+                                {loading ? "Salvando…" : "Salvar"}
                             </Button>
                         )}
                     </div>
                 </div>
+                {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
             </form>
         </div>
     )

@@ -7,16 +7,28 @@
  * Por que PDO e não mysqli_connect()?
  * - PDO funciona com qualquer banco (MySQL, PostgreSQL, SQLite...) com a mesma API
  * - Prepared statements são mais simples de escrever com PDO
- * - getenv() lê as variáveis de ambiente definidas no docker-compose.yml
  *
- * O `?:` define um valor padrão para quando você roda localmente (php -S) com o MySQL do MAMP.
- * No Docker, as variáveis de ambiente sobrescrevem esses padrões.
+ * A função env() vem do env.php e resolve de onde a configuração sai em cada
+ * ambiente (arquivo .env no terminal, variáveis no Docker, fastcgi_param no Forge).
+ *
+ * Sem padrão para as credenciais de propósito: se o .env estiver faltando, o erro
+ * é "access denied" na hora, e não uma conexão silenciosa num banco errado.
  */
-$host = getenv('DB_HOST') ?: '127.0.0.1';
-$port = getenv('DB_PORT') ?: '8889';        // 8889 = porta padrão do MySQL no MAMP
-$name = getenv('DB_NAME') ?: 'db_fluencylab';
-$user = getenv('DB_USER') ?: 'root';
-$pass = getenv('DB_PASS') ?: 'root';
+
+require_once __DIR__.'/env.php';
+
+$host = env('DB_HOST');
+$port = env('DB_PORT', '3306');
+$name = env('DB_NAME');
+$user = env('DB_USER');
+$pass = env('DB_PASS');
+
+if ($host === '' || $name === '' || $user === '') {
+    http_response_code(500);
+    exit(json_encode([
+        'error' => 'Configuração do banco ausente. Copie o .env.example para .env e preencha.',
+    ], JSON_UNESCAPED_UNICODE));
+}
 
 $pdo = new PDO(
     "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4",

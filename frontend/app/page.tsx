@@ -1,10 +1,16 @@
+import { redirect } from "next/navigation"
 import { HeroSection } from "@/app/_components/home/hero-section"
 import { DemoCard } from "@/app/_components/home/demo-card"
 import { CtaButtons } from "@/app/_components/home/cta-buttons"
 import { TermsFooter } from "@/app/_components/home/terms-dialog"
+import { getCurrentUser } from "@/app/_lib/server-api"
 
 
-export default function FluencyLabHome() {
+export default async function FluencyLabHome() {
+    // Já logado? A landing é para visitantes — manda pra home (igual ao /login).
+    const user = await getCurrentUser()
+    if (user) redirect("/home")
+
     return (
         <main id="main-content" tabIndex={-1} className="flex min-h-screen w-full flex-col bg-blue-100">
             <HeroSection />

@@ -7,7 +7,11 @@
  *   2. Inicia a sessão PHP (para ler/gravar $_SESSION)
  *   3. Responde imediatamente a requisições OPTIONS (preflight do browser)
  */
-header('Access-Control-Allow-Origin: http://localhost:3000');
+require_once __DIR__.'/env.php';
+
+// Origem do Next.js autorizada a chamar esta API. O default cobre o
+// `npm run dev` padrão; mude APP_ORIGIN no .env se usar outra porta.
+header('Access-Control-Allow-Origin: '.env('APP_ORIGIN', 'http://localhost:3000'));
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
@@ -21,17 +25,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+// No Forge o nginx termina o TLS e repassa o protocolo original em
+// X-Forwarded-Proto — para o PHP a conexão parece http. Sem checar os dois,
+// o cookie nunca seria marcado como secure em produção.
+$https = ($_SERVER['HTTPS'] ?? '') === 'on'
+    || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
+
 // Configura o cookie de sessão ANTES de chamar session_start().
 // SameSite=Lax permite que o cookie viaje entre portas do mesmo host (localhost:3000 → localhost:8000).
 // httponly=false: deixa o JavaScript do Next.js checar se o cookie existe (para o middleware).
-// Configura o cookie de sessão ANTES de chamar session_start().
-// SameSite=Lax permite que o cookie viaje entre portas do mesmo host (localhost:3000 → localhost:8000).
-// httponly=false: deixa o JavaScript do Next.js checar se o cookie existe (para o middleware).
+// secure precisa acompanhar o protocolo: em http (Docker local) tem que ser
+// false, senão o browser descarta o cookie e ninguém consegue logar.
 session_set_cookie_params([
     'samesite' => 'Lax',
     'httponly' => false,
-    'secure'   => false,    // false em desenvolvimento local (http)
-    'path'     => '/',
+    'secure' => $https,
+    'path' => '/',
 ]);
 
 session_start();

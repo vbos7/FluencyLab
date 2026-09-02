@@ -1,9 +1,10 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { Home, Calendar, Languages, BarChart2, User, BadgeCent } from "lucide-react"
+import { Home, Calendar, Languages, BarChart2, User } from "lucide-react"
 import { Button } from "@/app/_components/ui/button"
 import { cn } from "@/app/_lib/utils"
+import { type LoggedUser } from "@/app/_lib/user"
 
 const items = [
     { href: "/home", icon: Home, label: "Início" },
@@ -14,14 +15,13 @@ const items = [
     
 ]
 
-export function BottomNav() {
+export function BottomNav({ user }: { user: LoggedUser | null }) {
     const pathname = usePathname()
     const router = useRouter()
+    const isGuest = !user
     // Derivado diretamente do localStorage — re-calculado a cada navegação
     // porque usePathname() já causa re-render quando a rota muda
-    const isGuest =
-        typeof window !== "undefined" &&
-        localStorage.getItem("fluency-lab:mode") === "guest"
+    
 
     if (pathname === "/login" || pathname === "/register" || pathname === "/") return null
 

@@ -6,6 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/app/_components/ui/button"
 import { cn } from "@/app/_lib/utils"
+import { type LoggedUser } from "@/app/_lib/user"
 import ProModal from "@/app/_components/pro-modal";
 
 const items = [
@@ -16,13 +17,14 @@ const items = [
     { href: "/profile", icon: User, label: "Perfil" }
 ]
 
-export function TopNav() {
+export function TopNav({ user }: { user: LoggedUser | null }) {
     const pathname = usePathname()
     const router = useRouter()
 
-    const isGuest =
-        typeof window !== "undefined" &&
-        localStorage.getItem("fluency-lab:mode") === "guest"
+    const isGuest = !user
+
+    // Logado clica no logo -> vai pra /home; visitante/guest -> landing "/"
+    const logoHref = isGuest ? "/" : "/home"
 
     if (pathname === "/login" || pathname === "/register" || pathname === "/") return null
 
@@ -30,7 +32,7 @@ export function TopNav() {
         <>
             {/* Dispositivos Móveis */}
             <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-center border-b border-slate-100 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] md:hidden">
-                <Link href="/" className="flex items-center gap-2 text-[17px] font-bold tracking-tight text-slate-900">
+                <Link href={logoHref} className="flex items-center gap-2 text-[17px] font-bold tracking-tight text-slate-900">
                     <Image src="/img/logo.png" alt="Logo" width={50} height={60} className="object-contain"/>
                     {/* <img src={logo} alt="Logo" width={200} height={60} className="w-48 h-12 object-contain"/> */}
                     FluencyLab
@@ -39,7 +41,7 @@ export function TopNav() {
 
             {/* Dispositivos Desktop */}
             <nav className="sticky top-0 z-50 hidden h-16 w-full items-center gap-1 border-b border-slate-100 bg-white px-8 shadow-[0_1px_4px_rgba(0,0,0,0.04)] md:flex">
-                <Link href="/" className="mr-auto flex items-center gap-2 text-[17px] font-bold tracking-tight text-slate-900">
+                <Link href={logoHref} className="mr-auto flex items-center gap-2 text-[17px] font-bold tracking-tight text-slate-900">
                     <Image src="/img/logo.png" alt="Logo" width={50} height={60} className="object-contain"/>
                     FluencyLab
                 </Link>

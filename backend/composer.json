@@ -1,0 +1,11 @@
+{
+    "require": {
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*",
+        "ext-fileinfo": "*",
+        "ext-mbstring": "*",
+        "lbuchs/webauthn": "^2.2",
+        "spomky-labs/otphp": "^11.3",
+        "bacon/bacon-qr-code": "^3.0"
+    }
+}

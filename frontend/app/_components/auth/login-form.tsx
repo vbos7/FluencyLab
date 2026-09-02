@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { AuthLogo } from "./auth-logo"
 import { EmailIcon, LockIcon, EyeIcon, EyeOffIcon } from "./auth-icons"
 import { ForgotPasswordDialog } from "./forgot-password-dialog"
+import { TwoFactorChallenge } from "./two-factor-challenge"
 import { apiClient } from "@/app/_lib/api"
 
 export function LoginForm() {
@@ -17,8 +18,12 @@ export function LoginForm() {
     const [forgotOpen, setForgotOpen] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
+    // Admin com 2FA ativo: o login.php responde { two_factor: true } e trocamos
+    // para a tela de verificação em vez de ir direto pra home.
+    const [needs2fa, setNeeds2fa] = useState(false)
 
-    async function handleLogin() {
+    async function handleLogin(e?: React.FormEvent) {
+        e?.preventDefault()
         setError(null)
 
         if (!email || !password) {
@@ -29,7 +34,11 @@ export function LoginForm() {
         setLoading(true)
 
         try {
-            await apiClient.post("/auth/login.php", { email, password })
+            const { data } = await apiClient.post("/auth/login.php", { email, password })
+            if (data?.two_factor) {
+                setNeeds2fa(true)
+                return
+            }
             localStorage.removeItem("fluency-lab:mode")
             router.push("/home")
         } catch {
@@ -62,14 +71,17 @@ export function LoginForm() {
                 initialEmail={email}
             />
 
+            {needs2fa && <TwoFactorChallenge />}
+
             <div
+                hidden={needs2fa}
                 className={`relative z-10 m-7 w-full max-w-md rounded-3xl border border-blue-100 bg-white px-8 py-10 shadow-xl shadow-blue-100/40 ${fadeUp()}`}
             >
                 <div className={fadeUp(75)}>
                     <AuthLogo />
                 </div>
 
-                <div className="flex flex-col gap-4">
+                <form onSubmit={handleLogin} className="flex flex-col gap-4">
                     {/* E-mail */}
                     <div className={fadeUp(100)}>
                         <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
@@ -130,16 +142,15 @@ export function LoginForm() {
                     {/* Submit */}
                     <div className={`mt-2 ${fadeUp(200)}`}>
                         <button
-                            onClick={handleLogin}
                             disabled={loading}
-                            type="button"
+                            type="submit"
                             className="relative h-12 w-full overflow-hidden rounded-xl bg-linear-to-br from-blue-500 to-blue-800 text-sm font-bold text-white shadow-md shadow-blue-400/35 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-400/45 active:scale-[0.98]"
                         >
                             {loading ? "Entrando..." : "Entrar"}
                             <span className="absolute inset-0 -translate-x-full animate-[shimmer_3s_2s_infinite] bg-linear-to-r from-transparent via-white/10 to-transparent" />
                         </button>
                     </div>
-                </div>
+                </form>
 
                 <p className={`mt-6 text-center text-xs text-slate-400 ${fadeUp(320)}`}>
                     Não tem uma conta?{" "}

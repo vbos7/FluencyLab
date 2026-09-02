@@ -6,6 +6,8 @@ import { Button } from "@/app/_components/ui/button"
 type Props = {
     // Texto digitado pelo usuário
     answer: string
+    // true enquanto a API corrige a tradução — desabilita os campos e troca o texto do botão
+    loading: boolean
     // Callback ao digitar no textarea
     onChange: (value: string) => void
     // Callback ao clicar em "Verificar" ou pressionar Enter
@@ -16,15 +18,16 @@ type Props = {
     inputRef: RefObject<HTMLTextAreaElement | null>
 }
 
-export function AnswerForm({ answer, onChange, onVerify, onSkip, inputRef }: Props) {
+export function AnswerForm({ answer, loading, onChange, onVerify, onSkip, inputRef }: Props) {
     return (
         <div>
             {/* Textarea controlado; Enter sem Shift aciona a verificação */}
             <textarea
                 ref={inputRef}
+                disabled={loading}
                 aria-label="Digite a tradução em inglês da frase acima"
                 aria-describedby="current-phrase"
-                className="min-h-20 w-full resize-none rounded-2xl border-2 border-slate-200 bg-white px-5 py-4 text-base text-slate-800 transition-colors outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-300"
+                className="min-h-20 w-full resize-none rounded-2xl border-2 border-slate-200 bg-white px-5 py-4 text-base text-slate-800 transition-colors outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 disabled:opacity-60"
                 placeholder="Digite a tradução em inglês..."
                 value={answer}
                 onChange={(e) => onChange(e.target.value)}
@@ -36,18 +39,19 @@ export function AnswerForm({ answer, onChange, onVerify, onSkip, inputRef }: Pro
                 }}
             />
             <div className="mt-4 flex flex-col gap-2.5">
-                {/* Botão principal desabilitado enquanto o campo estiver vazio */}
+                {/* Botão principal desabilitado com o campo vazio ou durante a correção */}
                 <Button
                     onClick={onVerify}
-                    disabled={!answer.trim()}
+                    disabled={!answer.trim() || loading}
                     className="hover-lift h-auto w-full rounded-2xl bg-blue-600 py-4 text-base font-semibold hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400"
                 >
-                    Verificar Tradução
+                    {loading ? "Corrigindo..." : "Verificar Tradução"}
                 </Button>
-                {/* Pular vai direto para a próxima frase sem verificar */}
+                {/* Pular vai direto para a próxima frase sem verificar (bloqueado durante a correção) */}
                 <Button
                     variant="outline"
                     onClick={onSkip}
+                    disabled={loading}
                     className="h-auto w-full rounded-2xl border-[1.5px] border-slate-200 bg-transparent py-3.5 text-sm font-medium text-slate-500 hover:bg-transparent hover:text-slate-500"
                 >
                     Pular frase
