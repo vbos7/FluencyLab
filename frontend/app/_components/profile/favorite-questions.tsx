@@ -8,19 +8,23 @@ const ALL_PHRASES = FRASES.flat()
 
 export function FavoriteQuestions() {
     const [open, setOpen] = useState(false)
-    // Lazy initializer evita setState síncrono dentro de useEffect
-    const [favoriteIds, setFavoriteIds] = useState<number[]>(() => {
-        if (typeof window === "undefined") return []
+    // Sempre começa vazio — igual no servidor e na primeira renderização do cliente
+    const [favoriteIds, setFavoriteIds] = useState<number[]>([])
+    const [hidratado, setHidratado] = useState(false)
+
+    // Só lê o localStorage DEPOIS de montar (fora da renderização inicial/hidratação)
+    useEffect(() => {
         try {
             const stored = localStorage.getItem("fluency-lab:favorites")
-            return stored ? JSON.parse(stored) : []
+            setFavoriteIds(stored ? JSON.parse(stored) : [])
         } catch {
-            return []
+            setFavoriteIds([])
+        } finally {
+            setHidratado(true)
         }
-    })
+    }, [])
 
     useEffect(() => {
-        // Escuta mudanças no storage (caso outra aba atualize)
         function onStorage(e: StorageEvent) {
             if (e.key !== "fluency-lab:favorites") return
             try {
@@ -51,7 +55,7 @@ export function FavoriteQuestions() {
                     <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                     <span className="text-base font-semibold text-[#1e293b]">Frases Favoritas</span>
                     <span className="rounded-full bg-[#dbeafe] px-2 py-0.5 text-xs font-semibold text-[#2563eb]">
-                        {phrases.length}
+                        {hidratado ? phrases.length : ""}
                     </span>
                 </div>
                 <ChevronDown
@@ -69,10 +73,7 @@ export function FavoriteQuestions() {
                         </div>
                     ) : (
                         phrases.map((p) => (
-                            <div
-                                key={p.id}
-                                className="rounded-xl border border-[#e8f0fe] bg-[#f8faff] p-4"
-                            >
+                            <div key={p.id} className="rounded-xl border border-[#e8f0fe] bg-[#f8faff] p-4">
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1">
                                         <p className="mb-1 text-sm font-semibold text-[#1e293b]">{p.pt}</p>
@@ -87,9 +88,7 @@ export function FavoriteQuestions() {
                                     </button>
                                 </div>
                                 <div className="mt-3 flex items-center gap-2">
-                                    <span
-                                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${DIFFICULTY_STYLES[p.difficulty]}`}
-                                    >
+                                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${DIFFICULTY_STYLES[p.difficulty]}`}>
                                         {DIFFICULTY_LABELS[p.difficulty]}
                                     </span>
                                     <span className="text-[11px] text-[#94a3b8]">{p.category}</span>

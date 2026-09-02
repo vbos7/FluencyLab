@@ -8,7 +8,7 @@ import { SettingsDialog } from "@/app/_components/profile/settings-dialog"
 import { FavoriteQuestions } from "@/app/_components/profile/favorite-questions"
 import { LogoutButton } from "@/app/_components/profile/logout-button"
 import { fetchFromApi } from "@/app/_lib/server-api"
-import { getLevel, getLevelLabel, type LeaderboardUser } from "@/app/_lib/ranking"
+import { getLevel, levelLabel, type LeaderboardUser } from "@/app/_lib/ranking"
 import { type DashboardData } from "@/app/_lib/progress"
 
 import NavLayout from "@/app/_layouts/nav-layout"
@@ -24,7 +24,7 @@ export default async function ProfilePage() {
     ])
 
     const { level, currentXp, needed } = getLevel(dashboardData.xp_total)
-    const levelLabel = getLevelLabel(level)
+    const levelLabelText = levelLabel(level) // em vez de getLevelLabel(level)
 
     // Posição do usuário atual dentro do leaderboard (1-indexed)
     const posicao = leaderboard.findIndex((u) => u.id === user.id) + 1
@@ -60,7 +60,7 @@ export default async function ProfilePage() {
                     current={currentXp}
                     max={needed}
                     level={level}
-                    levelLabel={levelLabel}
+                    levelLabel={levelLabelText}
                 />
 
                 <PremiumCard />
