@@ -3,18 +3,30 @@
 require_once __DIR__.'/cors.php';
 require_once __DIR__.'/db.php';
 
+/** @var PDO $pdo Conexão criada em db.php (incluído acima). */
+
 // Público — qualquer um vê os planos disponíveis antes de se cadastrar
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     json_out(['error' => 'Método não permitido'], 405);
     exit;
 }
 
-$stmt = $pdo->query('SELECT * FROM plans ORDER BY price');
-$plans = $stmt->fetchAll();
+$plans = $pdo->query('SELECT * FROM plans ORDER BY price')->fetchAll();
 
-// A coluna features é JSON no banco — vem como string, precisa decodificar
+// As features agora vivem na tabela plan_features (uma linha por feature). Monta,
+// para cada plano, o array no mesmo formato que o front (Feature) já espera:
+// { label, included: bool, highlight: bool }.
+$featStmt = $pdo->prepare(
+    'SELECT label, included, highlight FROM plan_features WHERE plan_id = ? ORDER BY order_num, id'
+);
 foreach ($plans as &$plan) {
-    $plan['features'] = json_decode($plan['features'] ?? '[]', true);
+    $featStmt->execute([$plan['id']]);
+    $plan['features'] = array_map(fn ($f) => [
+        'label' => $f['label'],
+        'included' => (bool) $f['included'],
+        'highlight' => (bool) $f['highlight'],
+    ], $featStmt->fetchAll());
 }
+unset($plan);
 
 json_out($plans);

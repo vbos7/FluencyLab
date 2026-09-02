@@ -22,6 +22,10 @@ export default async function HomePage() {
     const stats = computeStats(dashboardData)
     const { level, currentXp, needed } = getLevel(dashboardData.xp_total)
 
+    // Nível/XP e streak derivados do XP e da consistência reais do banco.
+    const { level, currentXp, needed } = getLevel(dashboardData.xp_total)
+    const streak = computeStreak(dashboardData.consistencia)
+
     return (
         <NavLayout>
             <ProModal />

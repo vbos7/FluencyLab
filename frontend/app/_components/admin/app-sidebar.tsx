@@ -14,7 +14,7 @@ import {
 } from "@/app/_components/ui/sidebar"
 import { type NavItem } from "@/app/_lib/utils"
 import Link from "next/link"
-import { LayoutGrid, MessageSquare, Settings2, Trophy, Users } from "lucide-react"
+import { LayoutGrid, MessageSquare, Settings2, Tags, Users } from "lucide-react"
 import AppLogo from "./app-logo"
 
 // Itens principais da plataforma
@@ -22,6 +22,7 @@ const mainNavItems: NavItem[] = [
     { title: "Dashboard", href: "/admin/dashboard", icon: LayoutGrid },
     { title: "Usuários", href: "/admin/usuarios", icon: Users },
     { title: "Frases", href: "/admin/frases", icon: MessageSquare },
+    { title: "Categorias", href: "/admin/categorias", icon: Tags },
 ]
 
 // Item de configurações no rodapé

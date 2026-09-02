@@ -2,6 +2,8 @@
 
 require_once __DIR__.'/../cors.php';
 require_once __DIR__.'/../db.php';
+
+/** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 require_once __DIR__.'/AiService.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -16,6 +18,9 @@ if (! isset($_SESSION['user_id'])) {
 $body = json_decode(file_get_contents('php://input'), true);
 $phraseId = (int) ($body['phrase_id'] ?? 0);
 $resposta = trim($body['answer'] ?? '');
+// Tempo gasto no exercício (segundos). Limitado a [0, 3600] para não inflar o
+// total de estudo caso o aluno deixe a aba aberta.
+$tempoGasto = max(0, min((int) ($body['time_spent_seconds'] ?? 0), 3600));
 
 if (! $phraseId || empty($resposta)) {
     json_out(['errors' => ['phrase_id e answer obrigatórios']], 422);
@@ -42,19 +47,64 @@ try {
 $score = (int) ($feedback['score'] ?? 0);
 $xp = calcularXp($score);
 
-// Salva a tentativa no banco
-$pdo->prepare(
-    'INSERT INTO attempts (user_id, phrase_id, answer_given, ai_feedback, is_correct, score, xp_earned)
-     VALUES (?, ?, ?, ?, ?, ?, ?)'
-)->execute([
-    $_SESSION['user_id'], $phraseId, $resposta,
-    json_encode($feedback), $feedback['is_correct'] ? 1 : 0, $score, $xp,
-]);
+// Salva a tentativa e o feedback da IA, normalizado: os escalares vão como
+// colunas em attempts; os arrays (erros e pontos positivos) viram linhas nas
+// tabelas-filhas. Tudo numa transação para não deixar tentativa órfã de feedback.
+try {
+    $pdo->beginTransaction();
 
-// Se acertou, credita pontos de ranking
-if ($feedback['is_correct']) {
-    $pdo->prepare('INSERT INTO ranking_points (user_id, points, reason) VALUES (?, ?, ?)')
-        ->execute([$_SESSION['user_id'], $xp, 'Exercício correto']);
+    $pdo->prepare(
+        'INSERT INTO attempts (user_id, phrase_id, answer_given, overall_comment, corrected_sentence, is_correct, score, xp_earned, time_spent_seconds)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    )->execute([
+        $_SESSION['user_id'], $phraseId, $resposta,
+        $feedback['overall_comment'] ?? null,
+        $feedback['corrected_sentence'] ?? null,
+        $feedback['is_correct'] ? 1 : 0, $score, $xp, $tempoGasto,
+    ]);
+    $attemptId = (int) $pdo->lastInsertId();
+
+    if (! empty($feedback['mistakes']) && is_array($feedback['mistakes'])) {
+        $insMistake = $pdo->prepare(
+            'INSERT INTO attempt_mistakes (attempt_id, type, original, suggestion, explanation_pt)
+             VALUES (?, ?, ?, ?, ?)'
+        );
+        foreach ($feedback['mistakes'] as $m) {
+            if (! is_array($m)) {
+                continue;
+            }
+            $insMistake->execute([
+                $attemptId,
+                $m['type'] ?? null,
+                $m['original'] ?? null,
+                $m['suggestion'] ?? null,
+                $m['explanation_pt'] ?? null,
+            ]);
+        }
+    }
+
+    if (! empty($feedback['positive_points']) && is_array($feedback['positive_points'])) {
+        $insPoint = $pdo->prepare(
+            'INSERT INTO attempt_positive_points (attempt_id, point) VALUES (?, ?)'
+        );
+        foreach ($feedback['positive_points'] as $point) {
+            if (is_string($point) && $point !== '') {
+                $insPoint->execute([$attemptId, $point]);
+            }
+        }
+    }
+
+    // Se acertou, credita pontos de ranking
+    if ($feedback['is_correct']) {
+        $pdo->prepare('INSERT INTO ranking_points (user_id, points, reason) VALUES (?, ?, ?)')
+            ->execute([$_SESSION['user_id'], $xp, 'Exercício correto']);
+    }
+
+    $pdo->commit();
+} catch (Exception $e) {
+    $pdo->rollBack();
+    json_out(['error' => 'Erro ao salvar a tentativa'], 500);
+    exit;
 }
 
 json_out(['feedback' => $feedback, 'xp_earned' => $xp]);

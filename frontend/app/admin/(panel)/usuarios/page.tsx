@@ -1,11 +1,16 @@
 "use client"
 
+import { useCallback, useEffect, useState } from "react"
+import { toast } from "sonner"
 import AppLayout from "@/app/_layouts/app-layout"
 import { type BreadcrumbItem } from "@/app/_lib/utils"
-import { ADMIN_USERS } from "@/app/_lib/admin"
+import { type AdminUser } from "@/app/_lib/admin"
+import { apiErrorMessage, deleteUser, listUsers } from "@/app/_lib/admin-api"
 import { cn } from "@/app/_lib/utils"
 import { CardContainer } from "@/app/_components/admin/profile/card-container"
 import { Button } from "@/app/_components/ui/button"
+import { UserFormDialog } from "@/app/_components/admin/users/user-form-dialog"
+import { ConfirmDialog } from "@/app/_components/admin/confirm-dialog"
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: "Dashboard", href: "/admin/dashboard" },
@@ -27,12 +32,47 @@ function initials(name: string) {
         .join("")
 }
 
-function fmtDate(iso: string) {
-    const [y, m, d] = iso.split("-")
-    return `${d}/${m}/${y}`
+// Backend devolve datetime "YYYY-MM-DD HH:MM:SS".
+function fmtDate(dt: string) {
+    const d = new Date(dt.replace(" ", "T"))
+    return isNaN(d.getTime()) ? dt : d.toLocaleDateString("pt-BR")
 }
 
 export default function UsuariosPage() {
+    const [users, setUsers] = useState<AdminUser[]>([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState("")
+
+    const [formOpen, setFormOpen] = useState(false)
+    const [editing, setEditing] = useState<AdminUser | null>(null)
+    const [toDelete, setToDelete] = useState<AdminUser | null>(null)
+
+    const load = useCallback(async () => {
+        setLoading(true)
+        setError("")
+        try {
+            setUsers(await listUsers())
+        } catch (err) {
+            setError(apiErrorMessage(err, "Não foi possível carregar os usuários."))
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    useEffect(() => {
+        load()
+    }, [load])
+
+    function openCreate() {
+        setEditing(null)
+        setFormOpen(true)
+    }
+
+    function openEdit(user: AdminUser) {
+        setEditing(user)
+        setFormOpen(true)
+    }
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6 md:p-10">
@@ -41,11 +81,19 @@ export default function UsuariosPage() {
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900">Usuários</h1>
                         <p className="mt-0.5 text-sm text-slate-500">
-                            {ADMIN_USERS.length} usuários cadastrados
+                            {loading ? "Carregando…" : `${users.length} usuários cadastrados`}
                         </p>
                     </div>
-                    <Button className="shrink-0">+ Novo usuário</Button>
+                    <Button className="shrink-0" onClick={openCreate}>
+                        + Novo usuário
+                    </Button>
                 </div>
+
+                {error && (
+                    <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                        {error}
+                    </div>
+                )}
 
                 {/* Tabela */}
                 <CardContainer title="Todos os usuários">
@@ -54,21 +102,31 @@ export default function UsuariosPage() {
                             <thead>
                                 <tr className="border-b border-neutral-200 bg-slate-50 text-xs tracking-wide text-slate-600 uppercase dark:border-white/8 dark:bg-white/3">
                                     <th className="px-5 py-3 text-left">Usuário</th>
+                                    <th className="px-5 py-3 text-left">Papel</th>
                                     <th className="px-5 py-3 text-left">Nível</th>
                                     <th className="px-5 py-3 text-right">XP</th>
-                                    <th className="px-5 py-3 text-right">Sequência</th>
                                     <th className="px-5 py-3 text-left">Cadastro</th>
                                     <th className="px-5 py-3 text-center">Status</th>
                                     <th className="px-5 py-3 text-right">Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {ADMIN_USERS.map((user, i) => (
+                                {!loading && users.length === 0 && (
+                                    <tr>
+                                        <td
+                                            colSpan={7}
+                                            className="px-5 py-10 text-center text-slate-400"
+                                        >
+                                            Nenhum usuário cadastrado.
+                                        </td>
+                                    </tr>
+                                )}
+                                {users.map((user, i) => (
                                     <tr
                                         key={user.id}
                                         className={cn(
                                             "border-b border-neutral-100 transition-colors hover:bg-slate-50/60 dark:border-white/5 dark:hover:bg-white/3",
-                                            i === ADMIN_USERS.length - 1 && "border-b-0"
+                                            i === users.length - 1 && "border-b-0"
                                         )}
                                     >
                                         <td className="px-5 py-3">
@@ -91,6 +149,19 @@ export default function UsuariosPage() {
                                             <span
                                                 className={cn(
                                                     "rounded-full px-2.5 py-0.5 text-xs font-semibold",
+                                                    user.role === "admin"
+                                                        ? "bg-indigo-100 text-indigo-700"
+                                                        : "bg-slate-100 text-slate-600"
+                                                )}
+                                            >
+                                                {user.role === "admin" ? "Admin" : "Aluno"}
+                                            </span>
+                                        </td>
+
+                                        <td className="px-5 py-3">
+                                            <span
+                                                className={cn(
+                                                    "rounded-full px-2.5 py-0.5 text-xs font-semibold",
                                                     levelColor(user.level)
                                                 )}
                                             >
@@ -100,10 +171,6 @@ export default function UsuariosPage() {
 
                                         <td className="px-5 py-3 text-right font-mono font-semibold text-slate-700">
                                             {user.xp.toLocaleString("pt-BR")}
-                                        </td>
-
-                                        <td className="px-5 py-3 text-right text-slate-600">
-                                            🔥 {user.streak} dias
                                         </td>
 
                                         <td className="px-5 py-3 text-slate-600">
@@ -133,10 +200,16 @@ export default function UsuariosPage() {
 
                                         <td className="px-5 py-3 text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button className="rounded-lg px-2.5 py-1 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50">
+                                                <button
+                                                    onClick={() => openEdit(user)}
+                                                    className="rounded-lg px-2.5 py-1 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50"
+                                                >
                                                     Editar
                                                 </button>
-                                                <button className="rounded-lg px-2.5 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50">
+                                                <button
+                                                    onClick={() => setToDelete(user)}
+                                                    className="rounded-lg px-2.5 py-1 text-xs font-medium text-red-500 transition-colors hover:bg-red-50"
+                                                >
                                                     Remover
                                                 </button>
                                             </div>
@@ -148,6 +221,32 @@ export default function UsuariosPage() {
                     </div>
                 </CardContainer>
             </div>
+
+            <UserFormDialog
+                open={formOpen}
+                onOpenChange={setFormOpen}
+                editing={editing}
+                onSaved={load}
+            />
+
+            <ConfirmDialog
+                open={!!toDelete}
+                onOpenChange={(v) => !v && setToDelete(null)}
+                title="Remover usuário?"
+                description={`Isso apagará permanentemente ${toDelete?.name ?? "este usuário"} e todos os dados associados.`}
+                confirmLabel="Remover"
+                onConfirm={async () => {
+                    if (!toDelete) return
+                    try {
+                        await deleteUser(toDelete.id)
+                        toast.success("Usuário removido.")
+                        await load()
+                    } catch (err) {
+                        toast.error(apiErrorMessage(err, "Não foi possível remover o usuário."))
+                        throw err
+                    }
+                }}
+            />
         </AppLayout>
     )
 }

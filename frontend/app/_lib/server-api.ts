@@ -1,4 +1,5 @@
 import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 
 const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:8000/api";
 
@@ -19,6 +20,15 @@ export async function fetchFromApi<T>(path: string): Promise<T> {
             Cookie: cookieStore.toString(), // sempre busca dado fresco; troque depois se quiser cache
         },
     });
+
+    // 401 = sessão ausente/expirada. O middleware só checa a PRESENÇA do cookie
+    // PHPSESSID, então um cookie velho passa por ele e só aqui descobrimos que a
+    // sessão do backend não vale mais. Como todas as chamadas de fetchFromApi
+    // vêm de páginas protegidas (Server Components), o certo é mandar pro login
+    // em vez de estourar a página com um erro.
+    if (res.status === 401) {
+        redirect("/login")
+    }
 
     if (!res.ok) {
         throw new Error(`Erro ao buscar ${path}: ${res.status}`);

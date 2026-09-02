@@ -20,6 +20,7 @@ export type StatsData = {
     totalPracticed: number
     totalCorrect: number
     userXp: number
+    totalSeconds: number
 }
 
 export type CalendarData = {
@@ -62,16 +63,45 @@ export function computeStats(data: DashboardData): ComputedStats {
 }
 
 export function computeStatsFromApi(data: StatsData): ComputedStats {
+    const totalMinutosCheios = Math.floor(data.totalSeconds / 60)
+
     return {
         totalPracticed: data.totalPracticed,
         completionRate:
             data.totalPracticed > 0
                 ? Math.round((data.totalCorrect / data.totalPracticed) * 100)
                 : 0,
-        totalHours: 0,
-        totalMinutes: 0,
+        totalHours: Math.floor(totalMinutosCheios / 60),
+        totalMinutes: totalMinutosCheios % 60,
         userXp: data.userXp,
     }
+}
+
+// Data local no formato YYYY-MM-DD (bate com o DATE() do MySQL, sem drift de UTC)
+function localDateKey(d: Date): string {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, "0")
+    const day = String(d.getDate()).padStart(2, "0")
+    return `${y}-${m}-${day}`
+}
+
+// Sequência (streak) de dias consecutivos com atividade, terminando hoje.
+// Se ainda não houve prática hoje, conta a partir de ontem (não zera o streak
+// só porque o dia atual ainda não teve treino).
+export function computeStreak(consistencia: DashboardData["consistencia"]): number {
+    const ativos = new Set(
+        consistencia.filter((c) => c.atividades > 0).map((c) => c.dia)
+    )
+    const cursor = new Date()
+    if (!ativos.has(localDateKey(cursor))) {
+        cursor.setDate(cursor.getDate() - 1)
+    }
+    let streak = 0
+    while (ativos.has(localDateKey(cursor))) {
+        streak++
+        cursor.setDate(cursor.getDate() - 1)
+    }
+    return streak
 }
 
 // Converte a contagem bruta de atividades/dia em nível de intensidade (0–3) para o heatmap

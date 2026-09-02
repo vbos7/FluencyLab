@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
 import { Label } from "@/app/_components/ui/label"
@@ -13,9 +14,10 @@ import {
     DialogTitle,
 } from "@/app/_components/ui/dialog"
 import { type User } from "@/app/_lib/utils"
+import { apiErrorMessage, updateProfile } from "@/app/_lib/admin-api"
 import { CardRow } from "./card-row"
 
-export function EmailRow({ user }: { user: User }) {
+export function EmailRow({ user, onUpdated }: { user: User; onUpdated?: () => void }) {
     const [open, setOpen] = useState(false)
     const [email, setEmail] = useState(user.email)
     const [loading, setLoading] = useState(false)
@@ -26,10 +28,17 @@ export function EmailRow({ user }: { user: User }) {
         setError("")
         if (email === user.email) return
         setLoading(true)
-        // TODO: PATCH /api/admin/profile/email
-        await new Promise((r) => setTimeout(r, 800))
-        setLoading(false)
-        setOpen(false)
+        try {
+            // PUT /profile.php grava nome + email juntos; mantemos o nome atual.
+            await updateProfile({ name: user.name, email })
+            toast.success("E-mail atualizado.")
+            onUpdated?.()
+            setOpen(false)
+        } catch (err) {
+            setError(apiErrorMessage(err))
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (

@@ -15,31 +15,8 @@ import {
     CheckCircle2,
     StickyNote
 } from "lucide-react";
-
-
-
-type Lesson = {
-    id: number;
-    title: string;
-    duration: number;
-    youtube_id: string | null;
-    order_num: number;
-    is_free: boolean;
-    locked: boolean;
-};
-
-type CourseDetail = {
-    id: number;
-    slug: string;
-    title: string;
-    description: string;
-    level: string;
-    lessons: Lesson[];
-    user_has_premium: boolean;
-};
-
-type Comment = { id: number; content: string; user_id: number; user_name: string; created_at: string };
-type LoggedUser = { id: number; name: string; email: string; role: string };
+import { type CourseDetail, type Comment } from "@/app/_lib/courses";
+import { type LoggedUser } from "@/app/_lib/user";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -52,9 +29,13 @@ function formatarDuracao(segundos: number) {
 export default function CursoClient({ course }: { course: CourseDetail }) {
     const [aulaAtiva, setAulaAtiva] = useState(0);
     const [drawerAberto, setDrawer] = useState(false);
-    const [comentarios, setComentarios] = useState<Comment[]>([]);
+    // Comentários guardados junto do id da aula a que pertencem: assim o "carregando"
+    // vira estado derivado (some a necessidade de setState síncrono no efeito).
+    const [comentariosState, setComentariosState] = useState<{ lessonId: number | null; items: Comment[] }>({
+        lessonId: null,
+        items: [],
+    });
     const [novoComentario, setNovo] = useState("");
-    const [carregandoComentarios, setCarregando] = useState(true);
     const [usuarioLogado, setUsuarioLogado] = useState<LoggedUser | null>(null);
 
     const [aulasConcluidas, setAulasConcluidas] = useState<number[]>([]);
@@ -62,12 +43,19 @@ export default function CursoClient({ course }: { course: CourseDetail }) {
 
     const [nota, setNota] = useState("");
     const [notaOriginal, setNotaOriginal] = useState("");
-    const [carregandoNota, setCarregandoNota] = useState(true);
+    // Mesma ideia dos comentários: guardamos a aula cuja nota foi carregada para
+    // derivar o "carregando" sem setState síncrono.
+    const [notaLessonId, setNotaLessonId] = useState<number | null>(null);
     const [salvandoNota, setSalvandoNota] = useState(false);
 
     const aula = course.lessons[aulaAtiva];
 
-    
+    // Comentários da aula ativa (e seu "carregando") derivados do estado acima.
+    const comentarios = comentariosState.lessonId === aula?.id ? comentariosState.items : [];
+    const carregandoComentarios = !!aula && !aula.locked && comentariosState.lessonId !== aula.id;
+    const carregandoNota = !!aula && !!usuarioLogado && notaLessonId !== aula.id;
+
+
 
     // ── Busca o usuário logado ──────────────────────────────────
     useEffect(() => {
@@ -78,49 +66,55 @@ export default function CursoClient({ course }: { course: CourseDetail }) {
     }, []);
 
     // ── Busca o progresso do curso (só se estiver logado) ──────
+    // Sem login o bloco de progresso nem é renderizado (guardado por `usuarioLogado`),
+    // então não precisamos zerar o "carregando" à mão aqui.
     useEffect(() => {
-        if (!usuarioLogado) {
-            setCarregandoProgresso(false);
-            return;
-        }
+        if (!usuarioLogado) return;
+        let ignore = false;
         fetch(`${API_URL}/progresso.php?course_id=${course.id}`, { credentials: "include" })
             .then((res) => (res.ok ? res.json() : null))
-            .then((data) => setAulasConcluidas(data?.completed_lesson_ids ?? []))
-            .catch(() => setAulasConcluidas([]))
-            .finally(() => setCarregandoProgresso(false));
+            .then((data) => { if (!ignore) setAulasConcluidas(data?.completed_lesson_ids ?? []); })
+            .catch(() => { if (!ignore) setAulasConcluidas([]); })
+            .finally(() => { if (!ignore) setCarregandoProgresso(false); });
+        return () => { ignore = true; };
     }, [usuarioLogado, course.id]);
 
     // ── Busca os comentários da aula ativa ──────────────────────
+    // O "carregando" é derivado (ver acima); aqui só gravamos o resultado com o id
+    // da aula, sem setState síncrono.
     useEffect(() => {
         if (!aula || aula.locked) return;
-        setCarregando(true);
+        let ignore = false;
         fetch(`${API_URL}/comentarios.php?lesson_id=${aula.id}`)
             .then((res) => res.json())
-            .then((data) => setComentarios(data))
-            .catch(() => setComentarios([]))
-            .finally(() => setCarregando(false));
-    }, [aula?.id]);
+            .then((data) => { if (!ignore) setComentariosState({ lessonId: aula.id, items: data }); })
+            .catch(() => { if (!ignore) setComentariosState({ lessonId: aula.id, items: [] }); });
+        return () => { ignore = true; };
+    }, [aula]);
 
 
     // ── Busca as anotações da aula ─────────────────────────────
+    // O "carregando" é derivado de `notaLessonId`; aqui só gravamos o conteúdo e
+    // marcamos a aula carregada, sem setState síncrono.
     useEffect(() => {
-    if (!aula || !usuarioLogado) {
-        setCarregandoNota(false);
-        return;
-    }
-    setCarregandoNota(true);
-    fetch(`${API_URL}/notas.php?lesson_id=${aula.id}`, { credentials: "include" })
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-            setNota(data?.content ?? "");
-            setNotaOriginal(data?.content ?? "");
-        })
-        .catch(() => {
-            setNota("");
-            setNotaOriginal("");
-        })
-        .finally(() => setCarregandoNota(false));
-}, [aula?.id, usuarioLogado]);
+        if (!aula || !usuarioLogado) return;
+        let ignore = false;
+        fetch(`${API_URL}/notas.php?lesson_id=${aula.id}`, { credentials: "include" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+                if (ignore) return;
+                setNota(data?.content ?? "");
+                setNotaOriginal(data?.content ?? "");
+                setNotaLessonId(aula.id);
+            })
+            .catch(() => {
+                if (ignore) return;
+                setNota("");
+                setNotaOriginal("");
+                setNotaLessonId(aula.id);
+            });
+        return () => { ignore = true; };
+    }, [aula, usuarioLogado]);
 
     async function enviarComentario() {
         if (!novoComentario.trim() || !aula || !usuarioLogado) return;
@@ -138,7 +132,7 @@ export default function CursoClient({ course }: { course: CourseDetail }) {
         if (res.ok) {
             setNovo("");
             const atualizados = await fetch(`${API_URL}/comentarios.php?lesson_id=${aula.id}`).then((r) => r.json());
-            setComentarios(atualizados);
+            setComentariosState({ lessonId: aula.id, items: atualizados });
         }
     }
     // ── Salva a nota da aula ───────────────────────────────────

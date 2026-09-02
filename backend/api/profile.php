@@ -3,6 +3,9 @@
 require_once __DIR__.'/cors.php';
 require_once __DIR__.'/db.php';
 
+/** @var PDO $pdo Conexão criada em db.php (incluído acima). */
+require_once __DIR__.'/lib/url.php';
+
 if (! isset($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
     exit;
@@ -12,9 +15,13 @@ $userId = $_SESSION['user_id'];
 
 // ─── GET: devolve os dados do perfil ────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $stmt = $pdo->prepare('SELECT id, name, email, phone, role, created_at FROM users WHERE id = ?');
+    $stmt = $pdo->prepare('SELECT id, name, email, phone, role, avatar, created_at FROM users WHERE id = ?');
     $stmt->execute([$userId]);
-    json_out($stmt->fetch());
+    $perfil = $stmt->fetch();
+    if ($perfil) {
+        $perfil['avatar'] = avatar_url($perfil['avatar']); // caminho → URL absoluta
+    }
+    json_out($perfil);
     exit;
 }
 
@@ -84,6 +91,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     $stmt = $pdo->prepare('SELECT id, name, email, phone, role FROM users WHERE id = ?');
     $stmt->execute([$userId]);
     json_out(['success' => true, 'user' => $stmt->fetch()]);
+    exit;
+}
+
+// ─── DELETE: o usuário exclui a própria conta ───────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+    // Trava de segurança: não deixa sumir com o último admin (trancaria o painel).
+    $stmt = $pdo->prepare('SELECT role FROM users WHERE id = ?');
+    $stmt->execute([$userId]);
+    if ($stmt->fetchColumn() === 'admin') {
+        $totalAdmins = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
+        if ($totalAdmins <= 1) {
+            json_out(['error' => 'Não é possível excluir o único administrador'], 422);
+            exit;
+        }
+    }
+
+    // ON DELETE CASCADE limpa attempts, ranking_points, user_plan etc. do usuário.
+    $pdo->prepare('DELETE FROM users WHERE id = ?')->execute([$userId]);
+    session_destroy();
+    json_out(null, 204);
     exit;
 }
 
