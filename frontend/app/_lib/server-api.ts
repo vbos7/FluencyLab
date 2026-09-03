@@ -1,7 +1,11 @@
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
-const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:8000/api";
+// Só roda no servidor. Prioriza API_BASE_URL (pode apontar pro backend local, sem
+// passar por CDN); se faltar, cai no NEXT_PUBLIC_API_URL (também legível aqui), pra
+// bastar setar UMA variável. Último recurso: o backend de dev.
+const API_BASE_URL =
+    process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 // Usuário autenticado, no formato devolvido por /auth/me.php
 export type AuthUser = {
