@@ -6,6 +6,7 @@
         "ext-mbstring": "*",
         "lbuchs/webauthn": "^2.2",
         "spomky-labs/otphp": "^11.3",
-        "bacon/bacon-qr-code": "^3.0"
+        "bacon/bacon-qr-code": "^3.0",
+        "phpmailer/phpmailer": "^7.1"
     }
 }
