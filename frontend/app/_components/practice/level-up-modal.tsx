@@ -5,6 +5,7 @@ import { createPortal } from "react-dom"
 import { PartyPopper, Sparkles } from "lucide-react"
 import { levelLabel } from "@/app/_lib/ranking"
 import { useMounted } from "@/app/_lib/use-mounted"
+import { usePrefersReducedMotion } from "@/app/_lib/use-prefers-reduced-motion"
 
 type Props = {
     // Nível recém-alcançado; null = modal fechado (nenhuma subida a comemorar)
@@ -39,6 +40,8 @@ const CONFETTI = [
 // da árvore da prática há um ancestral com transform, que prenderia o position:fixed).
 export function LevelUpModal({ level, onClose }: Props) {
     const mounted = useMounted()
+    // Redução de movimento: sem confete, sem entrada, sem tremidinha, sem pulse.
+    const reduce = usePrefersReducedMotion()
 
     // Fecha no Esc enquanto o modal estiver aberto
     useEffect(() => {
@@ -61,37 +64,43 @@ export function LevelUpModal({ level, onClose }: Props) {
         >
             {/* Fundo escurecido — cobre a viewport inteira; clicar fora fecha */}
             <div
-                className="absolute inset-0 animate-in fade-in bg-black/50 backdrop-blur-sm duration-200"
+                className={`absolute inset-0 bg-black/50 backdrop-blur-sm ${reduce ? "" : "animate-in fade-in duration-200"}`}
                 onClick={onClose}
             />
 
-            {/* Confete caindo nas laterais */}
-            <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-                {CONFETTI.map((c, i) => (
-                    <span
-                        key={i}
-                        className="absolute top-0 block"
-                        style={{
-                            left: `${c.left}%`,
-                            width: c.round ? 8 : 7,
-                            height: c.round ? 8 : 12,
-                            backgroundColor: c.color,
-                            borderRadius: c.round ? "9999px" : "1px",
-                            animation: `confettiFall ${c.dur}s ${c.delay}s linear infinite`,
-                        }}
-                    />
-                ))}
-            </div>
+            {/* Confete caindo nas laterais — omitido se o usuário pediu menos movimento */}
+            {!reduce && (
+                <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+                    {CONFETTI.map((c, i) => (
+                        <span
+                            key={i}
+                            className="absolute top-0 block"
+                            style={{
+                                left: `${c.left}%`,
+                                width: c.round ? 8 : 7,
+                                height: c.round ? 8 : 12,
+                                backgroundColor: c.color,
+                                borderRadius: c.round ? "9999px" : "1px",
+                                animation: `confettiFall ${c.dur}s ${c.delay}s linear infinite`,
+                            }}
+                        />
+                    ))}
+                </div>
+            )}
 
-            <div className="animate-in fade-in zoom-in-95 relative w-full max-w-sm overflow-hidden rounded-3xl bg-white text-center shadow-[0_24px_64px_rgba(37,99,235,0.35)] duration-300">
+            {/* Wrapper faz a entrada (zoom/fade); o card interno faz a tremidinha a
+                cada 2s. Separados para as duas animações de transform não conflitarem.
+                Com redução de movimento, os dois ficam estáticos. */}
+            <div className={`relative w-full max-w-sm ${reduce ? "" : "animate-in fade-in zoom-in-95 duration-300"}`}>
+              <div className={`overflow-hidden rounded-3xl bg-white text-center shadow-[0_24px_64px_rgba(37,99,235,0.35)] ${reduce ? "" : "animate-[levelUpShake_2s_ease-in-out_infinite]"}`}>
                 {/* Faixa superior com o troféu */}
                 <div className="relative flex flex-col items-center gap-3 bg-gradient-to-br from-blue-600 to-indigo-600 px-6 pt-9 pb-8 text-white">
                     <Sparkles
-                        className="absolute top-5 left-6 size-5 animate-pulse text-white/70"
+                        className={`absolute top-5 left-6 size-5 text-white/70 ${reduce ? "" : "animate-pulse"}`}
                         aria-hidden="true"
                     />
                     <Sparkles
-                        className="absolute top-8 right-7 size-4 animate-pulse text-white/60"
+                        className={`absolute top-8 right-7 size-4 text-white/60 ${reduce ? "" : "animate-pulse"}`}
                         aria-hidden="true"
                     />
                     <div className="flex size-20 items-center justify-center rounded-2xl bg-white/15 shadow-inner">
@@ -125,6 +134,7 @@ export function LevelUpModal({ level, onClose }: Props) {
                         Continuar
                     </button>
                 </div>
+              </div>
             </div>
         </div>,
         document.body

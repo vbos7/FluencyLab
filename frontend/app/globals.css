@@ -396,3 +396,25 @@ html.reduce-motion *::after {
         opacity: 0;
     }
 }
+
+/* Tremidinha do card de subida de nível: sacode no começo e fica parado o resto
+   do ciclo. Com duração de 2s + infinite, o balanço acontece a cada 2 segundos. */
+@keyframes levelUpShake {
+    0%,
+    14%,
+    100% {
+        transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    3% {
+        transform: translate3d(-5px, 0, 0) rotate(-2deg);
+    }
+    6% {
+        transform: translate3d(5px, 0, 0) rotate(2deg);
+    }
+    9% {
+        transform: translate3d(-3px, 0, 0) rotate(-1deg);
+    }
+    12% {
+        transform: translate3d(3px, 0, 0) rotate(1deg);
+    }
+}
