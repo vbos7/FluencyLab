@@ -14,7 +14,8 @@ import { type DashboardData } from "@/app/_lib/progress"
 import NavLayout from "@/app/_layouts/nav-layout"
 import PremiumCard from "../_components/pricing/PremiumCard"
 
-type User = { id: number; name: string; email: string; phone: string | null; role: string }
+type User = { id: number; name: string; email: string; phone: string | null; role: string; avatar: string | null }
+
 
 export default async function ProfilePage() {
     const [user, dashboardData, leaderboard] = await Promise.all([
@@ -66,9 +67,7 @@ export default async function ProfilePage() {
                 <ProfileHeader
                     name={user.name}
                     rankLabel={posicao > 0 ? `#${posicao} no Ranking Geral` : "Ainda sem posição"}
-                    avatarSlot={
-                        <AvatarUpload name={user.name} avatarSrc="https://github.com/shadcn.png" />
-                    }
+                    avatarSlot={<AvatarUpload name={user.name} avatarSrc={user.avatar ?? undefined}/>}
                 >
                     <div className="flex items-center gap-2">
                         <EditProfileDialog

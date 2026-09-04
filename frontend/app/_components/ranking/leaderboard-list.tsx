@@ -29,23 +29,20 @@ export function LeaderboardList({ rows, startIdx }: Props) {
                         </span>
 
                         <Avatar className="size-10 shrink-0 rounded-2xl">
-                            {user.github ? (
-                                <AvatarImage
-                                    src={`https://github.com/${user.github}.png`}
-                                    alt={`@${user.github}`}
-                                />
-                            ) : null}
-                            <AvatarFallback
-                                className={cn(
-                                    "rounded-none text-sm font-semibold",
-                                    user.isCurrentUser
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-slate-100 text-slate-600"
-                                )}
-                            >
-                                {initials(user.name)}
-                            </AvatarFallback>
-                        </Avatar>
+    {user.avatar ? (
+        <AvatarImage src={user.avatar} alt={user.name} />
+    ) : user.github ? (
+        <AvatarImage src={`https://github.com/${user.github}.png`} alt={`@${user.github}`} />
+    ) : null}
+    <AvatarFallback
+        className={cn(
+            "rounded-none text-sm font-semibold",
+            user.isCurrentUser ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
+        )}
+    >
+        {initials(user.name)}
+    </AvatarFallback>
+</Avatar>
 
                         <div className="min-w-0 flex-1">
                             <p
