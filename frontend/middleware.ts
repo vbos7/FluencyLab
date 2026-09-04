@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const ROTAS_PUBLICAS = ["/login", "/register", "/", "/cursos", "/planos"]
+// /practice é público para permitir o modo convidado (praticar sem login). O
+// abuso é contido no backend (check-answer.php: teto por sessão + por IP), não aqui.
+const ROTAS_PUBLICAS = ["/login", "/register", "/", "/cursos", "/planos", "/practice"]
 
 export function middleware(request: NextRequest) {
     const sessao = request.cookies.get("PHPSESSID")?.value

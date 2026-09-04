@@ -65,8 +65,10 @@ if (! $verified) {
 
 // Segundo fator OK → promove a sessão. O papel vem do banco na autorização
 // (admin/guard.php), então não é guardado aqui.
-unset($_SESSION['2fa_pending_user_id']);
+$remember = ! empty($_SESSION['remember_pref']);
+unset($_SESSION['2fa_pending_user_id'], $_SESSION['remember_pref']);
 $_SESSION['user_id'] = (int) $user['id'];
+aplicar_remember($remember);
 
 json_out([
     'success' => true,

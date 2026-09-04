@@ -13,6 +13,7 @@ export function LoginForm() {
     const [mounted, setMounted] = useState(false)
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [remember, setRemember] = useState(false)
     const [showPass, setShowPass] = useState(false)
     const [focused, setFocused] = useState<string | null>(null)
     const [forgotOpen, setForgotOpen] = useState(false)
@@ -34,7 +35,7 @@ export function LoginForm() {
         setLoading(true)
 
         try {
-            const { data } = await apiClient.post("/auth/login.php", { email, password })
+            const { data } = await apiClient.post("/auth/login.php", { email, password, remember })
             if (data?.two_factor) {
                 setNeeds2fa(true)
                 return
@@ -136,6 +137,17 @@ export function LoginForm() {
                             </button>
                         </div>
                     </div>
+
+                    {/* Manter conectado */}
+                    <label className={`flex cursor-pointer items-center gap-2 ${fadeUp(175)}`}>
+                        <input
+                            type="checkbox"
+                            checked={remember}
+                            onChange={(e) => setRemember(e.target.checked)}
+                            className="size-4 cursor-pointer rounded border-slate-300 text-blue-600 accent-blue-600 focus-visible:ring-2 focus-visible:ring-blue-400"
+                        />
+                        <span className="text-sm font-medium text-slate-600">Manter conectado</span>
+                    </label>
 
                     {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
 

@@ -6,14 +6,17 @@ require_once __DIR__.'/../db.php';
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 require_once __DIR__.'/AiService.php';
 
+// Limites do modo convidado (sem login), para conter o custo da IA da OpenAI.
+const GUEST_MAX_ATTEMPTS = 5;    // por sessão do convidado
+const GUEST_IP_DAILY_CAP = 20;   // por IP por dia (backstop se limparem os cookies)
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['error' => 'Método não permitido'], 405);
     exit;
 }
-if (! isset($_SESSION['user_id'])) {
-    json_out(['error' => 'Não autenticado'], 401);
-    exit;
-}
+
+// Convidado = sem sessão logada. Pode praticar, mas com teto (ver guardaConvidado).
+$isGuest = ! isset($_SESSION['user_id']);
 
 $body = json_decode(file_get_contents('php://input'), true);
 $phraseId = (int) ($body['phrase_id'] ?? 0);
@@ -35,6 +38,11 @@ if (! $frase) {
     exit;
 }
 
+// Convidado: aplica os tetos (sessão + IP) ANTES de gastar crédito da IA.
+if ($isGuest) {
+    guardaConvidado($pdo);
+}
+
 // Chama a IA (pode demorar 1-3 segundos)
 try {
     $ai = new AiService;
@@ -46,6 +54,18 @@ try {
 
 $score = (int) ($feedback['score'] ?? 0);
 $xp = calcularXp($score);
+
+// Convidado não é persistido (não tem user_id nem nível): devolve o feedback,
+// informa quantas questões ainda restam e encerra aqui.
+if ($isGuest) {
+    json_out([
+        'feedback' => $feedback,
+        'xp_earned' => $xp,
+        'guest' => true,
+        'guest_remaining' => max(0, GUEST_MAX_ATTEMPTS - (int) ($_SESSION['guest_attempts'] ?? 0)),
+    ]);
+    exit;
+}
 
 // Salva a tentativa e o feedback da IA, normalizado: os escalares vão como
 // colunas em attempts; os arrays (erros e pontos positivos) viram linhas nas
@@ -138,6 +158,55 @@ function nivelDoXp(int $xp): int
     }
 
     return $nivel;
+}
+
+// IP real do cliente. Atrás do Cloudflare/nginx o REMOTE_ADDR é o proxy, então
+// preferimos os cabeçalhos que carregam o IP de origem.
+function client_ip(): string
+{
+    if (! empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        return $_SERVER['HTTP_CF_CONNECTING_IP'];
+    }
+    if (! empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        return trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
+    }
+
+    return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+}
+
+// Teto do convidado: contador na sessão (limite por convidado) + contagem diária
+// por IP (backstop caso limpem os cookies). Reserva o slot ANTES de chamar a IA,
+// para o crédito ficar protegido mesmo se a IA falhar. Aborta com 403 se estourar.
+function guardaConvidado(PDO $pdo): void
+{
+    $usados = (int) ($_SESSION['guest_attempts'] ?? 0);
+    if ($usados >= GUEST_MAX_ATTEMPTS) {
+        json_out([
+            'error' => 'limite_convidado',
+            'message' => 'Você atingiu o limite de questões como convidado. Faça login para continuar praticando.',
+        ], 403);
+        exit;
+    }
+
+    $ipBin = @inet_pton(client_ip());
+    if ($ipBin !== false) {
+        $hoje = date('Y-m-d');
+        $stmt = $pdo->prepare('SELECT count FROM guest_usage WHERE ip = ? AND day = ?');
+        $stmt->execute([$ipBin, $hoje]);
+        if ((int) ($stmt->fetchColumn() ?: 0) >= GUEST_IP_DAILY_CAP) {
+            json_out([
+                'error' => 'limite_convidado',
+                'message' => 'Limite diário de uso como convidado atingido. Faça login para continuar.',
+            ], 403);
+            exit;
+        }
+        $pdo->prepare(
+            'INSERT INTO guest_usage (ip, day, count) VALUES (?, ?, 1)
+             ON DUPLICATE KEY UPDATE count = count + 1'
+        )->execute([$ipBin, $hoje]);
+    }
+
+    $_SESSION['guest_attempts'] = $usados + 1;
 }
 
 function calcularXp(int $score): int

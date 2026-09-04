@@ -1,6 +1,7 @@
 "use client"
 
 import { apiClient } from "@/app/_lib/api"
+import { Sparkles } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { type Phrase, type Feedback } from "@/app/_lib/practice"
 import { XpToast } from "./xp-toast"
@@ -52,6 +53,10 @@ function adaptAiFeedback(ai: AiFeedback, xp: number): Feedback {
     }
 }
 
+// Convidado pode fazer no máx. N questões (verificar OU pular) antes de logar.
+// Deve casar com GUEST_MAX_ATTEMPTS no backend (check-answer.php), que é o teto real.
+const GUEST_LIMIT = 5
+
 export function PracticeController({ phrases }: Props) {
     const [loading, setLoading] = useState(false)
     // Mensagem de erro exibida quando a correção pela IA falha (null = sem erro)
@@ -93,6 +98,11 @@ export function PracticeController({ phrases }: Props) {
         if (typeof window === "undefined") return false
         return localStorage.getItem("fluency-lab:mode") === "guest"
     })
+    // Questões já consumidas pelo convidado (persistido p/ não zerar ao recarregar).
+    const [guestUsed, setGuestUsed] = useState<number>(() => {
+        if (typeof window === "undefined") return 0
+        return Number(localStorage.getItem("fluency-lab:guest-count") ?? 0)
+    })
 
     // Lista de ids de frases favoritadas pelo usuário — inicializada do localStorage
     const [favorites, setFavorites] = useState<number[]>(() => {
@@ -116,9 +126,18 @@ export function PracticeController({ phrases }: Props) {
         localStorage.setItem("fluency-lab:favorites", JSON.stringify(favorites))
     }, [favorites])
 
+    // Persiste a contagem do convidado (o backend continua sendo o teto de verdade)
+    useEffect(() => {
+        if (isGuest) localStorage.setItem("fluency-lab:guest-count", String(guestUsed))
+    }, [isGuest, guestUsed])
+
     // Atalhos derivados do state atual
     const phrase = filteredPhrases[currentIndex]
     const isFav = favorites.includes(phrase.id)
+    const guestRemaining = Math.max(0, GUEST_LIMIT - guestUsed)
+    // Bloqueia quando o convidado esgota o limite e não há feedback na tela — deixa
+    // ele ver o resultado da última resposta antes do aviso de login.
+    const guestBlocked = isGuest && guestUsed >= GUEST_LIMIT && feedback === null
 
     // Envia a resposta para a API corrigir com IA, adapta o feedback e exibe o toast de XP por 2s
     const handleVerify = async () => {
@@ -145,7 +164,15 @@ export function PracticeController({ phrases }: Props) {
             if (response.data.leveled_up) {
                 setLevelUp(response.data.level)
             }
+            // Convidado: cada verificação consome uma questão do limite
+            if (isGuest) setGuestUsed((n) => n + 1)
         } catch (err) {
+            // Backend recusou por limite de convidado (403) → força o aviso de login
+            const status = (err as { response?: { status?: number } })?.response?.status
+            if (isGuest && status === 403) {
+                setGuestUsed(GUEST_LIMIT)
+                return
+            }
             console.error("Erro ao corrigir:", err)
             setError("Não foi possível corrigir sua tradução agora. Tente novamente.")
         } finally {
@@ -155,6 +182,10 @@ export function PracticeController({ phrases }: Props) {
 
     // Avança para uma frase aleatória diferente da atual (dentro da dificuldade ativa)
     const handleNext = () => {
+        // "Pular" (sem feedback na tela) também consome uma questão do convidado.
+        // Já o "próxima" após responder não conta de novo (a verificação já contou).
+        if (isGuest && feedback === null) setGuestUsed((n) => n + 1)
+
         let next
         // Garante que a próxima frase seja diferente da atual (só se houver mais de uma)
         do {
@@ -191,6 +222,37 @@ export function PracticeController({ phrases }: Props) {
         setFavorites((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]))
     }
 
+    // Convidado esgotou as questões grátis → convida a criar conta / entrar.
+    if (guestBlocked) {
+        return (
+            <div className="page-enter mx-auto flex max-w-lg flex-col items-center gap-4 px-5 py-20 text-center">
+                <div className="flex size-16 items-center justify-center rounded-2xl bg-blue-50">
+                    <Sparkles className="size-8 text-blue-600" aria-hidden="true" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">
+                    Você usou suas {GUEST_LIMIT} questões grátis
+                </h2>
+                <p className="text-sm text-gray-500">
+                    Crie uma conta grátis para praticar sem limite, salvar seu progresso e subir de nível.
+                </p>
+                <div className="mt-2 flex w-full flex-col gap-2 sm:flex-row">
+                    <a
+                        href="/register"
+                        className="flex-1 rounded-2xl bg-blue-600 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                    >
+                        Criar conta grátis
+                    </a>
+                    <a
+                        href="/login"
+                        className="flex-1 rounded-2xl border border-blue-200 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
+                    >
+                        Entrar
+                    </a>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="page-enter mx-auto max-w-5xl bg-white px-5 pt-10 pb-28">
             {/* Região aria-live sempre presente no DOM — screen readers anunciam ao receber texto */}
@@ -200,6 +262,12 @@ export function PracticeController({ phrases }: Props) {
 
             <XpToast earnedXp={earnedXp} visible={showXpToast} />
             <LevelUpModal level={levelUp} onClose={() => setLevelUp(null)} />
+
+            {isGuest && (
+                <p className="mx-auto mb-4 w-fit rounded-full bg-blue-50 px-4 py-1.5 text-xs font-semibold text-blue-700">
+                    Modo convidado — {guestRemaining} de {GUEST_LIMIT} questões restantes
+                </p>
+            )}
 
             <PracticeHeader
                 difficulty={difficulty}
