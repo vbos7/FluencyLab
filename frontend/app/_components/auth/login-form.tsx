@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Check } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { AuthLogo } from "./auth-logo"
 import { EmailIcon, LockIcon, EyeIcon, EyeOffIcon } from "./auth-icons"
@@ -139,13 +140,24 @@ export function LoginForm() {
                     </div>
 
                     {/* Manter conectado */}
-                    <label className={`flex cursor-pointer items-center gap-2 ${fadeUp(175)}`}>
+                    <label
+                        className={`flex w-fit cursor-pointer items-center gap-2.5 select-none ${fadeUp(175)}`}
+                    >
                         <input
                             type="checkbox"
                             checked={remember}
                             onChange={(e) => setRemember(e.target.checked)}
-                            className="size-4 cursor-pointer rounded border-slate-300 text-blue-600 accent-blue-600 focus-visible:ring-2 focus-visible:ring-blue-400"
+                            className="peer sr-only"
                         />
+                        <span
+                            className={`flex size-5 items-center justify-center rounded-md border-2 transition-all duration-200 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-400 ${
+                                remember
+                                    ? "border-transparent bg-linear-to-br from-blue-500 to-blue-800 shadow-sm shadow-blue-300/50"
+                                    : "border-slate-300 bg-white"
+                            }`}
+                        >
+                            {remember && <Check className="size-3.5 text-white" strokeWidth={3} />}
+                        </span>
                         <span className="text-sm font-medium text-slate-600">Manter conectado</span>
                     </label>
 
