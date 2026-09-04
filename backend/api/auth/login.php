@@ -14,6 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $body = json_decode(file_get_contents('php://input'), true);
 $email = trim($body['email'] ?? '');
 $password = $body['password'] ?? '';
+// "Manter conectado": sessão de 30 dias em vez de morrer ao fechar o navegador.
+$remember = ! empty($body['remember']);
 
 if (empty($email) || empty($password)) {
     json_out(['errors' => ['Email e senha são obrigatórios']], 422);
@@ -37,8 +39,10 @@ if (! $user || ! password_verify($password, $user['password_hash'])) {
 // o código do autenticador. Usuários comuns nunca entram aqui (só email+senha).
 if ($user['role'] === 'admin' && $user['two_factor_confirmed_at'] !== null) {
     // Não gravamos user_id ainda — sessão só vira "logada" após o 2º fator.
+    // A preferência de "manter conectado" fica guardada para o 2º fator aplicar.
     unset($_SESSION['user_id']);
     $_SESSION['2fa_pending_user_id'] = (int) $user['id'];
+    $_SESSION['remember_pref'] = $remember;
 
     json_out(['two_factor' => true]);
 
@@ -48,6 +52,7 @@ if ($user['role'] === 'admin' && $user['two_factor_confirmed_at'] !== null) {
 // O papel NÃO é guardado na sessão: a autorização de admin lê users.role do banco
 // (ver admin/guard.php e /auth/me.php), fonte única de verdade.
 $_SESSION['user_id'] = $user['id'];
+aplicar_remember($remember);
 
 json_out([
     'success' => true,

@@ -1,12 +1,18 @@
-import { Languages } from "lucide-react"
+import Image from "next/image"
 
-export function AuthLogo() {
+// title permite trocar "FluencyLab" por "Painel FluencyLab" na tela do painel.
+export function AuthLogo({ title = "FluencyLab" }: { title?: string }) {
     return (
         <div className="mb-6 flex flex-col items-center">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-blue-800 shadow-lg shadow-blue-400/30">
-                <Languages className="text-white" size={22} />
-            </div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">FluencyLab</h1>
+            <Image
+                src="/img/logo.png"
+                alt="FluencyLab"
+                width={56}
+                height={67}
+                priority
+                className="mb-3 object-contain"
+            />
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{title}</h1>
         </div>
     )
 }

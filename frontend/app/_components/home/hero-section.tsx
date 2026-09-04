@@ -1,4 +1,3 @@
-import { Languages } from "lucide-react"
 import Image from "next/image"
 
 
@@ -35,9 +34,13 @@ export function HeroSection() {
 
                 {/* Logo */}
                 <div className="anim-2 mb-5 flex items-center gap-3 sm:mb-6">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/15 sm:h-12 sm:w-12">
-                        <Languages className="text-white" size={22} />
-                    </div>
+                    <Image
+                        src="/img/logoBranco.png"
+                        alt=""
+                        width={48}
+                        height={58}
+                        className="h-11 w-11 shrink-0 object-contain sm:h-12 sm:w-12"
+                    />
                     <p className="text-xl leading-none font-extrabold tracking-tight text-white sm:text-2xl">
                         Fluency Lab
                     </p>
