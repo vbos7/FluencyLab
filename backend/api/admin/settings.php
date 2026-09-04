@@ -39,6 +39,10 @@ if ($method === 'PUT' || $method === 'PATCH') {
         if (is_bool($value)) {
             $value = $value ? '1' : '0';
         }
+        // TODO: validar/clampar os valores numéricos no servidor quando as settings
+        // passarem a ser lidas de fato (hoje são gravadas mas não usadas):
+        // xp_per_phrase (int >= 1), streak_bonus (decimal >= 1). Hoje só o front
+        // sanitiza (ver _lib/masks.ts); falta a barreira server-side.
         $stmt->execute([$key, (string) $value]);
     }
 

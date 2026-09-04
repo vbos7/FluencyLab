@@ -24,11 +24,14 @@ $rows = $pdo->query("
     LIMIT {$limit}
 ")->fetchAll();
 
-// Mesma fórmula de nível do ranking do aluno: nível N exige N×150 de XP.
+// Mesma fórmula (triangular) do ranking do aluno: o nível N exige N×150 de XP
+// ACUMULADO — por isso subtraímos a cada volta, igual ao ranking.php e ao front.
 $saida = array_map(function ($u) {
     $xp = (int) $u['xp'];
     $nivel = 1;
-    while ($xp >= $nivel * 150) {
+    $restante = $xp;
+    while ($restante >= $nivel * 150) {
+        $restante -= $nivel * 150;
         $nivel++;
     }
 

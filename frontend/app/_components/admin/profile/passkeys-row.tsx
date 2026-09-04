@@ -13,12 +13,7 @@ import {
     DialogFooter,
     DialogTitle,
 } from "@/app/_components/ui/dialog"
-import {
-    apiErrorMessage,
-    deletePasskey,
-    listPasskeys,
-    type Passkey,
-} from "@/app/_lib/admin-api"
+import { apiErrorMessage, deletePasskey, listPasskeys, type Passkey } from "@/app/_lib/admin-api"
 import { browserSupportsPasskeys, registerPasskey } from "@/app/_lib/webauthn-client"
 
 function fmtDate(dt: string | null) {
@@ -101,9 +96,7 @@ export function PasskeysRow() {
             </div>
 
             {!supported && (
-                <p className="text-xs text-amber-600">
-                    Este navegador não suporta passkeys.
-                </p>
+                <p className="text-xs text-amber-600">Este navegador não suporta passkeys.</p>
             )}
 
             {passkeys.length > 0 && (
@@ -158,7 +151,11 @@ export function PasskeysRow() {
                         </div>
                         {error && <p className="text-xs text-red-500">{error}</p>}
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setAddOpen(false)}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setAddOpen(false)}
+                            >
                                 Cancelar
                             </Button>
                             <Button type="submit" disabled={busy}>

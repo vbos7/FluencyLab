@@ -1,20 +1,20 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { BarChart2, Calendar, Home, Languages, User, MonitorPlay  } from "lucide-react"
+import { BarChart2, Calendar, Home, Languages, User, MonitorPlay } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/app/_components/ui/button"
 import { cn } from "@/app/_lib/utils"
 import { type LoggedUser } from "@/app/_lib/user"
-import ProModal from "@/app/_components/pro-modal";
+import ProModal from "@/app/_components/pro-modal"
 
 const items = [
     { href: "/home", icon: Home, label: "Início" },
     { href: "/progress", icon: Calendar, label: "Progresso" },
     { href: "/ranking", icon: BarChart2, label: "Ranking" },
     { href: "/cursos", icon: MonitorPlay, label: "Cursos" },
-    { href: "/profile", icon: User, label: "Perfil" }
+    { href: "/profile", icon: User, label: "Perfil" },
 ]
 
 export function TopNav({ user }: { user: LoggedUser | null }) {
@@ -32,8 +32,17 @@ export function TopNav({ user }: { user: LoggedUser | null }) {
         <>
             {/* Dispositivos Móveis */}
             <nav className="sticky top-0 z-50 flex h-16 w-full items-center justify-center border-b border-slate-100 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] md:hidden">
-                <Link href={logoHref} className="flex items-center gap-2 text-[17px] font-bold tracking-tight text-slate-900">
-                    <Image src="/img/logo.png" alt="Logo" width={50} height={60} className="object-contain"/>
+                <Link
+                    href={logoHref}
+                    className="flex items-center gap-2 text-[17px] font-bold tracking-tight text-slate-900"
+                >
+                    <Image
+                        src="/img/logo.png"
+                        alt="Logo"
+                        width={50}
+                        height={60}
+                        className="object-contain"
+                    />
                     {/* <img src={logo} alt="Logo" width={200} height={60} className="w-48 h-12 object-contain"/> */}
                     FluencyLab
                 </Link>
@@ -41,8 +50,17 @@ export function TopNav({ user }: { user: LoggedUser | null }) {
 
             {/* Dispositivos Desktop */}
             <nav className="sticky top-0 z-50 hidden h-16 w-full items-center gap-1 border-b border-slate-100 bg-white px-8 shadow-[0_1px_4px_rgba(0,0,0,0.04)] md:flex">
-                <Link href={logoHref} className="mr-auto flex items-center gap-2 text-[17px] font-bold tracking-tight text-slate-900">
-                    <Image src="/img/logo.png" alt="Logo" width={50} height={60} className="object-contain"/>
+                <Link
+                    href={logoHref}
+                    className="mr-auto flex items-center gap-2 text-[17px] font-bold tracking-tight text-slate-900"
+                >
+                    <Image
+                        src="/img/logo.png"
+                        alt="Logo"
+                        width={50}
+                        height={60}
+                        className="object-contain"
+                    />
                     FluencyLab
                 </Link>
 
@@ -74,7 +92,7 @@ export function TopNav({ user }: { user: LoggedUser | null }) {
                         <Button
                             size="sm"
                             onClick={() => router.push("/register")}
-                            className="gap-1.5 rounded-[10px] bg-[#2B54FF] font-semibold text-white hover:bg-[#2B54FF]/90 shadow-[0_2px_10px_rgba(37,99,235,0.3)] hover:shadow-[0_4px_16px_rgba(37,99,235,0.4)]"
+                            className="gap-1.5 rounded-[10px] bg-[#2B54FF] font-semibold text-white shadow-[0_2px_10px_rgba(37,99,235,0.3)] hover:bg-[#2B54FF]/90 hover:shadow-[0_4px_16px_rgba(37,99,235,0.4)]"
                         >
                             <svg
                                 width="15"

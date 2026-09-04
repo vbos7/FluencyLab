@@ -9,6 +9,7 @@ import { CardContainer } from "@/app/_components/admin/profile/card-container"
 import { CardRow } from "@/app/_components/admin/profile/card-row"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
+import { onlyPositiveInt, onlyPositiveDecimal } from "@/app/_lib/masks"
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: "Dashboard", href: "/admin/dashboard" },
@@ -16,7 +17,15 @@ const breadcrumbs: BreadcrumbItem[] = [
 ]
 
 // Toggle reutilizável nesta página
-function Toggle({ enabled, onChange, label }: { enabled: boolean; onChange: (v: boolean) => void; label?: string }) {
+function Toggle({
+    enabled,
+    onChange,
+    label,
+}: {
+    enabled: boolean
+    onChange: (v: boolean) => void
+    label?: string
+}) {
     return (
         <button
             type="button"
@@ -24,7 +33,7 @@ function Toggle({ enabled, onChange, label }: { enabled: boolean; onChange: (v: 
             aria-checked={enabled}
             aria-label={label}
             onClick={() => onChange(!enabled)}
-            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 ${enabled ? "bg-blue-600" : "bg-slate-200"}`}
+            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:outline-none ${enabled ? "bg-blue-600" : "bg-slate-200"}`}
         >
             <span
                 className={`inline-block size-3.5 rounded-full bg-white shadow transition-transform ${enabled ? "translate-x-[18px]" : "translate-x-0.5"}`}
@@ -95,7 +104,9 @@ export default function ConfiguracoesPage() {
                 setNewRegistrations(toBool(s.new_registrations, true))
                 setRankingPublic(toBool(s.ranking_public, true))
             })
-            .catch((err) => setError(apiErrorMessage(err, "Não foi possível carregar as configurações.")))
+            .catch((err) =>
+                setError(apiErrorMessage(err, "Não foi possível carregar as configurações."))
+            )
             .finally(() => setLoading(false))
     }, [])
 
@@ -168,7 +179,7 @@ export default function ConfiguracoesPage() {
                         <Input
                             type="number"
                             value={xpPerPhrase}
-                            onChange={(e) => setXpPerPhrase(e.target.value)}
+                            onChange={(e) => setXpPerPhrase(onlyPositiveInt(e.target.value))}
                             min={1}
                             max={100}
                             className="h-9 w-28 text-right"
@@ -181,7 +192,7 @@ export default function ConfiguracoesPage() {
                         <Input
                             type="number"
                             value={streakBonus}
-                            onChange={(e) => setStreakBonus(e.target.value)}
+                            onChange={(e) => setStreakBonus(onlyPositiveDecimal(e.target.value))}
                             min={1}
                             step={0.1}
                             max={5}

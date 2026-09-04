@@ -25,6 +25,9 @@ if (ini_get('session.use_cookies')) {
     );
 }
 
+// Também apaga o cookie "remember", senão a sessão continuaria persistente.
+setcookie('remember', '', ['expires' => time() - 42000, 'path' => '/', 'samesite' => 'Lax', 'secure' => request_is_https()]);
+
 // Destrói a sessão no servidor
 session_destroy();
 

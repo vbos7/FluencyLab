@@ -7,8 +7,8 @@ import { RankingTop3 } from "@/app/_components/home/ranking-top3"
 import { StatsCards } from "@/app/_components/progress/stats-cards"
 import { computeStats, type DashboardData } from "@/app/_lib/progress"
 import { getLevel } from "@/app/_lib/ranking"
-import { CoursesCard } from "@/app/_components/home/courses-card";
-import ProModal from "@/app/_components/pro-modal";
+import { CoursesCard } from "@/app/_components/home/courses-card"
+import ProModal from "@/app/_components/pro-modal"
 import { fetchFromApi } from "../_lib/server-api"
 
 type Users = { id: number; name: string; email: string; phone: string | null; role: string }

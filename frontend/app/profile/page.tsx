@@ -31,10 +31,34 @@ export default async function ProfilePage() {
     const posicao = leaderboard.findIndex((u) => u.id === user.id) + 1
 
     const stats = [
-        { icon: Star, iconColor: "text-amber-500", iconBg: "bg-amber-50", value: dashboardData.xp_total.toLocaleString(), label: "Pontos" },
-        { icon: Trophy, iconColor: "text-blue-600", iconBg: "bg-blue-50", value: posicao > 0 ? `#${posicao}` : "—", label: "Posição" },
-        { icon: Flame, iconColor: "text-orange-500", iconBg: "bg-orange-50", value: `${dashboardData.streak}`, label: "Sequência" },
-        { icon: CircleCheck, iconColor: "text-emerald-600", iconBg: "bg-emerald-50", value: `${dashboardData.total_treinos}`, label: "Concluídos" },
+        {
+            icon: Star,
+            iconColor: "text-amber-500",
+            iconBg: "bg-amber-50",
+            value: dashboardData.xp_total.toLocaleString(),
+            label: "Pontos",
+        },
+        {
+            icon: Trophy,
+            iconColor: "text-blue-600",
+            iconBg: "bg-blue-50",
+            value: posicao > 0 ? `#${posicao}` : "—",
+            label: "Posição",
+        },
+        {
+            icon: Flame,
+            iconColor: "text-orange-500",
+            iconBg: "bg-orange-50",
+            value: `${dashboardData.streak}`,
+            label: "Sequência",
+        },
+        {
+            icon: CircleCheck,
+            iconColor: "text-emerald-600",
+            iconBg: "bg-emerald-50",
+            value: `${dashboardData.total_treinos}`,
+            label: "Concluídos",
+        },
     ]
 
     return (

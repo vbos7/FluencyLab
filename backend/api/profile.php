@@ -41,6 +41,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         $errors[] = 'Email inválido';
     }
 
+    // Telefone é opcional; se vier, tem que ter 10 (fixo) ou 11 (celular) dígitos.
+    // Validamos pela contagem de dígitos, tolerando a máscara "(11) 99999-9999".
+    $phoneDigits = preg_replace('/\D/', '', $phone);
+    if ($phone !== '' && (strlen($phoneDigits) < 10 || strlen($phoneDigits) > 11)) {
+        $errors[] = 'Telefone inválido';
+    }
+
     // Email precisa ser único — mas o próprio usuário pode manter o dele (id != ?)
     $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ? AND id != ?');
     $stmt->execute([$email, $userId]);

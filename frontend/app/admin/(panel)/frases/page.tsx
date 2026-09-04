@@ -4,11 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { toast } from "sonner"
 import AppLayout from "@/app/_layouts/app-layout"
 import { type BreadcrumbItem } from "@/app/_lib/utils"
-import {
-    DIFFICULTY_LABELS,
-    DIFFICULTY_STYLES,
-    type AdminPhrase,
-} from "@/app/_lib/admin"
+import { DIFFICULTY_LABELS, DIFFICULTY_STYLES, type AdminPhrase } from "@/app/_lib/admin"
 import { apiErrorMessage, deletePhrase, listPhrases } from "@/app/_lib/admin-api"
 import { cn } from "@/app/_lib/utils"
 import { CardContainer } from "@/app/_components/admin/profile/card-container"

@@ -56,7 +56,7 @@ export function StatsCards({ stats, limit }: Props) {
     const cards = limit ? buildCards(stats).slice(0, limit) : buildCards(stats)
 
     return (
-        <div className="grid grid-cols-2 gap-3 ">
+        <div className="grid grid-cols-2 gap-3">
             {cards.map((card) => {
                 const Icon = card.icon
 
@@ -64,7 +64,7 @@ export function StatsCards({ stats, limit }: Props) {
                     <div
                         key={card.label}
                         className={cn(
-                            "flex flex-col items-center rounded-2xl border border-[#dce8ff] bg-white p-4 shadow-[0_2px_16px_rgba(37,99,235,0.08)] sm:p-6  text-center",
+                            "flex flex-col items-center rounded-2xl border border-[#dce8ff] bg-white p-4 text-center shadow-[0_2px_16px_rgba(37,99,235,0.08)] sm:p-6",
                             // Cards "full" ocupam as duas colunas da grid
                             card.span === "full" &&
                                 "col-span-2 flex-row items-center gap-4 text-left"

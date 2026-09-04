@@ -172,6 +172,27 @@ CREATE TABLE IF NOT EXISTS ranking_points (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Falhas de login recentes, para rate limiting anti-força-bruta (ver
+-- lib/login-throttle.php). Só falhas são gravadas; um login certo limpa o e-mail.
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    email        VARCHAR(255)  NOT NULL,
+    ip           VARBINARY(16) NOT NULL,             -- inet_pton() (IPv4/IPv6)
+    attempted_at DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_email_time (email, attempted_at),
+    INDEX idx_ip_time (ip, attempted_at)
+);
+
+-- Uso da prática por convidados (sem login), por IP e por dia. Serve de teto
+-- diário anti-abuso: mesmo que a pessoa limpe os cookies (zerando o contador da
+-- sessão), o gasto com a IA da OpenAI fica limitado por IP. Ver practice/check-answer.php.
+CREATE TABLE IF NOT EXISTS guest_usage (
+    ip    VARBINARY(16) NOT NULL,                  -- inet_pton() (IPv4/IPv6)
+    day   DATE          NOT NULL,
+    count INT UNSIGNED  NOT NULL DEFAULT 0,
+    PRIMARY KEY (ip, day)
+);
+
 CREATE TABLE IF NOT EXISTS plans (
     id             INT AUTO_INCREMENT PRIMARY KEY,
     -- UNIQUE para o seed lá embaixo poder usar ON DUPLICATE KEY UPDATE

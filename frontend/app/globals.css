@@ -320,7 +320,6 @@ html:not(.reduce-motion) .hover-lift:active {
     transform: scale(0.97);
 }
 
-
 /* ─── Tamanho de Fonte ───────────────────────────────────────────────────────
    Aumenta a fonte base de 16px para 18px. Como o Tailwind v4 gera utilitários
    em rem, todas as classes text-* escalam proporcionalmente de forma automática.
@@ -383,4 +382,38 @@ html.reduce-motion *::after {
     --color-red-600: var(--color-orange-600);
     --color-red-700: var(--color-orange-700);
     --color-red-800: var(--color-orange-800);
+}
+
+/* Confete do modal de subida de nível — cada peça cai girando (ver level-up-modal.tsx) */
+@keyframes confettiFall {
+    0% {
+        transform: translateY(-20vh) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(105vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+/* Tremidinha do card de subida de nível: sacode no começo e fica parado o resto
+   do ciclo. Com duração de 2s + infinite, o balanço acontece a cada 2 segundos. */
+@keyframes levelUpShake {
+    0%,
+    14%,
+    100% {
+        transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    3% {
+        transform: translate3d(-5px, 0, 0) rotate(-2deg);
+    }
+    6% {
+        transform: translate3d(5px, 0, 0) rotate(2deg);
+    }
+    9% {
+        transform: translate3d(-3px, 0, 0) rotate(-1deg);
+    }
+    12% {
+        transform: translate3d(3px, 0, 0) rotate(1deg);
+    }
 }
