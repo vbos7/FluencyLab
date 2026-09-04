@@ -10,13 +10,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 // Mesma lógica de nível usada no front (ranking.ts: getLevel) — nível N exige N×150,
 // subtraindo cumulativamente, não apenas comparando o bruto.
-function calcularNivel(int $xp): int {
+function calcularNivel(int $xp): int
+{
     $nivel = 1;
     $restante = $xp;
     while ($restante >= $nivel * 150) {
         $restante -= $nivel * 150;
         $nivel++;
     }
+
     return $nivel;
 }
 

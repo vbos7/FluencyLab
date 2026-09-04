@@ -9,6 +9,7 @@ import { CardContainer } from "@/app/_components/admin/profile/card-container"
 import { CardRow } from "@/app/_components/admin/profile/card-row"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
+import { onlyPositiveInt, onlyPositiveDecimal } from "@/app/_lib/masks"
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: "Dashboard", href: "/admin/dashboard" },
@@ -168,7 +169,7 @@ export default function ConfiguracoesPage() {
                         <Input
                             type="number"
                             value={xpPerPhrase}
-                            onChange={(e) => setXpPerPhrase(e.target.value)}
+                            onChange={(e) => setXpPerPhrase(onlyPositiveInt(e.target.value))}
                             min={1}
                             max={100}
                             className="h-9 w-28 text-right"
@@ -181,7 +182,7 @@ export default function ConfiguracoesPage() {
                         <Input
                             type="number"
                             value={streakBonus}
-                            onChange={(e) => setStreakBonus(e.target.value)}
+                            onChange={(e) => setStreakBonus(onlyPositiveDecimal(e.target.value))}
                             min={1}
                             step={0.1}
                             max={5}

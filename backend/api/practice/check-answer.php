@@ -160,20 +160,6 @@ function nivelDoXp(int $xp): int
     return $nivel;
 }
 
-// IP real do cliente. Atrás do Cloudflare/nginx o REMOTE_ADDR é o proxy, então
-// preferimos os cabeçalhos que carregam o IP de origem.
-function client_ip(): string
-{
-    if (! empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
-        return $_SERVER['HTTP_CF_CONNECTING_IP'];
-    }
-    if (! empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        return trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
-    }
-
-    return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-}
-
 // Teto do convidado: contador na sessão (limite por convidado) + contagem diária
 // por IP (backstop caso limpem os cookies). Reserva o slot ANTES de chamar a IA,
 // para o crédito ficar protegido mesmo se a IA falhar. Aborta com 403 se estourar.

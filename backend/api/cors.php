@@ -79,6 +79,22 @@ function request_is_https(): bool
 }
 
 /**
+ * IP real do cliente. Atrás do Cloudflare/nginx o REMOTE_ADDR é o proxy, então
+ * preferimos os cabeçalhos que carregam o IP de origem. Usado em rate limiting.
+ */
+function client_ip(): string
+{
+    if (! empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        return $_SERVER['HTTP_CF_CONNECTING_IP'];
+    }
+    if (! empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        return trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
+    }
+
+    return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+}
+
+/**
  * Aplica (ou limpa) o "manter conectado" após um login bem-sucedido.
  *
  * Grava/apaga o cookie `remember` (que o cors.php lê no próximo request para

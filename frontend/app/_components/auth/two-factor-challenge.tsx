@@ -59,7 +59,17 @@ export function TwoFactorChallenge() {
                         autoComplete="one-time-code"
                         autoFocus
                         value={value}
-                        onChange={(e) => setValue(e.target.value)}
+                        maxLength={useRecovery ? 13 : 6}
+                        onChange={(e) => {
+                            const raw = e.target.value
+                            // Autenticador: só dígitos, 6. Recuperação: hex + hífen
+                            // (formato XXXXXX-XXXXXX gerado no backend), até 13.
+                            setValue(
+                                useRecovery
+                                    ? raw.toUpperCase().replace(/[^0-9A-F-]/g, "").slice(0, 13)
+                                    : raw.replace(/\D/g, "").slice(0, 6)
+                            )
+                        }}
                         placeholder={useRecovery ? "XXXXXX-XXXXXX" : "123456"}
                         className="h-12 rounded-xl border border-transparent bg-[#f0f4ff] px-4 text-center font-mono text-lg tracking-widest text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-300"
                     />

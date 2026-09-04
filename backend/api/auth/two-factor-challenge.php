@@ -13,6 +13,11 @@ require_once __DIR__.'/../cors.php';
 require_once __DIR__.'/../db.php';
 require_once __DIR__.'/../lib/twofactor.php';
 
+// Máximo de tentativas por sessão pendente. O código TOTP tem só 6 dígitos
+// (1 milhão de combinações); sem esse limite dá pra forçá-lo. Estourou → derruba
+// a sessão pendente e obriga a refazer o login (senha de novo).
+const MAX_2FA_ATTEMPTS = 5;
+
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['error' => 'Método não permitido'], 405);
@@ -22,6 +27,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $pendingId = $_SESSION['2fa_pending_user_id'] ?? null;
 if (! $pendingId) {
     json_out(['errors' => ['Sessão de verificação expirada. Faça login novamente.']], 401);
+    exit;
+}
+
+// Trava anti-força-bruta: se já esgotou as tentativas, encerra a sessão pendente.
+if (($_SESSION['2fa_attempts'] ?? 0) >= MAX_2FA_ATTEMPTS) {
+    unset($_SESSION['2fa_pending_user_id'], $_SESSION['2fa_attempts'], $_SESSION['remember_pref']);
+    json_out(['errors' => ['Muitas tentativas. Faça login novamente.']], 429);
     exit;
 }
 
@@ -43,8 +55,12 @@ if (! $user || $user['two_factor_secret'] === null) {
 $verified = false;
 
 if ($code !== '') {
-    $secret = app_decrypt($user['two_factor_secret']);
-    $verified = $secret !== null && totp_verify($secret, $code);
+    // O código do app é sempre 6 dígitos: formato inválido já cai como falha,
+    // sem nem chamar o verificador.
+    if (preg_match('/^\d{6}$/', $code)) {
+        $secret = app_decrypt($user['two_factor_secret']);
+        $verified = $secret !== null && totp_verify($secret, $code);
+    }
 } elseif ($recovery !== '') {
     // Código de recuperação é de uso único: se casar, gravamos a lista sem ele.
     $remaining = null;
@@ -59,14 +75,16 @@ if ($code !== '') {
 }
 
 if (! $verified) {
-    json_out(['errors' => ['Código inválido']], 401);
+    $_SESSION['2fa_attempts'] = ($_SESSION['2fa_attempts'] ?? 0) + 1;
+    $restantes = max(0, MAX_2FA_ATTEMPTS - $_SESSION['2fa_attempts']);
+    json_out(['errors' => ['Código inválido'], 'attempts_left' => $restantes], 401);
     exit;
 }
 
 // Segundo fator OK → promove a sessão. O papel vem do banco na autorização
 // (admin/guard.php), então não é guardado aqui.
 $remember = ! empty($_SESSION['remember_pref']);
-unset($_SESSION['2fa_pending_user_id'], $_SESSION['remember_pref']);
+unset($_SESSION['2fa_pending_user_id'], $_SESSION['remember_pref'], $_SESSION['2fa_attempts']);
 $_SESSION['user_id'] = (int) $user['id'];
 aplicar_remember($remember);
 

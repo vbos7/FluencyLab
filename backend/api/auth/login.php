@@ -3,6 +3,7 @@
 require_once __DIR__.'/../cors.php';
 
 require_once __DIR__.'/../db.php';
+require_once __DIR__.'/../lib/login-throttle.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -23,16 +24,28 @@ if (empty($email) || empty($password)) {
     exit;
 }
 
+// Anti-força-bruta: barra se e-mail ou IP já estourou o limite de falhas recentes.
+$ip = client_ip();
+if (login_bloqueado($pdo, $email, $ip)) {
+    json_out(['errors' => ['Muitas tentativas de login. Aguarde alguns minutos e tente novamente.']], 429);
+
+    exit;
+}
+
 $stmt = $pdo->prepare('SELECT id, name, email, password_hash, role, two_factor_confirmed_at FROM users WHERE email = ?');
 $stmt->execute([$email]);
 $user = $stmt->fetch();
 
 // password_verify() compara a senha com o hash salvo
 if (! $user || ! password_verify($password, $user['password_hash'])) {
+    login_registrar_falha($pdo, $email, $ip);
     json_out(['errors' => ['Credenciais inválidas']], 401);
 
     exit;
 }
+
+// Senha correta → zera o contador de falhas desse e-mail.
+login_limpar($pdo, $email);
 
 // Admin com 2FA ativo: a senha sozinha NÃO loga. Guardamos um estado
 // "pendente" e o front precisa completar em /auth/two-factor-challenge.php com
