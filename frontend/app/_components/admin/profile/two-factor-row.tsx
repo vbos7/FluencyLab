@@ -219,7 +219,10 @@ export function TwoFactorRow() {
                                 <DialogClose asChild>
                                     <Button variant="outline">Cancelar</Button>
                                 </DialogClose>
-                                <Button onClick={confirmEnable} disabled={loading || code.trim() === ""}>
+                                <Button
+                                    onClick={confirmEnable}
+                                    disabled={loading || code.trim() === ""}
+                                >
                                     {loading ? "Verificando…" : "Ativar 2FA"}
                                 </Button>
                             </DialogFooter>

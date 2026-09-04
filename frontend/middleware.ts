@@ -1,17 +1,28 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const ROTAS_PUBLICAS = ["/login", "/register", "/", "/cursos", "/planos"]
+// /practice é público para permitir o modo convidado (praticar sem login). O
+// abuso é contido no backend (check-answer.php: teto por sessão + por IP), não aqui.
+// /admin/login também é público, senão cairia em loop de redirect.
+const ROTAS_PUBLICAS = [
+    "/login",
+    "/register",
+    "/",
+    "/cursos",
+    "/planos",
+    "/practice",
+    "/admin/login",
+]
 
 export function middleware(request: NextRequest) {
     const sessao = request.cookies.get("PHPSESSID")?.value
     const { pathname } = request.nextUrl
 
-    const ehPublica = ROTAS_PUBLICAS.some(
-        (r) => pathname === r || pathname.startsWith(r + "/")
-    )
+    const ehPublica = ROTAS_PUBLICAS.some((r) => pathname === r || pathname.startsWith(r + "/"))
 
     if (!sessao && !ehPublica) {
-        return NextResponse.redirect(new URL("/login", request.url))
+        // Rotas do painel têm login próprio; o resto vai pro login do aluno.
+        const destino = pathname.startsWith("/admin") ? "/admin/login" : "/login"
+        return NextResponse.redirect(new URL(destino, request.url))
     }
 
     return NextResponse.next()

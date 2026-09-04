@@ -23,30 +23,27 @@ export function Podium({ top3 }: Props) {
                 return (
                     <div key={user.id} className="flex flex-1 flex-col items-center">
                         <Avatar
-                            className={cn(
-                                "border-2",
-                                isFirst
-                                    ? "size-16 rounded-4xl border-blue-300 shadow-[0_4px_16px_rgba(37,99,235,0.25)]"
-                                    : "size-13 rounded-[14px] border-slate-200"
-                            )}
-                        >
-                            {user.github ? (
-                                <AvatarImage
-                                    src={`https://github.com/${user.github}.png`}
-                                    alt={`@${user.github}`}
-                                />
-                            ) : null}
-                            <AvatarFallback
-                                className={cn(
-                                    "rounded-none text-sm font-semibold",
-                                    isFirst
-                                        ? "bg-blue-600 text-white"
-                                        : "bg-slate-100 text-slate-600"
-                                )}
-                            >
-                                {initials(user.name)}
-                            </AvatarFallback>
-                        </Avatar>
+    className={cn(
+        "border-2",
+        isFirst
+            ? "size-16 rounded-4xl border-blue-300 shadow-[0_4px_16px_rgba(37,99,235,0.25)]"
+            : "size-13 rounded-[14px] border-slate-200"
+    )}
+>
+    {user.avatar ? (
+        <AvatarImage src={user.avatar} alt={user.name} />
+    ) : user.github ? (
+        <AvatarImage src={`https://github.com/${user.github}.png`} alt={`@${user.github}`} />
+    ) : null}
+    <AvatarFallback
+        className={cn(
+            "rounded-none text-sm font-semibold",
+            isFirst ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600"
+        )}
+    >
+        {initials(user.name)}
+    </AvatarFallback>
+</Avatar>
 
                         <p
                             className={cn(

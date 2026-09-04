@@ -79,11 +79,32 @@ try {
         ];
     }
 
+    $diasComAtividade = [];
+    foreach ($consistencia as $item) {
+        if ($item['atividades'] > 0) {
+            $diasComAtividade[$item['dia']] = true;
+        }
+    }
+
+    $hoje = new DateTime('today');
+    $cursor = clone $hoje;
+
+    if (! isset($diasComAtividade[$cursor->format('Y-m-d')])) {
+        $cursor->modify('-1 day');
+    }
+
+    $streak = 0;
+    while (isset($diasComAtividade[$cursor->format('Y-m-d')])) {
+        $streak++;
+        $cursor->modify('-1 day');
+    }
+
     json_out([
         'total_treinos' => (int) $stats['total_treinos'],
         'taxa_acerto' => (int) ($stats['taxa_acerto'] ?? 0),
         'tempo_total_segundos' => (int) $stats['tempo_total_segundos'],
         'xp_total' => (int) $xp['xp_total'],
+        'streak' => $streak,
         'consistencia' => $consistencia,
         'weekly' => $weekly,
     ]);

@@ -3,27 +3,35 @@ export type LeaderboardUser = {
     name: string
     xp: number
     level: number
+    avatar?: string | null 
     github?: string
     isCurrentUser?: boolean
 }
 
-// XP necessário por nível. Fórmula única, igual à do backend
-// (ranking.php, admin/users.php, admin/top-users.php): cada nível exige 150 XP,
-// então nível = floor(xp / 150) + 1.
-export const XP_PER_LEVEL = 150
-
-// Deriva nível e progresso a partir do XP total, batendo com o backend.
-export function getLevel(totalXp: number) {
-    const level = Math.floor(totalXp / XP_PER_LEVEL) + 1
-    const currentXp = totalXp % XP_PER_LEVEL // progresso dentro do nível atual
-    return { level, currentXp, needed: XP_PER_LEVEL }
+// XP necessário para completar um nível específico (nível N exige N×150)
+export function xpForLevel(lvl: number): number {
+    return lvl * 150
 }
 
-// Rótulo de patamar por nível (usado no perfil).
+// Deriva nível atual + XP dentro do nível a partir do XP total acumulado.
+// Mesma lógica usada no backend (ranking.php) para manter os números consistentes
+// entre Home, Perfil e Ranking.
+export function getLevel(xp: number) {
+    let lvl = 1,
+        rem = xp
+    while (rem >= xpForLevel(lvl)) {
+        rem -= xpForLevel(lvl)
+        lvl++
+    }
+    return { level: lvl, currentXp: rem, needed: xpForLevel(lvl) }
+}
+
+// Rótulo de patamar por nível (usado no perfil e no ranking)
 export function levelLabel(level: number): string {
-    if (level >= 10) return "Expert"
-    if (level >= 6) return "Avançado"
-    if (level >= 3) return "Intermediário"
+    if (level >= 10) return "Mestre"
+    if (level >= 7) return "Avançado"
+    if (level >= 4) return "Expert"
+    if (level >= 2) return "Intermediário"
     return "Iniciante"
 }
 

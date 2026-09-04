@@ -30,6 +30,7 @@ export type CalendarData = {
 
 // Formato que vem direto do dashboard.php
 export type DashboardData = {
+    streak: number
     total_treinos: number
     taxa_acerto: number
     tempo_total_segundos: number
@@ -88,9 +89,7 @@ function localDateKey(d: Date): string {
 // Se ainda não houve prática hoje, conta a partir de ontem (não zera o streak
 // só porque o dia atual ainda não teve treino).
 export function computeStreak(consistencia: DashboardData["consistencia"]): number {
-    const ativos = new Set(
-        consistencia.filter((c) => c.atividades > 0).map((c) => c.dia)
-    )
+    const ativos = new Set(consistencia.filter((c) => c.atividades > 0).map((c) => c.dia))
     const cursor = new Date()
     if (!ativos.has(localDateKey(cursor))) {
         cursor.setDate(cursor.getDate() - 1)
@@ -112,7 +111,9 @@ function activityLevel(atividades: number): number {
 }
 
 // Transforma a lista [{dia, atividades}] da API num mapa {data: nível}, pronto pro generateWeeks
-export function buildCalendarMap(consistencia: DashboardData["consistencia"]): Record<string, number> {
+export function buildCalendarMap(
+    consistencia: DashboardData["consistencia"]
+): Record<string, number> {
     const map: Record<string, number> = {}
     for (const item of consistencia) {
         map[item.dia] = activityLevel(item.atividades)
@@ -127,8 +128,18 @@ export function buildCalendarMapFromApi(calendar: CalendarData[]): Record<string
 // ─── Helpers do calendário ──────────────────────────────────────────────────────
 
 export const MONTH_NAMES = [
-    "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-    "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+    "Jan",
+    "Fev",
+    "Mar",
+    "Abr",
+    "Mai",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Set",
+    "Out",
+    "Nov",
+    "Dez",
 ]
 
 // Gera a matriz de colunas (semanas) do ano, agora recebendo o mapa real de atividade

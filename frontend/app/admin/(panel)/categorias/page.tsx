@@ -5,11 +5,7 @@ import { toast } from "sonner"
 import AppLayout from "@/app/_layouts/app-layout"
 import { type BreadcrumbItem } from "@/app/_lib/utils"
 import { type AdminCategory } from "@/app/_lib/admin"
-import {
-    apiErrorMessage,
-    deleteCategory,
-    listCategories,
-} from "@/app/_lib/admin-api"
+import { apiErrorMessage, deleteCategory, listCategories } from "@/app/_lib/admin-api"
 import { cn } from "@/app/_lib/utils"
 import { CardContainer } from "@/app/_components/admin/profile/card-container"
 import { Button } from "@/app/_components/ui/button"
