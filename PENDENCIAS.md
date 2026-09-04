@@ -11,8 +11,6 @@ nome do lado. Última atualização: 2026-09-04.
 
 Telas que existem no front mas ainda têm `TODO` sem backend:
 
-- [ ] **Esqueci minha senha** (`frontend/app/_components/auth/forgot-password-dialog.tsx`)
-  — 3 passos sem API: enviar código, validar código e atualizar a senha.
 - [ ] **Notificações do admin** (`frontend/app/admin/(panel)/notificacoes/page.tsx:51`)
   — falta o `PATCH /api/admin/notifications` para marcar como lida.
 
@@ -107,3 +105,5 @@ notificações. **Não existe** gestão de cursos. Precisamos de um CRUD complet
 - [x] **Foto de perfil salva de verdade** (Marcos): endpoint `avatar-upload.php` (auth, valida MIME pelo conteúdo, limite 2MB, remove a antiga) + upload no perfil e avatares no ranking. Revisado: tirei o `console.log` de debug, o `any` do `catch`, o upload de teste que foi commitado e ajustei o `.gitignore` (`backend/api/uploads/`).
 - [x] **Rate limiting de login** (por e-mail e IP) + validação de telefone no servidor e máscara no cliente; campos numéricos do painel bloqueando negativos.
 - [x] **2FA endurecido**: input restrito (6 dígitos / código de recuperação), validação de formato no servidor e trava anti-força-bruta (5 tentativas).
+- [x] **Esqueci minha senha** (equipe): fluxo ligado à API — `forgot-password.php` + `reset-password.php` + envio de e-mail via PHPMailer (`config/mail.php`); dialog do front sem os TODOs.
+- [x] **Schema unificado**: `comments` e `lesson_notes` trazidos pro `schema.sql` (fonte única) e o dump `schema (2).sql` removido; corrige o 500 dos comentários.
