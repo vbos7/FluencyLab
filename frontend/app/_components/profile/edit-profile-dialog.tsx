@@ -10,6 +10,7 @@ import {
     DialogClose,
 } from "@/app/_components/ui/dialog"
 import { apiClient } from "@/app/_lib/api"
+import { maskPhone } from "@/app/_lib/masks"
 
 type Props = {
     initialName: string
@@ -30,7 +31,7 @@ export function EditProfileDialog({ initialName, initialEmail = "", initialPhone
     const [form, setForm] = useState({
         nome: initialName,
         email: initialEmail,
-        telefone: initialPhone,
+        telefone: maskPhone(initialPhone),
         senhaAtual: "",
         novaSenha: "",
         confirmarSenha: "",
@@ -114,10 +115,14 @@ export function EditProfileDialog({ initialName, initialEmail = "", initialPhone
                             <label className={labelClass}>Telefone</label>
                             <input
                                 type="tel"
+                                inputMode="numeric"
                                 name="telefone"
                                 value={form.telefone}
-                                onChange={handleChange}
-                                placeholder="+55 11 99999-9999"
+                                onChange={(e) =>
+                                    setForm({ ...form, telefone: maskPhone(e.target.value) })
+                                }
+                                placeholder="(11) 99999-9999"
+                                maxLength={15}
                                 className={inputClass}
                             />
                         </div>

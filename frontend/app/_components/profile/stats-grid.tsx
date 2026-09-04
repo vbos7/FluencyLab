@@ -27,7 +27,9 @@ export function StatsGrid({ stats }: Props) {
                         >
                             <s.icon className={`size-5 ${s.iconColor}`} aria-hidden="true" />
                         </div>
-                        <div className="text-xl font-black text-[#1e293b] sm:text-2xl">{s.value}</div>
+                        <div className="text-xl font-black text-[#1e293b] sm:text-2xl">
+                            {s.value}
+                        </div>
                         <div className="mt-1 text-[10px] font-semibold tracking-wide text-slate-500 uppercase sm:text-xs">
                             {s.label}
                         </div>

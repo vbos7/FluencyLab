@@ -25,12 +25,7 @@ import {
     type AdminPhrase,
     type Difficulty,
 } from "@/app/_lib/admin"
-import {
-    apiErrorMessage,
-    createPhrase,
-    listCategories,
-    updatePhrase,
-} from "@/app/_lib/admin-api"
+import { apiErrorMessage, createPhrase, listCategories, updatePhrase } from "@/app/_lib/admin-api"
 
 const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard"]
 
@@ -64,7 +59,9 @@ export function PhraseFormDialog({
         // Carrega as categorias disponíveis para o select toda vez que abre.
         listCategories()
             .then(setCategories)
-            .catch((err) => setError(apiErrorMessage(err, "Não foi possível carregar as categorias.")))
+            .catch((err) =>
+                setError(apiErrorMessage(err, "Não foi possível carregar as categorias."))
+            )
     }, [open, editing])
 
     async function handleSubmit(e: React.FormEvent) {

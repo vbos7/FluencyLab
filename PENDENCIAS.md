@@ -1,7 +1,7 @@
 # ✅ Pendências do FluencyLab
 
 Lista simples pra o grupo acompanhar. Marque `[x]` quando terminar e coloque seu
-nome do lado. Última atualização: 2026-08-28.
+nome do lado. Última atualização: 2026-09-04.
 
 > Como marcar: troque `- [ ]` por `- [x]` e adicione `— (seu nome)` no fim da linha.
 
@@ -65,9 +65,6 @@ notificações. **Não existe** gestão de cursos. Precisamos de um CRUD complet
 
 ## 🎯 Progressão, favoritas e recursos Premium
 
-- [ ] **Sistema de subir de nível conforme o XP** — hoje o nível é apenas
-  calculado/exibido (`level = floor(xp/150)+1`); falta o **evento de subir de nível**
-  (feedback/animação/notificação quando o usuário cruza o limiar de XP e muda de nível).
 - [ ] **Frases favoritadas de verdade** — hoje ficam só no `localStorage` do navegador
   (`fluency-lab:favorites`) e usam a lista estática `FRASES`, não o banco. Falta API +
   tabela pra favoritar **frases reais** e persistir por usuário.
@@ -102,3 +99,12 @@ notificações. **Não existe** gestão de cursos. Precisamos de um CRUD complet
 - [x] Normalização do banco implementada no código (schema + endpoints).
 - [x] Anotações `@var PDO $pdo` e extensões declaradas no `composer.json` (pdo, pdo_mysql, fileinfo, mbstring).
 - [x] Correção dos avisos de ESLint em `curso-client.tsx` (setState em efeito / deps).
+- [x] **Sistema de subir de nível**: backend (`check-answer.php`) devolve `leveled_up`/`level`; modal de comemoração com confete e "tremidinha" a cada 2s, tudo respeitando `prefers-reduced-motion`.
+- [x] **Fórmula de nível do admin** corrigida (`admin/users.php` e `admin/top-users.php`) para a triangular, batendo com `ranking.php` e o front.
+- [x] **Prática como convidado** (sem login), limitada a 5 questões: teto no backend por sessão + por IP e UI de "modo convidado" com CTA de cadastro.
+- [x] **"Manter conectado"** (sessão de 30 dias) no login + correção do logout automático (`session.gc_maxlifetime` estava em ~24min).
+- [x] **Login do painel** (`/admin/login`) idêntico ao público, com passkey acima do e-mail; middleware redireciona `/admin/*` sem sessão para `/admin/login`.
+- [x] **Logos atualizados** (login, sidebar do admin, hero da landing) para o logo real; título "Painel FluencyLab" na tela do painel.
+- [x] **Toast de XP** redesenhado e **modal de level-up** via portal (fundo escuro cobrindo a tela inteira).
+- [x] **`API_BASE_URL`** documentada no `.env.example` e com fallback para `NEXT_PUBLIC_API_URL` no `server-api.ts`.
+- [x] Deploy full-stack no Forge (composer no backend, `.env` do front, `/etc/hosts` p/ latência) e rotação dos segredos expostos.

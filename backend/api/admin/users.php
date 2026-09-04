@@ -21,9 +21,13 @@ if ($method === 'GET') {
     $limite = (new DateTime)->modify('-7 days');
 
     $saida = array_map(function ($u) use ($limite) {
+        // Nível triangular: N exige N×150 ACUMULADO (subtrai a cada volta), igual
+        // ao ranking.php e ao front. Sem a subtração, os níveis saíam inflados.
         $xp = (int) $u['xp'];
         $nivel = 1;
-        while ($xp >= $nivel * 150) {
+        $restante = $xp;
+        while ($restante >= $nivel * 150) {
+            $restante -= $nivel * 150;
             $nivel++;
         }
 

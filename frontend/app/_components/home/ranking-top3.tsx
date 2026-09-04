@@ -42,7 +42,9 @@ export async function RankingTop3() {
     return (
         <section aria-labelledby="ranking-title" className="mt-7">
             <div className="mb-3.5 flex items-center justify-between">
-                <h2 id="ranking-title" className="text-xl font-bold text-slate-900">Ranking Top 3</h2>
+                <h2 id="ranking-title" className="text-xl font-bold text-slate-900">
+                    Ranking Top 3
+                </h2>
                 <a
                     href="/ranking"
                     className="text-xs font-bold text-blue-500 transition-colors hover:text-blue-700"
@@ -51,7 +53,10 @@ export async function RankingTop3() {
                 </a>
             </div>
 
-            <ul className="flex flex-col divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm" role="list">
+            <ul
+                className="flex flex-col divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm"
+                role="list"
+            >
                 {top3.map((user, i) => {
                     const config = MEDAL_CONFIG[i]
                     const pos = i + 1
@@ -62,7 +67,7 @@ export async function RankingTop3() {
                                 href="/ranking"
                                 aria-label={`${pos}º lugar: ${user.name}, Nível ${user.level}, ${user.xp.toLocaleString()} XP`}
                                 className={cn(
-                                    "group flex items-center gap-3 px-4 py-3.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400",
+                                    "group flex items-center gap-3 px-4 py-3.5 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none focus-visible:ring-inset",
                                     config.hoverBg
                                 )}
                             >
@@ -76,11 +81,24 @@ export async function RankingTop3() {
                                 </span>
 
                                 <div className="relative">
-                                    <Avatar className={cn("size-9 ring-2 transition-all duration-200 group-hover:scale-105", config.ringClass)}>
+                                    <Avatar
+                                        className={cn(
+                                            "size-9 ring-2 transition-all duration-200 group-hover:scale-105",
+                                            config.ringClass
+                                        )}
+                                    >
                                         {user.github ? (
-                                            <AvatarImage src={`https://github.com/${user.github}.png`} alt={`@${user.github}`} />
+                                            <AvatarImage
+                                                src={`https://github.com/${user.github}.png`}
+                                                alt={`@${user.github}`}
+                                            />
                                         ) : null}
-                                        <AvatarFallback className={cn("text-xs font-semibold", config.fallbackBg)}>
+                                        <AvatarFallback
+                                            className={cn(
+                                                "text-xs font-semibold",
+                                                config.fallbackBg
+                                            )}
+                                        >
                                             {initials(user.name)}
                                         </AvatarFallback>
                                     </Avatar>
@@ -96,7 +114,12 @@ export async function RankingTop3() {
                                     <p className="text-xs text-slate-500">Nível {user.level}</p>
                                 </div>
 
-                                <span className={cn("rounded-full border px-2 py-0.5 font-mono text-xs font-bold", config.xpClass)}>
+                                <span
+                                    className={cn(
+                                        "rounded-full border px-2 py-0.5 font-mono text-xs font-bold",
+                                        config.xpClass
+                                    )}
+                                >
                                     {user.xp.toLocaleString()} XP
                                 </span>
                             </a>

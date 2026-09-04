@@ -1,9 +1,8 @@
-
 type Props = {
     name: string
     rankLabel: string
     avatarSlot: React.ReactNode // slot para o avatar com botão de câmera (client)
-    children?: React.ReactNode  // slot para o botão "Editar Perfil"
+    children?: React.ReactNode // slot para o botão "Editar Perfil"
 }
 
 export function ProfileHeader({ name, rankLabel, avatarSlot, children }: Props) {
@@ -26,9 +25,7 @@ export function ProfileHeader({ name, rankLabel, avatarSlot, children }: Props) 
 
             <div className="px-4 pb-5 sm:px-8 sm:pb-8">
                 {/* Avatar — renderizado pelo slot client (AvatarUpload) */}
-                <div className="-mt-9 mb-2 inline-block sm:-mt-11 sm:mb-3">
-                    {avatarSlot}
-                </div>
+                <div className="-mt-9 mb-2 inline-block sm:-mt-11 sm:mb-3">{avatarSlot}</div>
 
                 {/* Nome + ranking + ação */}
                 <div className="flex flex-wrap items-start justify-between gap-2 sm:gap-3">
