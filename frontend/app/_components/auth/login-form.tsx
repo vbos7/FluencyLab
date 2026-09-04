@@ -1,21 +1,28 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check } from "lucide-react"
+import { Check, Fingerprint } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { AuthLogo } from "./auth-logo"
 import { EmailIcon, LockIcon, EyeIcon, EyeOffIcon } from "./auth-icons"
 import { ForgotPasswordDialog } from "./forgot-password-dialog"
 import { TwoFactorChallenge } from "./two-factor-challenge"
 import { apiClient } from "@/app/_lib/api"
+import { apiErrorMessage } from "@/app/_lib/admin-api"
+import { browserSupportsPasskeys, loginWithPasskey } from "@/app/_lib/webauthn-client"
 
-export function LoginForm() {
+// showPasskey: usado na tela do painel (/admin/login) — acrescenta a opção de
+// entrar com passkey ACIMA do e-mail. Fora isso, o formulário é idêntico ao público.
+export function LoginForm({ showPasskey = false }: { showPasskey?: boolean }) {
     const router = useRouter()
     const [mounted, setMounted] = useState(false)
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [remember, setRemember] = useState(false)
     const [showPass, setShowPass] = useState(false)
+    // Estado do login por passkey (só relevante quando showPasskey)
+    const [passkeyLoading, setPasskeyLoading] = useState(false)
+    const [passkeyError, setPasskeyError] = useState("")
     const [focused, setFocused] = useState<string | null>(null)
     const [forgotOpen, setForgotOpen] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -42,11 +49,26 @@ export function LoginForm() {
                 return
             }
             localStorage.removeItem("fluency-lab:mode")
-            router.push("/home")
+            // Admin cai direto no painel; aluno na home.
+            router.push(data?.user?.role === "admin" ? "/admin/dashboard" : "/home")
         } catch {
             setError("Email ou senha incorretos.")
         } finally {
             setLoading(false)
+        }
+    }
+
+    async function handlePasskey() {
+        setPasskeyError("")
+        setPasskeyLoading(true)
+        try {
+            await loginWithPasskey()
+            router.push("/admin/dashboard")
+        } catch (err) {
+            // Cancelamento do usuário lança DOMException; cai no texto padrão.
+            setPasskeyError(apiErrorMessage(err, "Não foi possível autenticar com o passkey."))
+        } finally {
+            setPasskeyLoading(false)
         }
     }
 
@@ -65,6 +87,9 @@ export function LoginForm() {
             focused === name ? "border-blue-400 shadow-sm shadow-blue-100" : "border-transparent"
         }`
 
+    // Checa suporte só depois de montar (browserSupportsPasskeys lê o navegador).
+    const passkeyUnsupported = mounted && !browserSupportsPasskeys()
+
     return (
         <>
             <ForgotPasswordDialog
@@ -80,8 +105,40 @@ export function LoginForm() {
                 className={`relative z-10 m-7 w-full max-w-md rounded-3xl border border-blue-100 bg-white px-8 py-10 shadow-xl shadow-blue-100/40 ${fadeUp()}`}
             >
                 <div className={fadeUp(75)}>
-                    <AuthLogo />
+                    <AuthLogo title={showPasskey ? "Painel FluencyLab" : "FluencyLab"} />
                 </div>
+
+                {/* Login por passkey (só no painel) — fica ACIMA do e-mail */}
+                {showPasskey && (
+                    <div className={fadeUp(90)}>
+                        <button
+                            type="button"
+                            onClick={handlePasskey}
+                            disabled={passkeyLoading || passkeyUnsupported}
+                            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-blue-200 bg-white text-sm font-bold text-blue-700 transition-all duration-200 hover:border-blue-300 hover:bg-blue-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            <Fingerprint className="size-5" />
+                            {passkeyLoading ? "Aguardando autenticação…" : "Entrar com passkey"}
+                        </button>
+
+                        {passkeyUnsupported && (
+                            <p className="mt-2 text-center text-xs text-amber-600">
+                                Este navegador não suporta passkeys.
+                            </p>
+                        )}
+                        {passkeyError && (
+                            <p className="mt-2 text-center text-sm text-red-500">{passkeyError}</p>
+                        )}
+
+                        <div className="my-5 flex items-center gap-3">
+                            <span className="h-px flex-1 bg-slate-200" />
+                            <span className="text-xs font-medium text-slate-400">
+                                ou entre com e-mail
+                            </span>
+                            <span className="h-px flex-1 bg-slate-200" />
+                        </div>
+                    </div>
+                )}
 
                 <form onSubmit={handleLogin} className="flex flex-col gap-4">
                     {/* E-mail */}
