@@ -107,7 +107,38 @@ try {
     exit;
 }
 
-json_out(['feedback' => $feedback, 'xp_earned' => $xp]);
+// XP total atualizado (mesma fonte do dashboard/ranking) + detecção de subida de
+// nível. Só acerto credita ranking_points, então o XP "antes" tira o ganho desta
+// tentativa quando ela foi correta; senão o nível não muda.
+$stmtXp = $pdo->prepare('SELECT COALESCE(SUM(points), 0) FROM ranking_points WHERE user_id = ?');
+$stmtXp->execute([$_SESSION['user_id']]);
+$xpTotal = (int) $stmtXp->fetchColumn();
+
+$xpAntes = $feedback['is_correct'] ? $xpTotal - $xp : $xpTotal;
+$nivelAgora = nivelDoXp($xpTotal);
+$subiuDeNivel = $nivelAgora > nivelDoXp($xpAntes);
+
+json_out([
+    'feedback' => $feedback,
+    'xp_earned' => $xp,
+    'xp_total' => $xpTotal,
+    'level' => $nivelAgora,
+    'leveled_up' => $subiuDeNivel,
+]);
+
+// Nível a partir do XP total — mesma fórmula triangular do ranking.php e do front
+// (ranking.ts getLevel): o nível N exige N×150 de XP acumulado.
+function nivelDoXp(int $xp): int
+{
+    $nivel = 1;
+    $restante = $xp;
+    while ($restante >= $nivel * 150) {
+        $restante -= $nivel * 150;
+        $nivel++;
+    }
+
+    return $nivel;
+}
 
 function calcularXp(int $score): int
 {

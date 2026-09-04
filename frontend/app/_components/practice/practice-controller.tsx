@@ -4,6 +4,7 @@ import { apiClient } from "@/app/_lib/api"
 import { useState, useRef, useEffect } from "react"
 import { type Phrase, type Feedback } from "@/app/_lib/practice"
 import { XpToast } from "./xp-toast"
+import { LevelUpModal } from "./level-up-modal"
 import { PracticeHeader } from "./practice-header"
 import { PhraseCard } from "./phrase-card"
 import { AnswerForm } from "./answer-form"
@@ -84,6 +85,9 @@ export function PracticeController({ phrases }: Props) {
     const [showXpToast, setShowXpToast] = useState(false)
     // Quantidade de XP exibida no toast após verificar
     const [earnedXp, setEarnedXp] = useState(0)
+    // Nível recém-alcançado quando a tentativa faz o aluno subir de nível
+    // (null = sem comemoração pendente). Vem do `leveled_up` do backend.
+    const [levelUp, setLevelUp] = useState<number | null>(null)
     // Modo convidado — lido do localStorage na inicialização
     const [isGuest] = useState(() => {
         if (typeof window === "undefined") return false
@@ -137,6 +141,10 @@ export function PracticeController({ phrases }: Props) {
             setEarnedXp(fb.xp)
             setShowXpToast(true)
             setTimeout(() => setShowXpToast(false), 2000)
+            // Subiu de nível nesta tentativa → dispara a comemoração
+            if (response.data.leveled_up) {
+                setLevelUp(response.data.level)
+            }
         } catch (err) {
             console.error("Erro ao corrigir:", err)
             setError("Não foi possível corrigir sua tradução agora. Tente novamente.")
@@ -191,6 +199,7 @@ export function PracticeController({ phrases }: Props) {
             </div>
 
             <XpToast earnedXp={earnedXp} visible={showXpToast} />
+            <LevelUpModal level={levelUp} onClose={() => setLevelUp(null)} />
 
             <PracticeHeader
                 difficulty={difficulty}
