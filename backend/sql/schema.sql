@@ -105,6 +105,34 @@ CREATE TABLE IF NOT EXISTS lesson_progress (
     FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE
 );
 
+-- Comentários das aulas (comentarios.php). is_approved permite moderação futura;
+-- parent_id encadeia respostas a outro comentário.
+CREATE TABLE IF NOT EXISTS comments (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    lesson_id   INT NOT NULL,
+    user_id     INT NOT NULL,
+    parent_id   INT NULL,
+    content     TEXT NOT NULL,
+    is_approved TINYINT(1) NOT NULL DEFAULT 1,        -- 0 = aguardando moderação
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE
+);
+
+-- Anotações do aluno por aula (notas.php). O UNIQUE(user_id, lesson_id) é o que
+-- viabiliza o "ON DUPLICATE KEY UPDATE" do upsert (uma nota por aula por usuário).
+CREATE TABLE IF NOT EXISTS lesson_notes (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT NOT NULL,
+    lesson_id  INT NOT NULL,
+    content    TEXT NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_note_user_lesson (user_id, lesson_id),
+    FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE
+);
+
 -- ─── MÓDULO C — Prática/IA ───────────────────────────────────────────────────
 
 -- Categorias das frases, normalizadas numa tabela própria (antes era texto livre

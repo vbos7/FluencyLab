@@ -13,10 +13,6 @@ Telas que existem no front mas ainda têm `TODO` sem backend:
 
 - [ ] **Esqueci minha senha** (`frontend/app/_components/auth/forgot-password-dialog.tsx`)
   — 3 passos sem API: enviar código, validar código e atualizar a senha.
-- [ ] **Foto de perfil não salva** (`frontend/app/_components/profile/avatar-upload.tsx:27`)
-  — ao escolher a foto e clicar em **Atualizar** não acontece nada: só mostra o
-  preview local, o arquivo nunca é enviado pra API nem persistido.
-  (O painel admin já tem `backend/api/admin/profile/avatar.php` como referência.)
 - [ ] **Notificações do admin** (`frontend/app/admin/(panel)/notificacoes/page.tsx:51`)
   — falta o `PATCH /api/admin/notifications` para marcar como lida.
 
@@ -108,3 +104,6 @@ notificações. **Não existe** gestão de cursos. Precisamos de um CRUD complet
 - [x] **Toast de XP** redesenhado e **modal de level-up** via portal (fundo escuro cobrindo a tela inteira).
 - [x] **`API_BASE_URL`** documentada no `.env.example` e com fallback para `NEXT_PUBLIC_API_URL` no `server-api.ts`.
 - [x] Deploy full-stack no Forge (composer no backend, `.env` do front, `/etc/hosts` p/ latência) e rotação dos segredos expostos.
+- [x] **Foto de perfil salva de verdade** (Marcos): endpoint `avatar-upload.php` (auth, valida MIME pelo conteúdo, limite 2MB, remove a antiga) + upload no perfil e avatares no ranking. Revisado: tirei o `console.log` de debug, o `any` do `catch`, o upload de teste que foi commitado e ajustei o `.gitignore` (`backend/api/uploads/`).
+- [x] **Rate limiting de login** (por e-mail e IP) + validação de telefone no servidor e máscara no cliente; campos numéricos do painel bloqueando negativos.
+- [x] **2FA endurecido**: input restrito (6 dígitos / código de recuperação), validação de formato no servidor e trava anti-força-bruta (5 tentativas).

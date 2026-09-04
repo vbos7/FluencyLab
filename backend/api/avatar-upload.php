@@ -26,26 +26,29 @@ if ($arquivo['error'] !== UPLOAD_ERR_OK) {
     json_out(['error' => 'Erro no upload do arquivo'], 400);
     exit;
 }
-if (!in_array($arquivo['type'], $tiposPermitidos, true)) {
-    json_out(['error' => 'Formato inválido. Use JPG, PNG ou WEBP.'], 422);
-    exit;
-}
 if ($arquivo['size'] > $tamanhoMaximo) {
     json_out(['error' => 'Imagem muito grande. Máximo 2MB.'], 422);
     exit;
 }
 
+// MIME detectado pelo CONTEÚDO (não confia no tipo enviado pelo cliente, que é
+// forjável). getimagesize também garante que é uma imagem de verdade.
 $infoImagem = getimagesize($arquivo['tmp_name']);
 if ($infoImagem === false) {
     json_out(['error' => 'Arquivo não é uma imagem válida'], 422);
+    exit;
+}
+$mime = $infoImagem['mime'] ?? '';
+if (!in_array($mime, $tiposPermitidos, true)) {
+    json_out(['error' => 'Formato inválido. Use JPG, PNG ou WEBP.'], 422);
     exit;
 }
 
 $userId = $_SESSION['user_id'];
 
 try {
-    // Extensão real a partir do tipo detectado (não confia na extensão do nome original)
-    $extensao = match ($arquivo['type']) {
+    // Extensão real a partir do MIME detectado (não do nome/tipo enviado)
+    $extensao = match ($mime) {
         'image/jpeg' => 'jpg',
         'image/png'  => 'png',
         'image/webp' => 'webp',
