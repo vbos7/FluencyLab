@@ -65,6 +65,21 @@ CREATE TABLE IF NOT EXISTS webauthn_credentials (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Códigos de recuperação de senha ("Esqueci minha senha"). O código de 6 dígitos
+-- é guardado como HASH (nunca em texto), expira em 15 min e é de uso único (used).
+-- Usado por forgot-password.php (gera/envia) e reset-password.php (valida/consome).
+CREATE TABLE IF NOT EXISTS password_resets (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT NOT NULL,
+    code_hash  VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used       TINYINT(1) NOT NULL DEFAULT 0,
+    attempts   INT UNSIGNED NOT NULL DEFAULT 0,     -- tentativas erradas; trava força-bruta do código
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user_used (user_id, used),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- ─── MÓDULO B — Cursos/Aulas ─────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS courses (

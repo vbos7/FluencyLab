@@ -21,35 +21,34 @@ try {
     $stmt->execute([$email]);
     $user = $stmt->fetch();
 
-    // Agora informa explicitamente quando o email não está cadastrado
-    if (!$user) {
-        json_out(['errors' => ['Não encontramos uma conta com esse email.']], 404);
-        exit;
+    // Só gera/envia se a conta existir — mas a RESPOSTA é sempre a mesma (abaixo),
+    // pra não revelar quais e-mails têm cadastro (evita enumeração de usuários).
+    if ($user) {
+        $codigo = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $codigoHash = password_hash($codigo, PASSWORD_DEFAULT);
+        $expiraEm = date('Y-m-d H:i:s', strtotime('+15 minutes'));
+
+        $stmt = $pdo->prepare("UPDATE password_resets SET used = 1 WHERE user_id = ? AND used = 0");
+        $stmt->execute([$user['id']]);
+
+        $stmt = $pdo->prepare(
+            "INSERT INTO password_resets (user_id, code_hash, expires_at) VALUES (?, ?, ?)"
+        );
+        $stmt->execute([$user['id'], $codigoHash, $expiraEm]);
+
+        $enviado = enviarEmail(
+            $email,
+            'Recuperação de senha — FluencyLab',
+            templateEmailCodigo($user['name'], $codigo)
+        );
+
+        if (!$enviado) {
+            error_log("Falha ao enviar código de recuperação para user_id={$user['id']}");
+        }
     }
 
-    $codigo = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-    $codigoHash = password_hash($codigo, PASSWORD_DEFAULT);
-    $expiraEm = date('Y-m-d H:i:s', strtotime('+15 minutes'));
-
-    $stmt = $pdo->prepare("UPDATE password_resets SET used = 1 WHERE user_id = ? AND used = 0");
-    $stmt->execute([$user['id']]);
-
-    $stmt = $pdo->prepare(
-        "INSERT INTO password_resets (user_id, code_hash, expires_at) VALUES (?, ?, ?)"
-    );
-    $stmt->execute([$user['id'], $codigoHash, $expiraEm]);
-
-    $enviado = enviarEmail(
-        $email,
-        'Recuperação de senha — FluencyLab',
-        templateEmailCodigo($user['name'], $codigo)
-    );
-
-    if (!$enviado) {
-        error_log("Falha ao enviar código de recuperação para user_id={$user['id']}");
-    }
-
-    json_out(['success' => true, 'message' => 'Código enviado! Confira seu email.']);
+    // Resposta genérica idêntica exista ou não a conta.
+    json_out(['success' => true, 'message' => 'Se existir uma conta com esse e-mail, enviamos um código.']);
 
 } catch (PDOException $e) {
     error_log($e->getMessage());

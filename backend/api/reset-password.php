@@ -39,15 +39,22 @@ try {
         exit;
     }
 
+    // attempts < 5: depois de 5 erros o código é "queimado" (não é mais selecionado),
+    // travando força-bruta do código de 6 dígitos dentro da janela de 15 min.
     $stmt = $pdo->prepare(
         "SELECT id, code_hash FROM password_resets
-         WHERE user_id = ? AND used = 0 AND expires_at > NOW()
+         WHERE user_id = ? AND used = 0 AND expires_at > NOW() AND attempts < 5
          ORDER BY created_at DESC LIMIT 1"
     );
     $stmt->execute([$user['id']]);
     $reset = $stmt->fetch();
 
     if (!$reset || !password_verify($codigo, $reset['code_hash'])) {
+        // Conta a tentativa errada no código vigente (se houver)
+        if ($reset) {
+            $pdo->prepare("UPDATE password_resets SET attempts = attempts + 1 WHERE id = ?")
+                ->execute([$reset['id']]);
+        }
         json_out(['errors' => ['Código inválido ou expirado']], 422);
         exit;
     }
