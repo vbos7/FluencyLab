@@ -10,6 +10,7 @@ import {
     DialogDescription,
 } from "@/app/_components/ui/dialog"
 import { LockIcon, EyeIcon, EyeOffIcon } from "./auth-icons"
+import { apiClient } from "@/app/_lib/api"
 
 type Step = "email" | "code" | "password" | "done"
 
@@ -29,9 +30,9 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
     const [showConfirm, setShowConfirm] = useState(false)
     const [focused, setFocused] = useState<string | null>(null)
     const [error, setError] = useState("")
+    const [loading, setLoading] = useState(false) // 👈 novo: feedback de carregamento
     const codeRefs = useRef<(HTMLInputElement | null)[]>([])
 
-    // Reseta o estado quando fecha
     useEffect(() => {
         if (!open) {
             const t = setTimeout(() => {
@@ -47,7 +48,6 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
         }
     }, [open])
 
-    // Sincroniza email inicial quando abre — startTransition evita setState síncrono em effect
     useEffect(() => {
         if (open) startTransition(() => setEmail(initialEmail))
     }, [open, initialEmail])
@@ -58,9 +58,8 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
         }`
 
     const btnClass =
-        "w-full h-11 rounded-xl text-sm font-bold text-white bg-gradient-to-br from-blue-500 to-blue-800 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 shadow-md shadow-blue-400/30"
+        "w-full h-11 rounded-xl text-sm font-bold text-white bg-gradient-to-br from-blue-500 to-blue-800 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-200 shadow-md shadow-blue-400/30 disabled:opacity-60 disabled:hover:translate-y-0"
 
-    // ── Handlers de código OTP ──────────────────────────────────
     function handleCodeChange(i: number, val: string) {
         if (!/^\d?$/.test(val)) return
         const next = [...code]
@@ -87,31 +86,43 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
         codeRefs.current[Math.min(pasted.length, 5)]?.focus()
     }
 
-    // ── Submit handlers ─────────────────────────────────────────
-    function submitEmail() {
-        if (!email) {
-            setError("Digite seu e-mail.")
-            return
-        }
-        setError("")
-        // TODO: API — enviar código
+    // ── Submit handlers conectados na API real ─────────────────
+
+    async function submitEmail() {
+    if (!email) {
+        setError("Digite seu e-mail.")
+        return
+    }
+    setError("")
+    setLoading(true)
+
+    try {
+        await apiClient.post("/forgot-password.php", { email })
         setStep("code")
         setTimeout(() => codeRefs.current[0]?.focus(), 120)
+    } catch (err: any) {
+        const apiErrors = err.response?.data?.errors
+        setError(apiErrors?.[0] ?? "Não foi possível enviar o código. Tente novamente.")
+    } finally {
+        setLoading(false)
     }
+}
 
     function submitCode() {
+        // A validação real do código só acontece junto com a troca de senha
+        // (reset-password.php valida os dois juntos, numa operação só).
+        // Aqui só confirmamos que os 6 dígitos foram preenchidos antes de avançar.
         if (code.join("").length < 6) {
             setError("Digite o código completo.")
             return
         }
         setError("")
-        // TODO: API — validar código
         setStep("password")
     }
 
-    function submitPassword() {
-        if (newPassword.length < 8) {
-            setError("A senha deve ter pelo menos 8 caracteres.")
+    async function submitPassword() {
+        if (newPassword.length < 6) {
+            setError("A senha deve ter pelo menos 6 caracteres.")
             return
         }
         if (newPassword !== confirmPassword) {
@@ -119,14 +130,28 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
             return
         }
         setError("")
-        // TODO: API — atualizar senha
-        setStep("done")
+        setLoading(true)
+
+        try {
+            await apiClient.post("/reset-password.php", {
+                email,
+                code: code.join(""),
+                new_password: newPassword,
+                new_password_confirmation: confirmPassword,
+            })
+            setStep("done")
+        } catch (err: any) {
+            // Aqui é onde um código errado/expirado é finalmente detectado
+            const apiErrors = err.response?.data?.errors
+            setError(apiErrors?.[0] ?? "Código inválido ou expirado. Volte e peça um novo.")
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
         <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
             <DialogContent className="max-w-sm">
-                {/* ── Etapa 1: e-mail ───────────────────────────── */}
                 {step === "email" && (
                     <>
                         <DialogHeader>
@@ -153,19 +178,14 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                                     className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none"
                                 />
                             </div>
-                            {error && (
-                                <p role="alert" className="text-xs text-red-600">
-                                    {error}
-                                </p>
-                            )}
-                            <button onClick={submitEmail} className={btnClass}>
-                                Enviar código
+                            {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
+                            <button onClick={submitEmail} disabled={loading} className={btnClass}>
+                                {loading ? "Enviando..." : "Enviar código"}
                             </button>
                         </div>
                     </>
                 )}
 
-                {/* ── Etapa 2: código OTP ───────────────────────── */}
                 {step === "code" && (
                     <>
                         <DialogHeader>
@@ -177,17 +197,11 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                         </DialogHeader>
 
                         <div className="mt-2 flex flex-col gap-4">
-                            {/* Inputs OTP */}
-                            <div
-                                className="flex items-center justify-center gap-2"
-                                onPaste={handleCodePaste}
-                            >
+                            <div className="flex items-center justify-center gap-2" onPaste={handleCodePaste}>
                                 {code.map((digit, i) => (
                                     <input
                                         key={i}
-                                        ref={(el) => {
-                                            codeRefs.current[i] = el
-                                        }}
+                                        ref={(el) => { codeRefs.current[i] = el }}
                                         type="text"
                                         inputMode="numeric"
                                         maxLength={1}
@@ -223,22 +237,22 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                                 </button>
                                 <button
                                     onClick={submitEmail}
-                                    className="font-semibold text-blue-500 transition-colors hover:text-blue-700"
+                                    disabled={loading}
+                                    className="font-semibold text-blue-500 transition-colors hover:text-blue-700 disabled:opacity-60"
                                 >
-                                    Reenviar código
+                                    {loading ? "Reenviando..." : "Reenviar código"}
                                 </button>
                             </div>
                         </div>
                     </>
                 )}
 
-                {/* ── Etapa 3: nova senha ───────────────────────── */}
                 {step === "password" && (
                     <>
                         <DialogHeader>
                             <DialogTitle>Nova senha</DialogTitle>
                             <DialogDescription>
-                                Crie uma senha com pelo menos 8 caracteres.
+                                Crie uma senha com pelo menos 6 caracteres.
                             </DialogDescription>
                         </DialogHeader>
 
@@ -297,14 +311,13 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                                 </p>
                             )}
 
-                            <button onClick={submitPassword} className={`${btnClass} mt-1`}>
-                                Salvar nova senha
+                            <button onClick={submitPassword} disabled={loading} className={`${btnClass} mt-1`}>
+                                {loading ? "Salvando..." : "Salvar nova senha"}
                             </button>
                         </div>
                     </>
                 )}
 
-                {/* ── Etapa 4: concluído ────────────────────────── */}
                 {step === "done" && (
                     <div className="flex flex-col items-center gap-4 py-2 text-center">
                         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
