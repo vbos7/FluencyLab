@@ -233,7 +233,8 @@ export function PracticeController({ phrases }: Props) {
                     Você usou suas {GUEST_LIMIT} questões grátis
                 </h2>
                 <p className="text-sm text-gray-500">
-                    Crie uma conta grátis para praticar sem limite, salvar seu progresso e subir de nível.
+                    Crie uma conta grátis para praticar sem limite, salvar seu progresso e subir de
+                    nível.
                 </p>
                 <div className="mt-2 flex w-full flex-col gap-2 sm:flex-row">
                     <a

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation"
 // passar por CDN); se faltar, cai no NEXT_PUBLIC_API_URL (também legível aqui), pra
 // bastar setar UMA variável. Último recurso: o backend de dev.
 const API_BASE_URL =
-    process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+    process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
 // Usuário autenticado, no formato devolvido por /auth/me.php
 export type AuthUser = {
@@ -16,14 +16,14 @@ export type AuthUser = {
 }
 
 export async function fetchFromApi<T>(path: string): Promise<T> {
-    const cookieStore = await cookies();
+    const cookieStore = await cookies()
 
     const res = await fetch(`${API_BASE_URL}${path}`, {
-       cache: "no-store",
+        cache: "no-store",
         headers: {
             Cookie: cookieStore.toString(), // sempre busca dado fresco; troque depois se quiser cache
         },
-    });
+    })
 
     // 401 = sessão ausente/expirada. O middleware só checa a PRESENÇA do cookie
     // PHPSESSID, então um cookie velho passa por ele e só aqui descobrimos que a
@@ -35,10 +35,10 @@ export async function fetchFromApi<T>(path: string): Promise<T> {
     }
 
     if (!res.ok) {
-        throw new Error(`Erro ao buscar ${path}: ${res.status}`);
+        throw new Error(`Erro ao buscar ${path}: ${res.status}`)
     }
 
-    return res.json();
+    return res.json()
 }
 
 /**

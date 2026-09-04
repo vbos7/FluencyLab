@@ -320,7 +320,6 @@ html:not(.reduce-motion) .hover-lift:active {
     transform: scale(0.97);
 }
 
-
 /* ─── Tamanho de Fonte ───────────────────────────────────────────────────────
    Aumenta a fonte base de 16px para 18px. Como o Tailwind v4 gera utilitários
    em rem, todas as classes text-* escalam proporcionalmente de forma automática.

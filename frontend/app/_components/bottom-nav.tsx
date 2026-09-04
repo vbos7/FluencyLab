@@ -12,7 +12,6 @@ const items = [
     { href: "/practice", icon: Languages, label: "Praticar", center: true },
     { href: "/ranking", icon: BarChart2, label: "Ranking" },
     { href: "/profile", icon: User, label: "Perfil" },
-    
 ]
 
 export function BottomNav({ user }: { user: LoggedUser | null }) {
@@ -21,7 +20,6 @@ export function BottomNav({ user }: { user: LoggedUser | null }) {
     const isGuest = !user
     // Derivado diretamente do localStorage — re-calculado a cada navegação
     // porque usePathname() já causa re-render quando a rota muda
-    
 
     if (pathname === "/login" || pathname === "/register" || pathname === "/") return null
 
@@ -34,7 +32,7 @@ export function BottomNav({ user }: { user: LoggedUser | null }) {
             >
                 <a
                     href="/login"
-                    className="flex flex-1 h-12 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-[#f0f4ff] text-sm font-bold text-blue-600 transition-all active:scale-[0.98]"
+                    className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-[#f0f4ff] text-sm font-bold text-blue-600 transition-all active:scale-[0.98]"
                 >
                     <svg
                         width="15"
@@ -53,7 +51,7 @@ export function BottomNav({ user }: { user: LoggedUser | null }) {
                 </a>
                 <a
                     href="/register"
-                    className="relative flex flex-1 h-12 items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-800 text-sm font-bold text-white shadow-md shadow-blue-400/35 transition-all active:scale-[0.98]"
+                    className="relative flex h-12 flex-1 items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-800 text-sm font-bold text-white shadow-md shadow-blue-400/35 transition-all active:scale-[0.98]"
                 >
                     <svg
                         width="15"

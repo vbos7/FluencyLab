@@ -25,9 +25,7 @@ export function TwoFactorChallenge() {
         }
         setLoading(true)
         try {
-            const payload = useRecovery
-                ? { recovery_code: value.trim() }
-                : { code: value.trim() }
+            const payload = useRecovery ? { recovery_code: value.trim() } : { code: value.trim() }
             await apiClient.post("/auth/two-factor-challenge.php", payload)
             localStorage.removeItem("fluency-lab:mode")
             router.push("/home")
@@ -66,12 +64,15 @@ export function TwoFactorChallenge() {
                             // (formato XXXXXX-XXXXXX gerado no backend), até 13.
                             setValue(
                                 useRecovery
-                                    ? raw.toUpperCase().replace(/[^0-9A-F-]/g, "").slice(0, 13)
+                                    ? raw
+                                          .toUpperCase()
+                                          .replace(/[^0-9A-F-]/g, "")
+                                          .slice(0, 13)
                                     : raw.replace(/\D/g, "").slice(0, 6)
                             )
                         }}
                         placeholder={useRecovery ? "XXXXXX-XXXXXX" : "123456"}
-                        className="h-12 rounded-xl border border-transparent bg-[#f0f4ff] px-4 text-center font-mono text-lg tracking-widest text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-300"
+                        className="h-12 rounded-xl border border-transparent bg-[#f0f4ff] px-4 text-center font-mono text-lg tracking-widest text-slate-800 placeholder-slate-400 transition-all outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-300"
                     />
 
                     {error && <p className="text-sm text-red-500">{error}</p>}
@@ -94,9 +95,7 @@ export function TwoFactorChallenge() {
                     }}
                     className="text-center text-xs font-semibold text-blue-500 transition-colors hover:text-blue-700"
                 >
-                    {useRecovery
-                        ? "Usar o código do aplicativo"
-                        : "Usar um código de recuperação"}
+                    {useRecovery ? "Usar o código do aplicativo" : "Usar um código de recuperação"}
                 </button>
             </div>
         </div>

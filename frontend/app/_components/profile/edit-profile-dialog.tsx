@@ -118,7 +118,9 @@ export function EditProfileDialog({ initialName, initialEmail = "", initialPhone
                                 inputMode="numeric"
                                 name="telefone"
                                 value={form.telefone}
-                                onChange={(e) => setForm({ ...form, telefone: maskPhone(e.target.value) })}
+                                onChange={(e) =>
+                                    setForm({ ...form, telefone: maskPhone(e.target.value) })
+                                }
                                 placeholder="(11) 99999-9999"
                                 maxLength={15}
                                 className={inputClass}

@@ -65,18 +65,29 @@ export function FavoriteQuestions() {
             </button>
 
             {open && (
-                <div className="flex flex-col gap-3 px-5 pb-5" style={{ animation: "fadeUp 0.2s ease" }}>
+                <div
+                    className="flex flex-col gap-3 px-5 pb-5"
+                    style={{ animation: "fadeUp 0.2s ease" }}
+                >
                     {phrases.length === 0 ? (
                         <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-[#94a3b8]">
                             <Star className="size-5 text-slate-300" aria-hidden="true" />
-                            <span>Nenhuma frase favoritada ainda. Toque no ícone de estrela durante a prática!</span>
+                            <span>
+                                Nenhuma frase favoritada ainda. Toque no ícone de estrela durante a
+                                prática!
+                            </span>
                         </div>
                     ) : (
                         phrases.map((p) => (
-                            <div key={p.id} className="rounded-xl border border-[#e8f0fe] bg-[#f8faff] p-4">
+                            <div
+                                key={p.id}
+                                className="rounded-xl border border-[#e8f0fe] bg-[#f8faff] p-4"
+                            >
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1">
-                                        <p className="mb-1 text-sm font-semibold text-[#1e293b]">{p.pt}</p>
+                                        <p className="mb-1 text-sm font-semibold text-[#1e293b]">
+                                            {p.pt}
+                                        </p>
                                         <p className="text-sm text-[#2563eb]">{p.en}</p>
                                     </div>
                                     <button
@@ -88,7 +99,9 @@ export function FavoriteQuestions() {
                                     </button>
                                 </div>
                                 <div className="mt-3 flex items-center gap-2">
-                                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${DIFFICULTY_STYLES[p.difficulty]}`}>
+                                    <span
+                                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${DIFFICULTY_STYLES[p.difficulty]}`}
+                                    >
                                         {DIFFICULTY_LABELS[p.difficulty]}
                                     </span>
                                     <span className="text-[11px] text-[#94a3b8]">{p.category}</span>

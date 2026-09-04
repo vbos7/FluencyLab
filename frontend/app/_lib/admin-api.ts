@@ -26,7 +26,10 @@ export async function createUser(payload: NewUser): Promise<void> {
     await apiClient.post("/admin/users.php", payload)
 }
 
-export async function updateUser(id: number, payload: { name?: string; role?: "student" | "admin" }): Promise<void> {
+export async function updateUser(
+    id: number,
+    payload: { name?: string; role?: "student" | "admin" }
+): Promise<void> {
     await apiClient.put(`/admin/users.php?id=${id}`, payload)
 }
 
@@ -82,7 +85,7 @@ export async function getSettings(): Promise<AdminSettings> {
 }
 
 export async function saveSettings(
-    patch: Record<string, string | number | boolean>,
+    patch: Record<string, string | number | boolean>
 ): Promise<AdminSettings> {
     const { data } = await apiClient.put<{ settings: AdminSettings }>("/admin/settings.php", patch)
     return data.settings
@@ -158,7 +161,7 @@ export async function twoFactorEnable(): Promise<TwoFactorSetup> {
 export async function twoFactorConfirm(code: string): Promise<string[]> {
     const { data } = await apiClient.post<{ recovery_codes: string[] }>(
         "/admin/two-factor/confirm.php",
-        { code },
+        { code }
     )
     return data.recovery_codes
 }
@@ -190,10 +193,14 @@ export async function deletePasskey(id: number): Promise<void> {
 // ─── Helper para extrair a mensagem de erro do backend ──────────────────────────
 
 // Endpoints devolvem { error: string } ou { errors: string[] }. Normaliza para texto.
-export function apiErrorMessage(err: unknown, fallback = "Algo deu errado. Tente de novo."): string {
+export function apiErrorMessage(
+    err: unknown,
+    fallback = "Algo deu errado. Tente de novo."
+): string {
     const data =
         typeof err === "object" && err !== null && "response" in err
-            ? (err as { response?: { data?: { error?: string; errors?: string[] } } }).response?.data
+            ? (err as { response?: { data?: { error?: string; errors?: string[] } } }).response
+                  ?.data
             : undefined
     if (data?.errors?.length) return data.errors.join(" ")
     if (data?.error) return data.error

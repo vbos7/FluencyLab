@@ -30,7 +30,8 @@ const SETTINGS: Toggle[] = [
     {
         key: "colorBlind",
         label: "Modo daltônico",
-        description: "Substitui cores por padrões seguros para deuteranopia e protanopia (verde→ciano, vermelho→laranja).",
+        description:
+            "Substitui cores por padrões seguros para deuteranopia e protanopia (verde→ciano, vermelho→laranja).",
         defaultOn: false,
     },
     {
@@ -57,7 +58,7 @@ function Switch({
             aria-checked={on}
             aria-label={label}
             onClick={() => onChange(!on)}
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none ${
                 on ? "bg-blue-600" : "bg-slate-200"
             }`}
         >
@@ -112,15 +113,22 @@ export function SettingsDialog() {
     // Demais toggles — in-memory por enquanto (sem efeito funcional ainda)
     const [values, setValues] = useState<Record<string, boolean>>(
         Object.fromEntries(
-            SETTINGS
-                .filter((s) => !["colorBlind", "reduceMotion"].includes(s.key))
-                .map((s) => [s.key, s.defaultOn])
+            SETTINGS.filter((s) => !["colorBlind", "reduceMotion"].includes(s.key)).map((s) => [
+                s.key,
+                s.defaultOn,
+            ])
         )
     )
 
     function handleToggle(key: string, val: boolean) {
-        if (key === "colorBlind") { toggleColorBlind(val); return }
-        if (key === "reduceMotion") { toggleReduceMotion(val); return }
+        if (key === "colorBlind") {
+            toggleColorBlind(val)
+            return
+        }
+        if (key === "reduceMotion") {
+            toggleReduceMotion(val)
+            return
+        }
         setValues((prev) => ({ ...prev, [key]: val }))
     }
 
@@ -134,7 +142,7 @@ export function SettingsDialog() {
         <>
             <button
                 onClick={() => setOpen(true)}
-                className="hover-lift flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:border-slate-300 sm:px-5 sm:py-2.5 sm:text-sm"
+                className="hover-lift flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:border-slate-300 hover:bg-slate-50 sm:px-5 sm:py-2.5 sm:text-sm"
             >
                 <Settings size={14} aria-hidden="true" />
                 Configurações
@@ -153,7 +161,9 @@ export function SettingsDialog() {
                         {/* Tamanho de fonte — seletor especial */}
                         <div className="flex items-center justify-between gap-4 py-4">
                             <div className="min-w-0">
-                                <p className="text-sm font-semibold text-slate-800">Tamanho da fonte</p>
+                                <p className="text-sm font-semibold text-slate-800">
+                                    Tamanho da fonte
+                                </p>
                                 <p className="mt-0.5 text-xs text-slate-500">
                                     Aumenta o texto do site inteiro para facilitar a leitura.
                                 </p>
@@ -163,9 +173,14 @@ export function SettingsDialog() {
 
                         {/* Demais toggles */}
                         {SETTINGS.map((s) => (
-                            <div key={s.key} className="flex items-center justify-between gap-4 py-4">
+                            <div
+                                key={s.key}
+                                className="flex items-center justify-between gap-4 py-4"
+                            >
                                 <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-slate-800">{s.label}</p>
+                                    <p className="text-sm font-semibold text-slate-800">
+                                        {s.label}
+                                    </p>
                                     <p className="mt-0.5 text-xs text-slate-500">{s.description}</p>
                                 </div>
                                 <Switch

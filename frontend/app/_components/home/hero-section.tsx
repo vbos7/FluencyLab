@@ -1,6 +1,5 @@
 import Image from "next/image"
 
-
 export function HeroSection() {
     return (
         <div className="relative overflow-hidden bg-linear-to-br from-blue-900 via-blue-700 to-blue-500 px-4 pt-10 pb-16 sm:px-8 sm:pt-14 sm:pb-20 md:px-16 md:pt-16 md:pb-24 lg:px-24">
