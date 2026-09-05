@@ -72,8 +72,11 @@ try {
 
     json_out(['success' => true, 'message' => 'Senha atualizada com sucesso.']);
 
-} catch (PDOException $e) {
-    $pdo->rollBack();
-    error_log($e->getMessage());
+} catch (Throwable $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    // Agora captura QUALQUER erro (não só PDOException) e registra o tipo.
+    error_log('[reset-password] ' . get_class($e) . ': ' . $e->getMessage());
     json_out(['error' => 'Erro interno no servidor'], 500);
 }

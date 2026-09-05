@@ -290,6 +290,15 @@ SET @ddl := IF(
     'SELECT 1');
 PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
 
+-- password_resets.attempts (rate limiting do reset — CREATE TABLE IF NOT EXISTS não
+-- adiciona a coluna numa tabela que já existia; por isso o ALTER idempotente aqui)
+SET @ddl := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'password_resets' AND COLUMN_NAME = 'attempts') = 0,
+    'ALTER TABLE password_resets ADD COLUMN attempts INT UNSIGNED NOT NULL DEFAULT 0',
+    'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
 -- lessons.duration: VARCHAR antigo → INT em segundos (o front trata como número)
 SET @ddl := IF(
     (SELECT DATA_TYPE FROM information_schema.COLUMNS
