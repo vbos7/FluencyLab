@@ -9,16 +9,24 @@ function enviarEmail(string $destinatario, string $assunto, string $corpoHtml): 
     $mail = new PHPMailer(true);
 
     try {
+        // Config genérica de SMTP (funciona com qualquer provedor, não só Gmail).
         $mail->isSMTP();
-        $mail->Host       = 'smtp.gmail.com';
+        $mail->Host       = env('MAIL_HOST', 'smtp.gmail.com');
         $mail->SMTPAuth   = true;
-        $mail->Username   = env('GMAIL_USER');          // seu Gmail completo
-        $mail->Password   = env('GMAIL_APP_PASSWORD');              // senha de app (16 chars, sem espaços)
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port       = 587;
+        $mail->Username   = env('MAIL_USERNAME');
+        $mail->Password   = env('MAIL_PASSWORD');
+        // tls = STARTTLS (porta 587) · ssl = SMTPS (porta 465)
+        $mail->SMTPSecure = env('MAIL_ENCRYPTION', 'tls') === 'ssl'
+            ? PHPMailer::ENCRYPTION_SMTPS
+            : PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = (int) env('MAIL_PORT', '587');
         $mail->CharSet    = 'UTF-8';
 
-        $mail->setFrom(env('GMAIL_USER'), 'FluencyLab');
+        // Remetente: MAIL_FROM_ADDRESS (ou o próprio usuário) + nome amigável.
+        $mail->setFrom(
+            env('MAIL_FROM_ADDRESS', env('MAIL_USERNAME')),
+            env('MAIL_FROM_NAME', 'FluencyLab')
+        );
         $mail->addAddress($destinatario);
 
         $mail->isHTML(true);
