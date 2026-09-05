@@ -3,10 +3,26 @@
 require_once __DIR__.'/cors.php';
 require_once __DIR__.'/db.php';
 require_once __DIR__.'/lib/url.php';
+require_once __DIR__.'/lib/settings.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     json_out(['error' => 'Método não permitido'], 405);
     exit;
+}
+
+// Acesso → ranking_public: se desligado, o ranking geral fica só para admins.
+// Alunos recebem lista vazia (o front mostra "ranking indisponível").
+if (get_setting($pdo, 'ranking_public', '1') !== '1') {
+    $ehAdmin = false;
+    if (isset($_SESSION['user_id'])) {
+        $st = $pdo->prepare('SELECT role FROM users WHERE id = ?');
+        $st->execute([$_SESSION['user_id']]);
+        $ehAdmin = $st->fetchColumn() === 'admin';
+    }
+    if (! $ehAdmin) {
+        json_out([]);
+        exit;
+    }
 }
 
 // Mesma lógica de nível usada no front (ranking.ts: getLevel) — nível N exige N×150,

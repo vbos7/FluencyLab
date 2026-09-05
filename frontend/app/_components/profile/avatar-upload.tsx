@@ -53,8 +53,6 @@ export function AvatarUpload({ name, avatarSrc }: Props) {
                 headers: { 'Content-Type': 'multipart/form-data' },
             })
 
-            console.log('Resposta avatar-upload.php:', res.data) // debug temporário
-
             if (res.data?.success) {
                 const novaUrl = `${res.data.avatar_url}?t=${Date.now()}`
                 setAvatarAtual(novaUrl)
@@ -64,9 +62,9 @@ export function AvatarUpload({ name, avatarSrc }: Props) {
             } else {
                 setErro('O servidor não confirmou o salvamento.')
             }
-        } catch (err: any) {
-            console.error('Erro no upload:', err.response?.data ?? err) // debug temporário
-            setErro(err.response?.data?.error ?? 'Erro ao enviar imagem')
+        } catch (err) {
+            const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+            setErro(msg ?? 'Erro ao enviar imagem')
         } finally {
             setEnviando(false)
         }

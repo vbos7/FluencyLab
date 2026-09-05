@@ -46,7 +46,7 @@ export default async function RankingPage() {
 
                 {leaderboard.length === 0 ? (
                     <p className="py-16 text-center text-sm text-slate-400">
-                        O ranking ainda não possui participantes.
+                        O ranking não está disponível no momento.
                     </p>
                 ) : (
                     <>

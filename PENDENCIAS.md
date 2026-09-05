@@ -1,7 +1,7 @@
 # ✅ Pendências do FluencyLab
 
 Lista simples pra o grupo acompanhar. Marque `[x]` quando terminar e coloque seu
-nome do lado. Última atualização: 2026-09-04.
+nome do lado. Última atualização: 2026-09-05.
 
 > Como marcar: troque `- [ ]` por `- [x]` e adicione `— (seu nome)` no fim da linha.
 
@@ -11,33 +11,8 @@ nome do lado. Última atualização: 2026-09-04.
 
 Telas que existem no front mas ainda têm `TODO` sem backend:
 
-- [ ] **Esqueci minha senha** (`frontend/app/_components/auth/forgot-password-dialog.tsx`)
-  — 3 passos sem API: enviar código, validar código e atualizar a senha.
-- [ ] **Foto de perfil não salva** (`frontend/app/_components/profile/avatar-upload.tsx:27`)
-  — ao escolher a foto e clicar em **Atualizar** não acontece nada: só mostra o
-  preview local, o arquivo nunca é enviado pra API nem persistido.
-  (O painel admin já tem `backend/api/admin/profile/avatar.php` como referência.)
 - [ ] **Notificações do admin** (`frontend/app/admin/(panel)/notificacoes/page.tsx:51`)
   — falta o `PATCH /api/admin/notifications` para marcar como lida.
-
----
-
-## 🎮 Configurações do painel que não têm efeito no sistema
-
-As telas de configuração salvam na tabela `settings`, mas **nenhum endpoint lê esses
-valores** — ou seja, mudar no painel só altera o banco e não muda nada no jogo/plataforma.
-Falta ligar cada configuração à lógica de verdade.
-
-Arquivos: `frontend/app/admin/(panel)/configuracoes/page.tsx` + `backend/api/admin/settings.php`.
-
-- [ ] **Gamificação → `xp_per_phrase`** — o XP hoje é fixo em `calcularXp($score)`
-  (`backend/api/practice/check-answer.php`), ignora a configuração.
-- [ ] **Gamificação → `streak_bonus`** — não é aplicado em nenhum cálculo de sequência.
-- [ ] **Acesso → `ranking_public`** — o ranking (`backend/api/ranking.php`) não checa isso.
-- [ ] **Acesso → `new_registrations`** — o cadastro (`backend/api/auth/register.php`)
-  não bloqueia novos registros quando desativado.
-- [ ] **Acesso → `maintenance_mode`** — não existe nenhuma barreira de manutenção; o
-  valor é ignorado.
 
 ---
 
@@ -108,3 +83,9 @@ notificações. **Não existe** gestão de cursos. Precisamos de um CRUD complet
 - [x] **Toast de XP** redesenhado e **modal de level-up** via portal (fundo escuro cobrindo a tela inteira).
 - [x] **`API_BASE_URL`** documentada no `.env.example` e com fallback para `NEXT_PUBLIC_API_URL` no `server-api.ts`.
 - [x] Deploy full-stack no Forge (composer no backend, `.env` do front, `/etc/hosts` p/ latência) e rotação dos segredos expostos.
+- [x] **Foto de perfil salva de verdade** (Marcos): endpoint `avatar-upload.php` (auth, valida MIME pelo conteúdo, limite 2MB, remove a antiga) + upload no perfil e avatares no ranking. Revisado: tirei o `console.log` de debug, o `any` do `catch`, o upload de teste que foi commitado e ajustei o `.gitignore` (`backend/api/uploads/`).
+- [x] **Rate limiting de login** (por e-mail e IP) + validação de telefone no servidor e máscara no cliente; campos numéricos do painel bloqueando negativos.
+- [x] **2FA endurecido**: input restrito (6 dígitos / código de recuperação), validação de formato no servidor e trava anti-força-bruta (5 tentativas).
+- [x] **Esqueci minha senha** (equipe): fluxo ligado à API — `forgot-password.php` + `reset-password.php` + envio de e-mail via PHPMailer (`config/mail.php`); dialog do front sem os TODOs.
+- [x] **Schema unificado**: `comments` e `lesson_notes` trazidos pro `schema.sql` (fonte única) e o dump `schema (2).sql` removido; corrige o 500 dos comentários.
+- [x] **Configurações do painel agora têm efeito** (via `lib/settings.php`): `xp_per_phrase` (XP base escalado por qualidade), `streak_bonus` (XP ×bônus em streak ≥ 2 dias), `ranking_public` (desligado → só admin vê o ranking), `new_registrations` (bloqueia cadastro com 403), `maintenance_mode` (tela de manutenção no `NavLayout` p/ não-admins via `status.php`).

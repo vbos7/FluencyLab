@@ -65,6 +65,21 @@ CREATE TABLE IF NOT EXISTS webauthn_credentials (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Códigos de recuperação de senha ("Esqueci minha senha"). O código de 6 dígitos
+-- é guardado como HASH (nunca em texto), expira em 15 min e é de uso único (used).
+-- Usado por forgot-password.php (gera/envia) e reset-password.php (valida/consome).
+CREATE TABLE IF NOT EXISTS password_resets (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT NOT NULL,
+    code_hash  VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used       TINYINT(1) NOT NULL DEFAULT 0,
+    attempts   INT UNSIGNED NOT NULL DEFAULT 0,     -- tentativas erradas; trava força-bruta do código
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user_used (user_id, used),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- ─── MÓDULO B — Cursos/Aulas ─────────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS courses (
@@ -101,6 +116,34 @@ CREATE TABLE IF NOT EXISTS lesson_progress (
     lesson_id    INT NOT NULL,
     completed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_lesson_progress (user_id, lesson_id),
+    FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE
+);
+
+-- Comentários das aulas (comentarios.php). is_approved permite moderação futura;
+-- parent_id encadeia respostas a outro comentário.
+CREATE TABLE IF NOT EXISTS comments (
+    id          INT AUTO_INCREMENT PRIMARY KEY,
+    lesson_id   INT NOT NULL,
+    user_id     INT NOT NULL,
+    parent_id   INT NULL,
+    content     TEXT NOT NULL,
+    is_approved TINYINT(1) NOT NULL DEFAULT 1,        -- 0 = aguardando moderação
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE
+);
+
+-- Anotações do aluno por aula (notas.php). O UNIQUE(user_id, lesson_id) é o que
+-- viabiliza o "ON DUPLICATE KEY UPDATE" do upsert (uma nota por aula por usuário).
+CREATE TABLE IF NOT EXISTS lesson_notes (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT NOT NULL,
+    lesson_id  INT NOT NULL,
+    content    TEXT NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_note_user_lesson (user_id, lesson_id),
     FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
     FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE
 );
@@ -244,6 +287,15 @@ SET @ddl := IF(
     (SELECT COUNT(*) FROM information_schema.COLUMNS
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'lessons' AND COLUMN_NAME = 'is_free') = 0,
     'ALTER TABLE lessons ADD COLUMN is_free TINYINT(1) NOT NULL DEFAULT 0 AFTER youtube_id',
+    'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- password_resets.attempts (rate limiting do reset — CREATE TABLE IF NOT EXISTS não
+-- adiciona a coluna numa tabela que já existia; por isso o ALTER idempotente aqui)
+SET @ddl := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'password_resets' AND COLUMN_NAME = 'attempts') = 0,
+    'ALTER TABLE password_resets ADD COLUMN attempts INT UNSIGNED NOT NULL DEFAULT 0',
     'SELECT 1');
 PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
 

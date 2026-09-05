@@ -5,6 +5,7 @@ require_once __DIR__.'/../db.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 require_once __DIR__.'/AiService.php';
+require_once __DIR__.'/../lib/settings.php';
 
 // Limites do modo convidado (sem login), para conter o custo da IA da OpenAI.
 const GUEST_MAX_ATTEMPTS = 5;    // por sessão do convidado
@@ -53,7 +54,9 @@ try {
 }
 
 $score = (int) ($feedback['score'] ?? 0);
-$xp = calcularXp($score);
+// XP base configurável no painel (Gamificação → xp_per_phrase). Default 10.
+$xpBase = max(1, (int) get_setting($pdo, 'xp_per_phrase', '10'));
+$xp = calcularXp($score, $xpBase);
 
 // Convidado não é persistido (não tem user_id nem nível): devolve o feedback,
 // informa quantas questões ainda restam e encerra aqui.
@@ -65,6 +68,13 @@ if ($isGuest) {
         'guest_remaining' => max(0, GUEST_MAX_ATTEMPTS - (int) ($_SESSION['guest_attempts'] ?? 0)),
     ]);
     exit;
+}
+
+// Bônus de sequência (Gamificação → streak_bonus): se o aluno está numa streak
+// (>= 2 dias consecutivos) e acertou, o XP é multiplicado pelo bônus configurado.
+$streakBonus = (float) get_setting($pdo, 'streak_bonus', '1.5');
+if ($feedback['is_correct'] && $streakBonus > 1 && calcularStreak($pdo, (int) $_SESSION['user_id']) >= 2) {
+    $xp = (int) round($xp * $streakBonus);
 }
 
 // Salva a tentativa e o feedback da IA, normalizado: os escalares vão como
@@ -160,6 +170,35 @@ function nivelDoXp(int $xp): int
     return $nivel;
 }
 
+// Streak = dias consecutivos com pontos ganhos, terminando hoje (ou ontem, se hoje
+// ainda não pontuou). Mesma lógica do computeStreak do front (progress.ts).
+function calcularStreak(PDO $pdo, int $userId): int
+{
+    $stmt = $pdo->prepare(
+        'SELECT DISTINCT DATE(earned_at) AS dia FROM ranking_points WHERE user_id = ? ORDER BY dia DESC'
+    );
+    $stmt->execute([$userId]);
+    $ativos = array_flip(array_column($stmt->fetchAll(), 'dia'));
+
+    if (empty($ativos)) {
+        return 0;
+    }
+
+    $cursor = new DateTime('today');
+    // Se hoje ainda não pontuou, a streak vigente termina ontem.
+    if (! isset($ativos[$cursor->format('Y-m-d')])) {
+        $cursor->modify('-1 day');
+    }
+
+    $streak = 0;
+    while (isset($ativos[$cursor->format('Y-m-d')])) {
+        $streak++;
+        $cursor->modify('-1 day');
+    }
+
+    return $streak;
+}
+
 // Teto do convidado: contador na sessão (limite por convidado) + contagem diária
 // por IP (backstop caso limpem os cookies). Reserva o slot ANTES de chamar a IA,
 // para o crédito ficar protegido mesmo se a IA falhar. Aborta com 403 se estourar.
@@ -195,17 +234,19 @@ function guardaConvidado(PDO $pdo): void
     $_SESSION['guest_attempts'] = $usados + 1;
 }
 
-function calcularXp(int $score): int
+// XP proporcional à qualidade da resposta, escalado pelo XP base configurável.
+// Com base = 10 (default) reproduz os valores antigos: 25 / 15 / 8 / 3.
+function calcularXp(int $score, int $xpBase): int
 {
     if ($score >= 95) {
-        return 25;
+        return (int) round($xpBase * 2.5);
     }
     if ($score >= 70) {
-        return 15;
+        return (int) round($xpBase * 1.5);
     }
     if ($score >= 40) {
-        return 8;
+        return (int) round($xpBase * 0.8);
     }
 
-    return 3;
+    return (int) round($xpBase * 0.3);
 }

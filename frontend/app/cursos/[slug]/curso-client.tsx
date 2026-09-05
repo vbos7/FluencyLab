@@ -97,7 +97,12 @@ export default function CursoClient({ course }: { course: CourseDetail }) {
         fetch(`${API_URL}/comentarios.php?lesson_id=${aula.id}`)
             .then((res) => res.json())
             .then((data) => {
-                if (!ignore) setComentariosState({ lessonId: aula.id, items: data })
+                // O endpoint devolve {error} em falha; garante array pra não quebrar o .map
+                if (!ignore)
+                    setComentariosState({
+                        lessonId: aula.id,
+                        items: Array.isArray(data) ? data : [],
+                    })
             })
             .catch(() => {
                 if (!ignore) setComentariosState({ lessonId: aula.id, items: [] })
@@ -150,7 +155,10 @@ export default function CursoClient({ course }: { course: CourseDetail }) {
             const atualizados = await fetch(`${API_URL}/comentarios.php?lesson_id=${aula.id}`).then(
                 (r) => r.json()
             )
-            setComentariosState({ lessonId: aula.id, items: atualizados })
+            setComentariosState({
+                lessonId: aula.id,
+                items: Array.isArray(atualizados) ? atualizados : [],
+            })
         }
     }
     // ── Salva a nota da aula ───────────────────────────────────

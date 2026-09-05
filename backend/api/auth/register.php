@@ -3,10 +3,18 @@
 require_once __DIR__.'/../cors.php';
 
 require_once __DIR__.'/../db.php';
+require_once __DIR__.'/../lib/settings.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['error' => 'Método não permitido'], 405);
+
+    exit;
+}
+
+// Acesso → new_registrations: quando desligado no painel, bloqueia novos cadastros.
+if (get_setting($pdo, 'new_registrations', '1') !== '1') {
+    json_out(['errors' => ['Os cadastros estão temporariamente desativados.']], 403);
 
     exit;
 }
