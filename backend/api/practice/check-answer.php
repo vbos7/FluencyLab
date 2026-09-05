@@ -5,6 +5,7 @@ require_once __DIR__.'/../db.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 require_once __DIR__.'/AiService.php';
+require_once __DIR__.'/../lib/settings.php';
 
 // Limites do modo convidado (sem login), para conter o custo da IA da OpenAI.
 const GUEST_MAX_ATTEMPTS = 5;    // por sessão do convidado
@@ -53,7 +54,9 @@ try {
 }
 
 $score = (int) ($feedback['score'] ?? 0);
-$xp = calcularXp($score);
+// XP base configurável no painel (Gamificação → xp_per_phrase). Default 10.
+$xpBase = max(1, (int) get_setting($pdo, 'xp_per_phrase', '10'));
+$xp = calcularXp($score, $xpBase);
 
 // Convidado não é persistido (não tem user_id nem nível): devolve o feedback,
 // informa quantas questões ainda restam e encerra aqui.
@@ -195,17 +198,19 @@ function guardaConvidado(PDO $pdo): void
     $_SESSION['guest_attempts'] = $usados + 1;
 }
 
-function calcularXp(int $score): int
+// XP proporcional à qualidade da resposta, escalado pelo XP base configurável.
+// Com base = 10 (default) reproduz os valores antigos: 25 / 15 / 8 / 3.
+function calcularXp(int $score, int $xpBase): int
 {
     if ($score >= 95) {
-        return 25;
+        return (int) round($xpBase * 2.5);
     }
     if ($score >= 70) {
-        return 15;
+        return (int) round($xpBase * 1.5);
     }
     if ($score >= 40) {
-        return 8;
+        return (int) round($xpBase * 0.8);
     }
 
-    return 3;
+    return (int) round($xpBase * 0.3);
 }
