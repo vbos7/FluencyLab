@@ -1,6 +1,7 @@
 "use client"
 
 import { apiClient } from "@/app/_lib/api"
+import { toast } from "sonner"
 import { Sparkles } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { type Phrase, type Feedback } from "@/app/_lib/practice"
@@ -210,6 +211,7 @@ export function PracticeController({ phrases, isPremium }: Props) {
 
     // Avança para uma frase aleatória diferente da atual (dentro da dificuldade ativa)
     const handleNext = () => {
+        if (!phrase || loading || categoryLock.current) return
         // "Pular" (sem feedback na tela) também consome uma questão do convidado.
         // Já o "próxima" após responder não conta de novo (a verificação já contou).
         if (isGuest && feedback === null) setGuestUsed((n) => n + 1)
@@ -230,6 +232,7 @@ export function PracticeController({ phrases, isPremium }: Props) {
 
     // Troca a dificuldade ativa, persiste no localStorage e sorteia nova frase
     const handleChangeDifficulty = (newDifficulty: string) => {
+        if (loading || categoryLock.current) return
         localStorage.setItem("fluency-lab:difficulty", newDifficulty)
         setDifficulty(newDifficulty)
         const newFiltered = phrases.filter(
@@ -333,6 +336,19 @@ export function PracticeController({ phrases, isPremium }: Props) {
                 </p>
             )}
 
+            <div className="mb-5 flex flex-wrap items-center gap-3">
+                <label htmlFor="practice-category" className="text-sm font-semibold text-slate-700">Categoria · Pro</label>
+                <select id="practice-category" value={category}
+                    disabled={!isPro || loading || categoryLoading}
+                    onChange={(event) => handleChangeCategory(event.target.value)}
+                    className="max-w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm disabled:opacity-50">
+                    <option value="">Todas as categorias</option>
+                    {categories.map((name) => <option key={name} value={name}>{name}</option>)}
+                </select>
+                {!isPro && <a href="/planos" className="text-sm font-semibold text-blue-600">Desbloquear com Pro</a>}
+                {categoryLoading && <span role="status" className="text-sm text-slate-500">Carregando categoria…</span>}
+            </div>
+
             <PracticeHeader
             difficulty={difficulty}
             onChangeDifficulty={handleChangeDifficulty}
@@ -346,9 +362,10 @@ export function PracticeController({ phrases, isPremium }: Props) {
             showFavorite={!isGuest}
         />
 
-            <PhraseCard phrase={phrase} />
+            {!phrase && <p role="status" className="rounded-2xl bg-slate-50 p-6 text-slate-600">Nenhuma frase nesta combinação. Escolha outra categoria ou dificuldade.</p>}
+            {phrase && <PhraseCard phrase={phrase} />}
 
-            {!feedback && (
+            {phrase && !feedback && !categoryLoading && (
                 <AnswerForm
                     loading={loading}
                     answer={answer}
