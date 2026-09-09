@@ -36,14 +36,25 @@ export default async function ProgressPage() {
         <NavLayout>
             <main className="min-h-screen bg-gray-50 px-4 py-10">
                 <div className="mx-auto max-w-3xl space-y-6">
-                    <div className="text-center">
-                        <h1 className="text-2xl font-bold text-slate-800">Consistência</h1>
-                        <p className="mt-1 text-sm text-slate-500">Seu histórico de atividade</p>
+                    <div className="mb-8 text-center">
+                        <div className="mb-2 flex items-center justify-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+
+                        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+                                 Seu progresso
+                        </h1>
+
+                        <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                    </div>
+
+                    <p className="text-sm font-medium text-slate-500">
+                     Acompanhe sua evolução ao longo do tempo.
+                    </p>
                     </div>
 
                     <ConsistencyHeatmap weeks={weeks} currentWeekIdx={currentWeekIdx} />
                     <StatsCards stats={stats} />
-                    <WeeklyChart data={weeklyData} />
+                    
                 </div>
             </main>
         </NavLayout>

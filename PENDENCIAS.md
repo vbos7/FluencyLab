@@ -40,16 +40,16 @@ notificações. **Não existe** gestão de cursos. Precisamos de um CRUD complet
 
 ## 🎯 Progressão, favoritas e recursos Premium
 
-- [ ] **Frases favoritadas de verdade** — hoje ficam só no `localStorage` do navegador
+- [x] **Frases favoritadas de verdade** — hoje ficam só no `localStorage` do navegador
   (`fluency-lab:favorites`) e usam a lista estática `FRASES`, não o banco. Falta API +
   tabela pra favoritar **frases reais** e persistir por usuário.
   Arquivos: `frontend/app/_components/practice/practice-controller.tsx` e
   `frontend/app/_components/profile/favorite-questions.tsx`.
-- [ ] **Relatório de evolução semanal detalhado (Premium) no perfil** — o perfil só
+- [x] **Relatório de evolução semanal detalhado (Premium) no perfil** — o perfil só
   mostra o `PremiumCard`; falta o relatório semanal detalhado liberado **só pra
   assinantes Pro**. Dá pra reaproveitar o endpoint `backend/api/user/progress-weekly.php`
   e o `frontend/app/_components/progress/weekly-chart.tsx` (já usados em `/progress`).
-- [ ] **Escolher a categoria da questão na prática (Premium)** — a prática só deixa
+- [x] **Escolher a categoria da questão na prática (Premium)** — a prática só deixa
   escolher **dificuldade**; falta o seletor de **categoria** liberado pra Pro.
   O backend `backend/api/practice/phrases.php` já aceita `?category=` / `?category_id=`,
   então falta só a UI + a trava de premium.
