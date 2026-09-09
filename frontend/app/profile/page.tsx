@@ -7,6 +7,7 @@ import { EditProfileDialog } from "@/app/_components/profile/edit-profile-dialog
 import { SettingsDialog } from "@/app/_components/profile/settings-dialog"
 import { FavoriteQuestions } from "@/app/_components/profile/favorite-questions"
 import { LogoutButton } from "@/app/_components/profile/logout-button"
+import { WeeklyReport } from "@/app/_components/profile/weekly-report"
 import { fetchFromApi } from "@/app/_lib/server-api"
 import { getLevel, levelLabel, type LeaderboardUser } from "@/app/_lib/ranking"
 import { type DashboardData } from "@/app/_lib/progress"
@@ -18,10 +19,11 @@ type User = { id: number; name: string; email: string; phone: string | null; rol
 
 
 export default async function ProfilePage() {
-    const [user, dashboardData, leaderboard] = await Promise.all([
+    const [user, dashboardData, leaderboard, premium] = await Promise.all([
         fetchFromApi<User>("/profile.php"),
         fetchFromApi<DashboardData>("/dashboard.php"),
         fetchFromApi<LeaderboardUser[]>("/ranking.php"),
+        fetchFromApi<{ is_pro: boolean }>("/user/premium.php"),
     ])
 
     const { level, currentXp, needed } = getLevel(dashboardData.xp_total)
@@ -88,7 +90,7 @@ export default async function ProfilePage() {
                     levelLabel={levelLabelText}
                 />
 
-                <PremiumCard />
+                {premium.is_pro ? <WeeklyReport /> : <PremiumCard />}
 
                 <FavoriteQuestions />
 

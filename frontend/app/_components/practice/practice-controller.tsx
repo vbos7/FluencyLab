@@ -1,6 +1,7 @@
 "use client"
 
 import { apiClient } from "@/app/_lib/api"
+import { toast } from "sonner"
 import { Sparkles } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { type Phrase, type Feedback } from "@/app/_lib/practice"
@@ -14,6 +15,7 @@ import { FeedbackCard } from "./feedback-card"
 type Props = {
     // Lista de frases carregada da API pelo server component (page.tsx)
     phrases: Phrase[]
+    isPro: boolean
 }
 
 type AiFeedback = {
@@ -57,7 +59,12 @@ function adaptAiFeedback(ai: AiFeedback, xp: number): Feedback {
 // Deve casar com GUEST_MAX_ATTEMPTS no backend (check-answer.php), que é o teto real.
 const GUEST_LIMIT = 5
 
-export function PracticeController({ phrases }: Props) {
+export function PracticeController({ phrases, isPro }: Props) {
+    const [category, setCategory] = useState("")
+    const [categoryPhrases, setCategoryPhrases] = useState(phrases)
+    const [categoryLoading, setCategoryLoading] = useState(false)
+    const categoryLock = useRef(false)
+    const categories = [...new Set(phrases.map((p) => p.category))].sort((a, b) => a.localeCompare(b, "pt-BR"))
     const [loading, setLoading] = useState(false)
     // Mensagem de erro exibida quando a correção pela IA falha (null = sem erro)
     const [error, setError] = useState<string | null>(null)
@@ -68,7 +75,7 @@ export function PracticeController({ phrases }: Props) {
     })
 
     // Frases filtradas pela dificuldade ativa
-    const filteredPhrases = phrases.filter((p) => p.difficulty === difficulty)
+    const filteredPhrases = categoryPhrases.filter((p) => p.difficulty === difficulty)
 
     // Índice da frase atual dentro de filteredPhrases — inicializado aleatoriamente
     const [currentIndex, setCurrentIndex] = useState(() => {
@@ -133,7 +140,7 @@ export function PracticeController({ phrases }: Props) {
 
     // Atalhos derivados do state atual
     const phrase = filteredPhrases[currentIndex]
-    const isFav = favorites.includes(phrase.id)
+    const isFav = !!phrase && favorites.includes(phrase.id)
     const guestRemaining = Math.max(0, GUEST_LIMIT - guestUsed)
     // Bloqueia quando o convidado esgota o limite e não há feedback na tela — deixa
     // ele ver o resultado da última resposta antes do aviso de login.
@@ -141,7 +148,7 @@ export function PracticeController({ phrases }: Props) {
 
     // Envia a resposta para a API corrigir com IA, adapta o feedback e exibe o toast de XP por 2s
     const handleVerify = async () => {
-        if (!answer.trim()) return
+        if (!answer.trim() || !phrase || loading || categoryLock.current) return
         setLoading(true)
         setError(null)
 
@@ -182,6 +189,7 @@ export function PracticeController({ phrases }: Props) {
 
     // Avança para uma frase aleatória diferente da atual (dentro da dificuldade ativa)
     const handleNext = () => {
+        if (!phrase || loading || categoryLock.current) return
         // "Pular" (sem feedback na tela) também consome uma questão do convidado.
         // Já o "próxima" após responder não conta de novo (a verificação já contou).
         if (isGuest && feedback === null) setGuestUsed((n) => n + 1)
@@ -202,14 +210,38 @@ export function PracticeController({ phrases }: Props) {
 
     // Troca a dificuldade ativa, persiste no localStorage e sorteia nova frase
     const handleChangeDifficulty = (newDifficulty: string) => {
+        if (loading || categoryLock.current) return
         localStorage.setItem("fluency-lab:difficulty", newDifficulty)
         setDifficulty(newDifficulty)
-        const newFiltered = phrases.filter((p) => p.difficulty === newDifficulty)
+        const newFiltered = categoryPhrases.filter((p) => p.difficulty === newDifficulty)
         setCurrentIndex(Math.floor(Math.random() * newFiltered.length))
         setAnswer("")
         setFeedback(null)
         setError(null)
         phraseStartRef.current = Date.now() // reinicia o cronômetro para a nova frase
+    }
+
+    const handleChangeCategory = async (value: string) => {
+        if (!isPro || loading || categoryLock.current) return
+        categoryLock.current = true
+        setCategoryLoading(true)
+        try {
+            const response = await apiClient.get<Phrase[]>("/practice/phrases.php", {
+                params: value ? { category: value } : {},
+            })
+            setCategory(value)
+            setCategoryPhrases(response.data)
+            setCurrentIndex(0)
+            setAnswer("")
+            setFeedback(null)
+            setError(null)
+            phraseStartRef.current = Date.now()
+        } catch {
+            toast.error("Não foi possível carregar a categoria. Verifique seu plano Pro e tente novamente.")
+        } finally {
+            categoryLock.current = false
+            setCategoryLoading(false)
+        }
     }
 
     // Alterna o favorito: remove se já existe, adiciona se não existe
@@ -270,18 +302,32 @@ export function PracticeController({ phrases }: Props) {
                 </p>
             )}
 
+            <div className="mb-5 flex flex-wrap items-center gap-3">
+                <label htmlFor="practice-category" className="text-sm font-semibold text-slate-700">Categoria · Pro</label>
+                <select id="practice-category" value={category}
+                    disabled={!isPro || loading || categoryLoading}
+                    onChange={(event) => handleChangeCategory(event.target.value)}
+                    className="max-w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm disabled:opacity-50">
+                    <option value="">Todas as categorias</option>
+                    {categories.map((name) => <option key={name} value={name}>{name}</option>)}
+                </select>
+                {!isPro && <a href="/planos" className="text-sm font-semibold text-blue-600">Desbloquear com Pro</a>}
+                {categoryLoading && <span role="status" className="text-sm text-slate-500">Carregando categoria…</span>}
+            </div>
+
             <PracticeHeader
                 difficulty={difficulty}
                 onChangeDifficulty={handleChangeDifficulty}
                 isFav={isFav}
                 justFavorited={justFavorited}
-                onToggleFavorite={() => toggleFavorite(phrase.id)}
-                showFavorite={!isGuest}
+                onToggleFavorite={() => phrase && toggleFavorite(phrase.id)}
+                showFavorite={!isGuest && !!phrase && !categoryLoading}
             />
 
-            <PhraseCard phrase={phrase} />
+            {!phrase && <p role="status" className="rounded-2xl bg-slate-50 p-6 text-slate-600">Nenhuma frase nesta combinação. Escolha outra categoria ou dificuldade.</p>}
+            {phrase && <PhraseCard phrase={phrase} />}
 
-            {!feedback && (
+            {phrase && !feedback && !categoryLoading && (
                 <AnswerForm
                     loading={loading}
                     answer={answer}

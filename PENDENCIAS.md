@@ -45,14 +45,16 @@ notificações. **Não existe** gestão de cursos. Precisamos de um CRUD complet
   tabela pra favoritar **frases reais** e persistir por usuário.
   Arquivos: `frontend/app/_components/practice/practice-controller.tsx` e
   `frontend/app/_components/profile/favorite-questions.tsx`.
-- [ ] **Relatório de evolução semanal detalhado (Premium) no perfil** — o perfil só
-  mostra o `PremiumCard`; falta o relatório semanal detalhado liberado **só pra
-  assinantes Pro**. Dá pra reaproveitar o endpoint `backend/api/user/progress-weekly.php`
-  e o `frontend/app/_components/progress/weekly-chart.tsx` (já usados em `/progress`).
-- [ ] **Escolher a categoria da questão na prática (Premium)** — a prática só deixa
-  escolher **dificuldade**; falta o seletor de **categoria** liberado pra Pro.
-  O backend `backend/api/practice/phrases.php` já aceita `?category=` / `?category_id=`,
-  então falta só a UI + a trava de premium.
+- [x] **Relatório de evolução semanal detalhado (Premium) no perfil** — gráfico e tabela
+  das últimas 12 semanas com XP, treinos, acertos e tempo real; dados detalhados
+  protegidos na API por assinatura Pro ativa e não expirada. — (Codex)
+  Arquivos: `frontend/app/_components/profile/weekly-report.tsx` e
+  `backend/api/user/progress-weekly.php?detailed=1`.
+- [x] **Escolher a categoria da questão na prática (Premium)** — seletor integrado à
+  API, combinado com dificuldade, estado vazio e convite para assinar; filtros por
+  nome ou ID protegidos no backend. — (Codex)
+  Regra compartilhada: `backend/api/lib/premium.php`.
+  Testes: `php backend/tests/premium.php`.
 
 ---
 
