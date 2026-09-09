@@ -56,7 +56,7 @@ export function StatsCards({ stats, limit }: Props) {
     const cards = limit ? buildCards(stats).slice(0, limit) : buildCards(stats)
 
     return (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 mb-10">
             {cards.map((card) => {
                 const Icon = card.icon
 

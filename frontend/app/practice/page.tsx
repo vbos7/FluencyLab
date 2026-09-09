@@ -5,14 +5,14 @@ import NavLayout from "@/app/_layouts/nav-layout"
 type Phrase = { id: number; pt: string; en: string; difficulty: string; category: string }
 
 export default async function PracticePage() {
-    const [phrases, premium] = await Promise.all([
+    const [phrases, planStatus] = await Promise.all([
         fetchFromApi<Phrase[]>("/practice/phrases.php"),
-        fetchFromApi<{ is_pro: boolean }>("/user/premium.php"),
+        fetchFromApi<{ active: boolean }>("/my-plan.php").catch(() => ({ active: false })),
     ])
 
     return (
         <NavLayout>
-            <PracticeController phrases={phrases} isPro={premium.is_pro} />
+            <PracticeController phrases={phrases} isPremium={planStatus.active} />
         </NavLayout>
     )
 }

@@ -2,48 +2,42 @@
 
 import { useState, useEffect } from "react"
 import { Star, ChevronDown } from "lucide-react"
-import { FRASES, DIFFICULTY_STYLES, DIFFICULTY_LABELS } from "@/app/_lib/practice"
+import { DIFFICULTY_STYLES, DIFFICULTY_LABELS } from "@/app/_lib/practice"
+import { apiClient } from "@/app/_lib/api"
 
-const ALL_PHRASES = FRASES.flat()
+type FavoritePhrase = {
+    id: number
+    pt: string
+    en: string
+    difficulty: keyof typeof DIFFICULTY_STYLES
+    category: string
+}
 
 export function FavoriteQuestions() {
     const [open, setOpen] = useState(false)
-    // Sempre começa vazio — igual no servidor e na primeira renderização do cliente
-    const [favoriteIds, setFavoriteIds] = useState<number[]>([])
+    const [phrases, setPhrases] = useState<FavoritePhrase[]>([])
     const [hidratado, setHidratado] = useState(false)
 
-    // Só lê o localStorage DEPOIS de montar (fora da renderização inicial/hidratação)
+    // Busca as frases favoritadas reais do usuário, direto do banco
     useEffect(() => {
+        apiClient
+            .get("/favoritos.php")
+            .then((res) => setPhrases(res.data))
+            .catch(() => setPhrases([]))
+            .finally(() => setHidratado(true))
+    }, [])
+
+    async function remove(id: number) {
+        // Atualização otimista: some da lista antes da resposta do servidor
+        setPhrases((prev) => prev.filter((p) => p.id !== id))
         try {
-            const stored = localStorage.getItem("fluency-lab:favorites")
-            setFavoriteIds(stored ? JSON.parse(stored) : [])
+            await apiClient.delete(`/favoritos.php?phrase_id=${id}`)
         } catch {
-            setFavoriteIds([])
-        } finally {
-            setHidratado(true)
+            // Se falhar, o ideal seria recarregar a lista real — mas como esse card
+            // já vai fechar/reabrir com frequência, um refetch simples resolve
+            apiClient.get("/favoritos.php").then((res) => setPhrases(res.data)).catch(() => {})
         }
-    }, [])
-
-    useEffect(() => {
-        function onStorage(e: StorageEvent) {
-            if (e.key !== "fluency-lab:favorites") return
-            try {
-                setFavoriteIds(e.newValue ? JSON.parse(e.newValue) : [])
-            } catch {
-                // ignora
-            }
-        }
-        window.addEventListener("storage", onStorage)
-        return () => window.removeEventListener("storage", onStorage)
-    }, [])
-
-    function remove(id: number) {
-        const next = favoriteIds.filter((f) => f !== id)
-        setFavoriteIds(next)
-        localStorage.setItem("fluency-lab:favorites", JSON.stringify(next))
     }
-
-    const phrases = ALL_PHRASES.filter((p) => favoriteIds.includes(p.id))
 
     return (
         <div className="rounded-2xl border border-[#dce8ff] bg-white shadow-[0_2px_16px_rgba(37,99,235,0.08)]">
@@ -65,29 +59,18 @@ export function FavoriteQuestions() {
             </button>
 
             {open && (
-                <div
-                    className="flex flex-col gap-3 px-5 pb-5"
-                    style={{ animation: "fadeUp 0.2s ease" }}
-                >
+                <div className="flex flex-col gap-3 px-5 pb-5" style={{ animation: "fadeUp 0.2s ease" }}>
                     {phrases.length === 0 ? (
                         <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-[#94a3b8]">
                             <Star className="size-5 text-slate-300" aria-hidden="true" />
-                            <span>
-                                Nenhuma frase favoritada ainda. Toque no ícone de estrela durante a
-                                prática!
-                            </span>
+                            <span>Nenhuma frase favoritada ainda. Toque no ícone de estrela durante a prática!</span>
                         </div>
                     ) : (
                         phrases.map((p) => (
-                            <div
-                                key={p.id}
-                                className="rounded-xl border border-[#e8f0fe] bg-[#f8faff] p-4"
-                            >
+                            <div key={p.id} className="rounded-xl border border-[#e8f0fe] bg-[#f8faff] p-4">
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="flex-1">
-                                        <p className="mb-1 text-sm font-semibold text-[#1e293b]">
-                                            {p.pt}
-                                        </p>
+                                        <p className="mb-1 text-sm font-semibold text-[#1e293b]">{p.pt}</p>
                                         <p className="text-sm text-[#2563eb]">{p.en}</p>
                                     </div>
                                     <button
@@ -99,9 +82,7 @@ export function FavoriteQuestions() {
                                     </button>
                                 </div>
                                 <div className="mt-3 flex items-center gap-2">
-                                    <span
-                                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${DIFFICULTY_STYLES[p.difficulty]}`}
-                                    >
+                                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${DIFFICULTY_STYLES[p.difficulty]}`}>
                                         {DIFFICULTY_LABELS[p.difficulty]}
                                     </span>
                                     <span className="text-[11px] text-[#94a3b8]">{p.category}</span>
