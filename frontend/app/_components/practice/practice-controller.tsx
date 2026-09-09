@@ -14,6 +14,7 @@ import { FeedbackCard } from "./feedback-card"
 type Props = {
     // Lista de frases carregada da API pelo server component (page.tsx)
     phrases: Phrase[]
+    isPremium: boolean
 }
 
 type AiFeedback = {
@@ -57,7 +58,7 @@ function adaptAiFeedback(ai: AiFeedback, xp: number): Feedback {
 // Deve casar com GUEST_MAX_ATTEMPTS no backend (check-answer.php), que é o teto real.
 const GUEST_LIMIT = 5
 
-export function PracticeController({ phrases }: Props) {
+export function PracticeController({ phrases, isPremium }: Props) {
     const [loading, setLoading] = useState(false)
     // Mensagem de erro exibida quando a correção pela IA falha (null = sem erro)
     const [error, setError] = useState<string | null>(null)
@@ -67,8 +68,37 @@ export function PracticeController({ phrases }: Props) {
         return localStorage.getItem("fluency-lab:difficulty") ?? "medium"
     })
 
+    const [category, setCategory] = useState<string>(() => {
+        if (typeof window === "undefined") return "all"
+        return localStorage.getItem("fluency-lab:category") ?? "all"
+    })
+
+    const categories = Array.from(new Set(phrases.map((p) => p.category))).sort()
+
+    const effectiveCategory = isPremium ? category : "all"
+
+    
+
     // Frases filtradas pela dificuldade ativa
-    const filteredPhrases = phrases.filter((p) => p.difficulty === difficulty)
+    const filteredPhrases = phrases.filter(
+        (p) => p.difficulty === difficulty && (effectiveCategory === "all" || p.category === effectiveCategory)
+    )
+
+    const handleChangeCategory = (newCategory: string) => {
+        if (!isPremium) return // trava extra de segurança, mesmo que o seletor já esteja escondido
+        localStorage.setItem("fluency-lab:category", newCategory)
+        setCategory(newCategory)
+        const newFiltered = phrases.filter(
+            (p) => p.difficulty === difficulty && (newCategory === "all" || p.category === newCategory)
+        )
+        setCurrentIndex(Math.floor(Math.random() * newFiltered.length))
+        setAnswer("")
+        setFeedback(null)
+        setError(null)
+        phraseStartRef.current = Date.now()
+    }
+
+    
 
     // Índice da frase atual dentro de filteredPhrases — inicializado aleatoriamente
     const [currentIndex, setCurrentIndex] = useState(() => {
@@ -104,15 +134,9 @@ export function PracticeController({ phrases }: Props) {
         return Number(localStorage.getItem("fluency-lab:guest-count") ?? 0)
     })
 
-    // Lista de ids de frases favoritadas pelo usuário — inicializada do localStorage
-    const [favorites, setFavorites] = useState<number[]>(() => {
-        if (typeof window === "undefined") return []
-        try {
-            return JSON.parse(localStorage.getItem("fluency-lab:favorites") ?? "[]")
-        } catch {
-            return []
-        }
-    })
+    // Favoritos vêm do banco (por usuário), não mais do localStorage.
+    // Começa vazio e é preenchido assim que a API responder (convidado não busca).
+    const [favorites, setFavorites] = useState<number[]>([])
     // Dispara a animação de pop ao favoritar (reset automático em 300ms)
     const [justFavorited, setJustFavorited] = useState(false)
     // Referência direta ao textarea para dar foco programaticamente
@@ -121,10 +145,14 @@ export function PracticeController({ phrases }: Props) {
     // gasto no exercício (enviado ao backend e somado no "tempo total de estudo")
     const phraseStartRef = useRef(Date.now())
 
-    // Sincroniza favorites com localStorage sempre que mudar
+    // Busca os favoritos reais do usuário logado assim que o componente monta
     useEffect(() => {
-        localStorage.setItem("fluency-lab:favorites", JSON.stringify(favorites))
-    }, [favorites])
+        if (isGuest) return
+        apiClient
+            .get("/favoritos.php")
+            .then((res) => setFavorites(res.data.map((f: { id: number }) => f.id)))
+            .catch(() => setFavorites([]))
+    }, [isGuest])
 
     // Persiste a contagem do convidado (o backend continua sendo o teto de verdade)
     useEffect(() => {
@@ -133,7 +161,7 @@ export function PracticeController({ phrases }: Props) {
 
     // Atalhos derivados do state atual
     const phrase = filteredPhrases[currentIndex]
-    const isFav = favorites.includes(phrase.id)
+    const isFav = phrase ? favorites.includes(phrase.id) : false
     const guestRemaining = Math.max(0, GUEST_LIMIT - guestUsed)
     // Bloqueia quando o convidado esgota o limite e não há feedback na tela — deixa
     // ele ver o resultado da última resposta antes do aviso de login.
@@ -141,7 +169,7 @@ export function PracticeController({ phrases }: Props) {
 
     // Envia a resposta para a API corrigir com IA, adapta o feedback e exibe o toast de XP por 2s
     const handleVerify = async () => {
-        if (!answer.trim()) return
+        if (!answer.trim() || !phrase) return
         setLoading(true)
         setError(null)
 
@@ -204,22 +232,39 @@ export function PracticeController({ phrases }: Props) {
     const handleChangeDifficulty = (newDifficulty: string) => {
         localStorage.setItem("fluency-lab:difficulty", newDifficulty)
         setDifficulty(newDifficulty)
-        const newFiltered = phrases.filter((p) => p.difficulty === newDifficulty)
+        const newFiltered = phrases.filter(
+            (p) => p.difficulty === newDifficulty && (effectiveCategory === "all" || p.category === effectiveCategory)
+        )
         setCurrentIndex(Math.floor(Math.random() * newFiltered.length))
         setAnswer("")
         setFeedback(null)
         setError(null)
-        phraseStartRef.current = Date.now() // reinicia o cronômetro para a nova frase
+        phraseStartRef.current = Date.now()
     }
 
-    // Alterna o favorito: remove se já existe, adiciona se não existe
-    const toggleFavorite = (id: number) => {
-        if (!favorites.includes(id)) {
+    // Alterna o favorito no banco — atualização otimista (muda a tela antes
+    // da resposta do servidor, desfaz se a requisição falhar)
+    const toggleFavorite = async (id: number) => {
+        const jaFavoritada = favorites.includes(id)
+
+        if (!jaFavoritada) {
             // Aciona a animação de pop apenas ao favoritar (não ao desfavoritar)
             setJustFavorited(true)
             setTimeout(() => setJustFavorited(false), 300)
         }
-        setFavorites((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]))
+
+        setFavorites((prev) => (jaFavoritada ? prev.filter((f) => f !== id) : [...prev, id]))
+
+        try {
+            if (jaFavoritada) {
+                await apiClient.delete(`/favoritos.php?phrase_id=${id}`)
+            } else {
+                await apiClient.post("/favoritos.php", { phrase_id: id })
+            }
+        } catch {
+            // Desfaz a mudança otimista se a requisição falhar
+            setFavorites((prev) => (jaFavoritada ? [...prev, id] : prev.filter((f) => f !== id)))
+        }
     }
 
     // Convidado esgotou as questões grátis → convida a criar conta / entrar.
@@ -254,6 +299,24 @@ export function PracticeController({ phrases }: Props) {
         )
     }
 
+    // Sem frases nessa dificuldade (ex: localStorage com valor antigo que não bate
+    // com nenhuma frase retornada pelo servidor) — evita crash acessando phrase.id
+    if (!phrase) {
+        return (
+            <div className="page-enter mx-auto flex max-w-lg flex-col items-center gap-4 px-5 py-20 text-center">
+                <p className="text-sm text-gray-500">
+                    Nenhuma frase disponível para esta dificuldade no momento.
+                </p>
+                <button
+                    onClick={() => handleChangeDifficulty("medium")}
+                    className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                >
+                    Tentar dificuldade Médio
+                </button>
+            </div>
+        )
+    }
+
     return (
         <div className="page-enter mx-auto max-w-5xl bg-white px-5 pt-10 pb-28">
             {/* Região aria-live sempre presente no DOM — screen readers anunciam ao receber texto */}
@@ -271,13 +334,17 @@ export function PracticeController({ phrases }: Props) {
             )}
 
             <PracticeHeader
-                difficulty={difficulty}
-                onChangeDifficulty={handleChangeDifficulty}
-                isFav={isFav}
-                justFavorited={justFavorited}
-                onToggleFavorite={() => toggleFavorite(phrase.id)}
-                showFavorite={!isGuest}
-            />
+            difficulty={difficulty}
+            onChangeDifficulty={handleChangeDifficulty}
+            category={effectiveCategory}
+            onChangeCategory={handleChangeCategory}
+            categories={categories}
+            isPremium={isPremium}
+            isFav={isFav}
+            justFavorited={justFavorited}
+            onToggleFavorite={() => toggleFavorite(phrase.id)}
+            showFavorite={!isGuest}
+        />
 
             <PhraseCard phrase={phrase} />
 
