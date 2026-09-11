@@ -28,7 +28,11 @@ export function AvatarUpload({ name, avatarSrc }: Props) {
     const [erro, setErro] = useState<string | null>(null)
     const inputRef = useRef<HTMLInputElement>(null)
 
-    const initials = name.split(" ").slice(0, 2).map((n) => n[0]).join("")
+    const initials = name
+        .split(" ")
+        .slice(0, 2)
+        .map((n) => n[0])
+        .join("")
 
     function handleSelecionarArquivo(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]
@@ -46,11 +50,11 @@ export function AvatarUpload({ name, avatarSrc }: Props) {
         setEnviando(true)
 
         const formData = new FormData()
-        formData.append('avatar', arquivoSelecionado)
+        formData.append("avatar", arquivoSelecionado)
 
         try {
-            const res = await apiClient.post('/avatar-upload.php', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+            const res = await apiClient.post("/avatar-upload.php", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
             })
 
             if (res.data?.success) {
@@ -60,11 +64,11 @@ export function AvatarUpload({ name, avatarSrc }: Props) {
                 setArquivoSelecionado(null)
                 setOpen(false)
             } else {
-                setErro('O servidor não confirmou o salvamento.')
+                setErro("O servidor não confirmou o salvamento.")
             }
         } catch (err) {
             const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-            setErro(msg ?? 'Erro ao enviar imagem')
+            setErro(msg ?? "Erro ao enviar imagem")
         } finally {
             setEnviando(false)
         }
@@ -78,7 +82,13 @@ export function AvatarUpload({ name, avatarSrc }: Props) {
     }
 
     return (
-        <Dialog open={open} onOpenChange={(v) => { if (!v) handleCancelar(); else setOpen(true) }}>
+        <Dialog
+            open={open}
+            onOpenChange={(v) => {
+                if (!v) handleCancelar()
+                else setOpen(true)
+            }}
+        >
             <div className="relative inline-block">
                 <div
                     className="flex h-[72px] w-[72px] items-center justify-center rounded-full border-4 border-white shadow-[0_4px_16px_rgba(37,99,235,0.35)] sm:h-[88px] sm:w-[88px]"
@@ -122,7 +132,7 @@ export function AvatarUpload({ name, avatarSrc }: Props) {
                     <button
                         type="button"
                         onClick={() => inputRef.current?.click()}
-                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                     >
                         <Upload size={15} />
                         Escolher imagem
@@ -136,9 +146,7 @@ export function AvatarUpload({ name, avatarSrc }: Props) {
                         onChange={handleSelecionarArquivo}
                     />
 
-                    {erro && (
-                        <p className="text-sm text-red-500 text-center">{erro}</p>
-                    )}
+                    {erro && <p className="text-center text-sm text-red-500">{erro}</p>}
                 </div>
 
                 <DialogFooter className="gap-2 sm:gap-2">
@@ -148,7 +156,7 @@ export function AvatarUpload({ name, avatarSrc }: Props) {
                     <Button onClick={handleSalvar} disabled={!arquivoSelecionado || enviando}>
                         {enviando ? (
                             <>
-                                <Loader2 size={15} className="animate-spin mr-1.5" />
+                                <Loader2 size={15} className="mr-1.5 animate-spin" />
                                 Salvando...
                             </>
                         ) : (

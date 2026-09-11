@@ -1,59 +1,118 @@
-import { StarIcon } from "lucide-react"
+import { Lock } from "lucide-react"
 import { Tabs, TabsList, TabsTrigger } from "@/app/_components/ui/tabs"
-import { cn } from "@/app/_lib/utils"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/app/_components/ui/select"
 
 type Props = {
     difficulty: string
     onChangeDifficulty: (value: string) => void
-    isFav: boolean
-    justFavorited: boolean
-    onToggleFavorite: () => void
-    showFavorite: boolean
+    category: string
+    onChangeCategory: (value: string) => void
+    categories: string[]
+    isPremium: boolean
 }
+
+const DIFFICULTY_OPTIONS = [
+    { value: "easy", label: "Fácil" },
+    { value: "medium", label: "Médio" },
+    { value: "hard", label: "Difícil" },
+]
 
 export function PracticeHeader({
     difficulty,
     onChangeDifficulty,
-    isFav,
-    justFavorited,
-    onToggleFavorite,
-    showFavorite,
+    category,
+    onChangeCategory,
+    categories,
+    isPremium,
 }: Props) {
     return (
-        <div className="mb-6 flex items-center justify-between">
-            {/* Tabs de dificuldade — controladas e persistidas no localStorage */}
-            <Tabs value={difficulty} onValueChange={onChangeDifficulty} className="w-fit">
-                <TabsList>
-                    <TabsTrigger value="easy" className="px-5">
-                        Fácil
-                    </TabsTrigger>
-                    <TabsTrigger value="medium" className="px-5">
-                        Médio
-                    </TabsTrigger>
-                    <TabsTrigger value="hard" className="px-5">
-                        Difícil
-                    </TabsTrigger>
-                </TabsList>
-            </Tabs>
+        <div className="mb-6 flex flex-col gap-3">
+            {/* Mobile: nível e categoria lado a lado, ambos como select shadcn/ui */}
+            <div className="grid grid-cols-2 gap-2 sm:hidden">
+                <Select value={difficulty} onValueChange={onChangeDifficulty}>
+                    <SelectTrigger className="h-9 w-full rounded-xl border-slate-200 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-100 focus:ring-offset-0">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {DIFFICULTY_OPTIONS.map((d) => (
+                            <SelectItem key={d.value} value={d.value}>
+                                {d.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
 
-            {/* Badge de favoritar — oculto no modo convidado */}
-            {showFavorite && (
-                <button
-                    onClick={onToggleFavorite}
-                    className={cn(
-                        "inline-flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition-all duration-200 select-none",
-                        isFav
-                            ? "border-blue-600 bg-blue-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.3)]"
-                            : "border-slate-300 bg-white text-slate-600 hover:border-blue-400 hover:text-blue-600",
-                        justFavorited && "scale-125"
-                    )}
-                >
-                    <StarIcon
-                        className={cn("size-4 transition-all duration-200", isFav && "fill-white")}
-                    />
-                    {isFav ? "Favoritada" : "Favoritar"}
-                </button>
-            )}
+                {isPremium ? (
+                    <Select value={category} onValueChange={onChangeCategory}>
+                        <SelectTrigger className="h-9 w-full rounded-xl border-slate-200 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-100 focus:ring-offset-0">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todas categorias</SelectItem>
+                            {categories.map((c) => (
+                                <SelectItem key={c} value={c}>
+                                    {c}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                ) : (
+                    <a
+                        href="/planos"
+                        className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-medium text-amber-700 transition hover:bg-amber-100"
+                    >
+                        <Lock size={13} />
+                        Só no Pro
+                    </a>
+                )}
+            </div>
+
+            {/* Desktop: tabs de dificuldade + select de categoria */}
+            <div className="hidden flex-wrap items-center gap-3 sm:flex">
+                <Tabs value={difficulty} onValueChange={onChangeDifficulty} className="w-fit">
+                    <TabsList>
+                        <TabsTrigger value="easy" className="px-5">
+                            Fácil
+                        </TabsTrigger>
+                        <TabsTrigger value="medium" className="px-5">
+                            Médio
+                        </TabsTrigger>
+                        <TabsTrigger value="hard" className="px-5">
+                            Difícil
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
+
+                {isPremium ? (
+                    <Select value={category} onValueChange={onChangeCategory}>
+                        <SelectTrigger className="h-9 w-fit gap-2 rounded-xl border-slate-200 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-100 focus:ring-offset-0">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todas as categorias</SelectItem>
+                            {categories.map((c) => (
+                                <SelectItem key={c} value={c}>
+                                    {c}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                ) : (
+                    <a
+                        href="/planos"
+                        className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-medium text-amber-700 transition hover:bg-amber-100"
+                    >
+                        <Lock size={13} />
+                        Categorias — só no Pro
+                    </a>
+                )}
+            </div>
         </div>
     )
 }

@@ -7,6 +7,8 @@ import { EditProfileDialog } from "@/app/_components/profile/edit-profile-dialog
 import { SettingsDialog } from "@/app/_components/profile/settings-dialog"
 import { FavoriteQuestions } from "@/app/_components/profile/favorite-questions"
 import { LogoutButton } from "@/app/_components/profile/logout-button"
+import { WeeklyReport } from "@/app/_components/profile/weekly-report"
+import { ProLockCard } from "@/app/_components/pro-lock-card"
 import { fetchFromApi } from "@/app/_lib/server-api"
 import { getLevel, levelLabel, type LeaderboardUser } from "@/app/_lib/ranking"
 import { type DashboardData } from "@/app/_lib/progress"
@@ -14,20 +16,25 @@ import { type DashboardData } from "@/app/_lib/progress"
 import NavLayout from "@/app/_layouts/nav-layout"
 import PremiumCard from "../_components/pricing/PremiumCard"
 
-type User = { id: number; name: string; email: string; phone: string | null; role: string; avatar: string | null }
-
+type User = {
+    id: number
+    name: string
+    email: string
+    phone: string | null
+    role: string
+    avatar: string | null
+}
 
 export default async function ProfilePage() {
-    const [user, dashboardData, leaderboard] = await Promise.all([
+    const [user, dashboardData, leaderboard, planStatus] = await Promise.all([
         fetchFromApi<User>("/profile.php"),
         fetchFromApi<DashboardData>("/dashboard.php"),
         fetchFromApi<LeaderboardUser[]>("/ranking.php"),
+        fetchFromApi<{ active: boolean }>("/my-plan.php").catch(() => ({ active: false })),
     ])
 
     const { level, currentXp, needed } = getLevel(dashboardData.xp_total)
-    const levelLabelText = levelLabel(level) // em vez de getLevelLabel(level)
-
-    // Posição do usuário atual dentro do leaderboard (1-indexed)
+    const levelLabelText = levelLabel(level)
     const posicao = leaderboard.findIndex((u) => u.id === user.id) + 1
 
     const stats = [
@@ -67,7 +74,9 @@ export default async function ProfilePage() {
                 <ProfileHeader
                     name={user.name}
                     rankLabel={posicao > 0 ? `#${posicao} no Ranking Geral` : "Ainda sem posição"}
-                    avatarSlot={<AvatarUpload name={user.name} avatarSrc={user.avatar ?? undefined}/>}
+                    avatarSlot={
+                        <AvatarUpload name={user.name} avatarSrc={user.avatar ?? undefined} />
+                    }
                 >
                     <div className="flex items-center gap-2">
                         <EditProfileDialog
@@ -88,9 +97,19 @@ export default async function ProfilePage() {
                     levelLabel={levelLabelText}
                 />
 
-                <PremiumCard />
-
                 <FavoriteQuestions />
+
+                {/* Relatório semanal detalhado — exclusivo Pro */}
+                {planStatus.active ? (
+                    <WeeklyReport />
+                ) : (
+                    <ProLockCard
+                        title="Relatório semanal detalhado"
+                        description="Assinantes Pro acompanham XP e treinos das últimas 12 semanas em um gráfico completo."
+                    />
+                )}
+
+                <PremiumCard />
 
                 <LogoutButton />
             </div>

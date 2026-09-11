@@ -2,11 +2,20 @@
 
 require_once __DIR__.'/../cors.php';
 require_once __DIR__.'/../db.php';
+require_once __DIR__.'/../lib/premium.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     json_out(['error' => 'Método não permitido'], 405);
     exit;
+}
+
+if (isset($_GET['category']) || isset($_GET['category_id'])) {
+    if (! isset($_SESSION['user_id'])) {
+        json_out(['error' => 'Não autenticado'], 401);
+        exit;
+    }
+    requirePro($pdo);
 }
 
 // JOIN com categories para devolver o nome da categoria (o front espera `category`).

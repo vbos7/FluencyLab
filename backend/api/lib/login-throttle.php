@@ -9,7 +9,6 @@
  * e-mail. Fecha o buraco do 2FA: sem isso, dava pra relogar e resetar as
  * tentativas do 2º fator.
  */
-
 const LOGIN_MAX_PER_EMAIL = 8;    // falhas por e-mail na janela
 const LOGIN_MAX_PER_IP = 20;      // falhas por IP na janela (mais alto: IP compartilhado)
 const LOGIN_WINDOW_MIN = 15;      // janela, em minutos

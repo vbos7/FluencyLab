@@ -1,0 +1,1117 @@
+diff --git a/PENDENCIAS.md b/PENDENCIAS.md
+index 09ae0db..0d44cb2 100644
+--- a/PENDENCIAS.md
++++ b/PENDENCIAS.md
+@@ -40,16 +40,16 @@ notificações. **Não existe** gestão de cursos. Precisamos de um CRUD complet
+ 
+ ## 🎯 Progressão, favoritas e recursos Premium
+ 
+-- [ ] **Frases favoritadas de verdade** — hoje ficam só no `localStorage` do navegador
++- [x] **Frases favoritadas de verdade** — hoje ficam só no `localStorage` do navegador
+   (`fluency-lab:favorites`) e usam a lista estática `FRASES`, não o banco. Falta API +
+   tabela pra favoritar **frases reais** e persistir por usuário.
+   Arquivos: `frontend/app/_components/practice/practice-controller.tsx` e
+   `frontend/app/_components/profile/favorite-questions.tsx`.
+-- [ ] **Relatório de evolução semanal detalhado (Premium) no perfil** — o perfil só
++- [x] **Relatório de evolução semanal detalhado (Premium) no perfil** — o perfil só
+   mostra o `PremiumCard`; falta o relatório semanal detalhado liberado **só pra
+   assinantes Pro**. Dá pra reaproveitar o endpoint `backend/api/user/progress-weekly.php`
+   e o `frontend/app/_components/progress/weekly-chart.tsx` (já usados em `/progress`).
+-- [ ] **Escolher a categoria da questão na prática (Premium)** — a prática só deixa
++- [x] **Escolher a categoria da questão na prática (Premium)** — a prática só deixa
+   escolher **dificuldade**; falta o seletor de **categoria** liberado pra Pro.
+   O backend `backend/api/practice/phrases.php` já aceita `?category=` / `?category_id=`,
+   então falta só a UI + a trava de premium.
+diff --git a/backend/api/favoritos.php b/backend/api/favoritos.php
+new file mode 100644
+index 0000000..1dfd5d0
+--- /dev/null
++++ b/backend/api/favoritos.php
+@@ -0,0 +1,64 @@
++<?php
++require_once __DIR__ . '/cors.php';
++require_once __DIR__ . '/db.php';
++
++if (empty($_SESSION['user_id'])) {
++    json_out(['error' => 'Não autenticado'], 401);
++    exit;
++}
++
++$userId = $_SESSION['user_id'];
++
++try {
++    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
++        $stmt = $pdo->prepare(
++            "SELECT p.id, p.pt, p.en, p.difficulty, c.name AS category
++             FROM favorite_phrases f
++             JOIN phrases p ON p.id = f.phrase_id
++             JOIN categories c ON c.id = p.category_id
++             WHERE f.user_id = ?
++             ORDER BY f.created_at DESC"
++        );
++        $stmt->execute([$userId]);
++        json_out($stmt->fetchAll());
++        exit;
++    }
++
++    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
++        $input = json_decode(file_get_contents('php://input'), true);
++
++        if (empty($input['phrase_id'])) {
++            json_out(['error' => 'phrase_id é obrigatório'], 400);
++            exit;
++        }
++
++        $stmt = $pdo->prepare(
++            "INSERT IGNORE INTO favorite_phrases (user_id, phrase_id) VALUES (?, ?)"
++        );
++        $stmt->execute([$userId, $input['phrase_id']]);
++
++        json_out(['success' => true, 'favorited' => true]);
++        exit;
++    }
++
++    if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
++        if (empty($_GET['phrase_id'])) {
++            json_out(['error' => 'phrase_id é obrigatório'], 400);
++            exit;
++        }
++
++        $stmt = $pdo->prepare(
++            "DELETE FROM favorite_phrases WHERE user_id = ? AND phrase_id = ?"
++        );
++        $stmt->execute([$userId, $_GET['phrase_id']]);
++
++        json_out(['success' => true, 'favorited' => false]);
++        exit;
++    }
++
++    json_out(['error' => 'Método não permitido'], 405);
++
++} catch (PDOException $e) {
++    error_log($e->getMessage());
++    json_out(['error' => 'Erro interno no servidor'], 500);
++}
+\ No newline at end of file
+diff --git a/backend/api/lib/premium.php b/backend/api/lib/premium.php
+new file mode 100644
+index 0000000..b4cbfbf
+--- /dev/null
++++ b/backend/api/lib/premium.php
+@@ -0,0 +1,20 @@
++<?php
++
++function hasActivePro(PDO $pdo, ?int $userId): bool
++{
++    if (! $userId) return false;
++    $stmt = $pdo->prepare("SELECT up.id FROM user_plan up
++        JOIN plans p ON p.id = up.plan_id
++        WHERE up.user_id = ? AND up.status = 'active' AND p.name = 'Pro'
++        AND (up.expires_at IS NULL OR up.expires_at > NOW()) LIMIT 1");
++    $stmt->execute([$userId]);
++    return (bool) $stmt->fetchColumn();
++}
++
++function requirePro(PDO $pdo): void
++{
++    if (! hasActivePro($pdo, isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null)) {
++        json_out(['error' => 'premium_required', 'message' => 'Recurso exclusivo do plano Pro.'], 403);
++        exit;
++    }
++}
+diff --git a/backend/api/practice/phrases.php b/backend/api/practice/phrases.php
+index aca20c9..106737d 100644
+--- a/backend/api/practice/phrases.php
++++ b/backend/api/practice/phrases.php
+@@ -2,6 +2,7 @@
+ 
+ require_once __DIR__.'/../cors.php';
+ require_once __DIR__.'/../db.php';
++require_once __DIR__.'/../lib/premium.php';
+ 
+ /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
+ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+@@ -9,6 +10,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+     exit;
+ }
+ 
++if (isset($_GET['category']) || isset($_GET['category_id'])) {
++    requirePro($pdo);
++}
++
+ // JOIN com categories para devolver o nome da categoria (o front espera `category`).
+ // 1=1 é sempre verdadeiro, então não filtra nada por padrão.
+ $sql = 'SELECT p.id, p.pt, p.en, p.difficulty, p.category_id, c.name AS category
+diff --git a/backend/api/user/premium.php b/backend/api/user/premium.php
+new file mode 100644
+index 0000000..15da878
+--- /dev/null
++++ b/backend/api/user/premium.php
+@@ -0,0 +1,12 @@
++<?php
++
++require_once __DIR__.'/../cors.php';
++require_once __DIR__.'/../db.php';
++require_once __DIR__.'/../lib/premium.php';
++
++/** @var PDO $pdo */
++if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
++    json_out(['error' => 'Método não permitido'], 405);
++    exit;
++}
++json_out(['is_pro' => hasActivePro($pdo, isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null)]);
+diff --git a/backend/api/user/progress-weekly.php b/backend/api/user/progress-weekly.php
+index c86931d..3da59ea 100644
+--- a/backend/api/user/progress-weekly.php
++++ b/backend/api/user/progress-weekly.php
+@@ -2,6 +2,7 @@
+ 
+ require_once __DIR__.'/../cors.php';
+ require_once __DIR__.'/../db.php';
++require_once __DIR__.'/../lib/premium.php';
+ 
+ /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
+ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+@@ -13,15 +14,20 @@ if (! isset($_SESSION['user_id'])) {
+     exit;
+ }
+ 
++$detailed = isset($_GET['detailed']);
++if ($detailed) requirePro($pdo);
++
+ $stmt = $pdo->prepare('
+     SELECT
+-        YEARWEEK(created_at, 1)     AS ano_semana,
++        YEARWEEK(created_at, 3)     AS ano_semana,
+         COALESCE(SUM(xp_earned), 0) AS xp,
+-        COUNT(*)                    AS treinos
++        COUNT(*)                    AS treinos,
++        SUM(is_correct) AS acertos,
++        SUM(time_spent_seconds) AS segundos
+     FROM attempts
+     WHERE user_id = ?
+       AND created_at >= DATE_SUB(NOW(), INTERVAL 12 WEEK)
+-    GROUP BY YEARWEEK(created_at, 1)
++    GROUP BY YEARWEEK(created_at, 3)
+     ORDER BY ano_semana
+ ');
+ $stmt->execute([$_SESSION['user_id']]);
+@@ -30,14 +36,19 @@ $rows = $stmt->fetchAll();
+ // Garante que sempre devolve 12 semanas (mesmo sem dados)
+ $semanas = [];
+ for ($i = 11; $i >= 0; $i--) {
+-    $semanas[date('YW', strtotime("-{$i} weeks"))] = [
++    $semanas[date('oW', strtotime("-{$i} weeks"))] = [
+         'week' => 'Sem '.(12 - $i), 'xp' => 0, 'treinos' => 0,
++        ...($detailed ? ['inicio' => date('Y-m-d', strtotime("monday this week -{$i} weeks")), 'acertos' => 0, 'segundos' => 0] : []),
+     ];
+ }
+ foreach ($rows as $row) {
+     if (isset($semanas[$row['ano_semana']])) {
+         $semanas[$row['ano_semana']]['xp'] = (int) $row['xp'];
+         $semanas[$row['ano_semana']]['treinos'] = (int) $row['treinos'];
++        if ($detailed) {
++            $semanas[$row['ano_semana']]['acertos'] = (int) $row['acertos'];
++            $semanas[$row['ano_semana']]['segundos'] = (int) $row['segundos'];
++        }
+     }
+ }
+ json_out(array_values($semanas));
+diff --git a/backend/tests/premium.php b/backend/tests/premium.php
+new file mode 100644
+index 0000000..d04ff71
+--- /dev/null
++++ b/backend/tests/premium.php
+@@ -0,0 +1,25 @@
++<?php
++
++// Tabelas temporárias: nenhuma assinatura persistente é alterada.
++require_once __DIR__.'/../api/env.php';
++require_once __DIR__.'/../api/lib/premium.php';
++
++$pdo = new PDO(
++    'mysql:host='.env('DB_HOST').';port='.env('DB_PORT', '3306').';dbname='.env('DB_NAME').';charset=utf8mb4',
++    env('DB_USER'), env('DB_PASS'), [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
++);
++$pdo->exec('CREATE TEMPORARY TABLE plans (id INT PRIMARY KEY, name VARCHAR(50))');
++$pdo->exec('CREATE TEMPORARY TABLE user_plan (id INT PRIMARY KEY, user_id INT, plan_id INT, status VARCHAR(30), expires_at DATETIME NULL)');
++$pdo->exec("INSERT INTO plans VALUES (1, 'Free'), (2, 'Pro')");
++$pdo->exec("INSERT INTO user_plan VALUES
++    (1, 1, 1, 'active', NULL),
++    (2, 2, 2, 'active', NULL),
++    (3, 3, 2, 'active', DATE_ADD(NOW(), INTERVAL 1 DAY)),
++    (4, 4, 2, 'active', DATE_SUB(NOW(), INTERVAL 1 DAY)),
++    (5, 5, 2, 'cancelled', NULL)");
++foreach ([[null, false], [1, false], [2, true], [3, true], [4, false], [5, false], [6, false]] as [$userId, $expected]) {
++    if (hasActivePro($pdo, $userId) !== $expected) {
++        throw new RuntimeException('Permissão incorreta para usuário '.var_export($userId, true));
++    }
++}
++echo "Premium: 7 verificações de integração passaram.\n";
+diff --git a/frontend/app/_components/practice/practice-controller.tsx b/frontend/app/_components/practice/practice-controller.tsx
+index 93e37e8..a83f8b0 100644
+--- a/frontend/app/_components/practice/practice-controller.tsx
++++ b/frontend/app/_components/practice/practice-controller.tsx
+@@ -1,6 +1,7 @@
+ "use client"
+ 
+ import { apiClient } from "@/app/_lib/api"
++import { toast } from "sonner"
+ import { Sparkles } from "lucide-react"
+ import { useState, useRef, useEffect } from "react"
+ import { type Phrase, type Feedback } from "@/app/_lib/practice"
+@@ -14,6 +15,7 @@ import { FeedbackCard } from "./feedback-card"
+ type Props = {
+     // Lista de frases carregada da API pelo server component (page.tsx)
+     phrases: Phrase[]
++    isPremium: boolean
+ }
+ 
+ type AiFeedback = {
+@@ -57,7 +59,7 @@ function adaptAiFeedback(ai: AiFeedback, xp: number): Feedback {
+ // Deve casar com GUEST_MAX_ATTEMPTS no backend (check-answer.php), que é o teto real.
+ const GUEST_LIMIT = 5
+ 
+-export function PracticeController({ phrases }: Props) {
++export function PracticeController({ phrases, isPremium }: Props) {
+     const [loading, setLoading] = useState(false)
+     // Mensagem de erro exibida quando a correção pela IA falha (null = sem erro)
+     const [error, setError] = useState<string | null>(null)
+@@ -67,8 +69,37 @@ export function PracticeController({ phrases }: Props) {
+         return localStorage.getItem("fluency-lab:difficulty") ?? "medium"
+     })
+ 
++    const [category, setCategory] = useState<string>(() => {
++        if (typeof window === "undefined") return "all"
++        return localStorage.getItem("fluency-lab:category") ?? "all"
++    })
++
++    const categories = Array.from(new Set(phrases.map((p) => p.category))).sort()
++
++    const effectiveCategory = isPremium ? category : "all"
++
++    
++
+     // Frases filtradas pela dificuldade ativa
+-    const filteredPhrases = phrases.filter((p) => p.difficulty === difficulty)
++    const filteredPhrases = phrases.filter(
++        (p) => p.difficulty === difficulty && (effectiveCategory === "all" || p.category === effectiveCategory)
++    )
++
++    const handleChangeCategory = (newCategory: string) => {
++        if (!isPremium) return // trava extra de segurança, mesmo que o seletor já esteja escondido
++        localStorage.setItem("fluency-lab:category", newCategory)
++        setCategory(newCategory)
++        const newFiltered = phrases.filter(
++            (p) => p.difficulty === difficulty && (newCategory === "all" || p.category === newCategory)
++        )
++        setCurrentIndex(Math.floor(Math.random() * newFiltered.length))
++        setAnswer("")
++        setFeedback(null)
++        setError(null)
++        phraseStartRef.current = Date.now()
++    }
++
++    
+ 
+     // Índice da frase atual dentro de filteredPhrases — inicializado aleatoriamente
+     const [currentIndex, setCurrentIndex] = useState(() => {
+@@ -104,15 +135,9 @@ export function PracticeController({ phrases }: Props) {
+         return Number(localStorage.getItem("fluency-lab:guest-count") ?? 0)
+     })
+ 
+-    // Lista de ids de frases favoritadas pelo usuário — inicializada do localStorage
+-    const [favorites, setFavorites] = useState<number[]>(() => {
+-        if (typeof window === "undefined") return []
+-        try {
+-            return JSON.parse(localStorage.getItem("fluency-lab:favorites") ?? "[]")
+-        } catch {
+-            return []
+-        }
+-    })
++    // Favoritos vêm do banco (por usuário), não mais do localStorage.
++    // Começa vazio e é preenchido assim que a API responder (convidado não busca).
++    const [favorites, setFavorites] = useState<number[]>([])
+     // Dispara a animação de pop ao favoritar (reset automático em 300ms)
+     const [justFavorited, setJustFavorited] = useState(false)
+     // Referência direta ao textarea para dar foco programaticamente
+@@ -121,10 +146,14 @@ export function PracticeController({ phrases }: Props) {
+     // gasto no exercício (enviado ao backend e somado no "tempo total de estudo")
+     const phraseStartRef = useRef(Date.now())
+ 
+-    // Sincroniza favorites com localStorage sempre que mudar
++    // Busca os favoritos reais do usuário logado assim que o componente monta
+     useEffect(() => {
+-        localStorage.setItem("fluency-lab:favorites", JSON.stringify(favorites))
+-    }, [favorites])
++        if (isGuest) return
++        apiClient
++            .get("/favoritos.php")
++            .then((res) => setFavorites(res.data.map((f: { id: number }) => f.id)))
++            .catch(() => setFavorites([]))
++    }, [isGuest])
+ 
+     // Persiste a contagem do convidado (o backend continua sendo o teto de verdade)
+     useEffect(() => {
+@@ -133,7 +162,7 @@ export function PracticeController({ phrases }: Props) {
+ 
+     // Atalhos derivados do state atual
+     const phrase = filteredPhrases[currentIndex]
+-    const isFav = favorites.includes(phrase.id)
++    const isFav = phrase ? favorites.includes(phrase.id) : false
+     const guestRemaining = Math.max(0, GUEST_LIMIT - guestUsed)
+     // Bloqueia quando o convidado esgota o limite e não há feedback na tela — deixa
+     // ele ver o resultado da última resposta antes do aviso de login.
+@@ -141,7 +170,7 @@ export function PracticeController({ phrases }: Props) {
+ 
+     // Envia a resposta para a API corrigir com IA, adapta o feedback e exibe o toast de XP por 2s
+     const handleVerify = async () => {
+-        if (!answer.trim()) return
++        if (!answer.trim() || !phrase) return
+         setLoading(true)
+         setError(null)
+ 
+@@ -182,6 +211,7 @@ export function PracticeController({ phrases }: Props) {
+ 
+     // Avança para uma frase aleatória diferente da atual (dentro da dificuldade ativa)
+     const handleNext = () => {
++        if (!phrase || loading || categoryLock.current) return
+         // "Pular" (sem feedback na tela) também consome uma questão do convidado.
+         // Já o "próxima" após responder não conta de novo (a verificação já contou).
+         if (isGuest && feedback === null) setGuestUsed((n) => n + 1)
+@@ -202,24 +232,42 @@ export function PracticeController({ phrases }: Props) {
+ 
+     // Troca a dificuldade ativa, persiste no localStorage e sorteia nova frase
+     const handleChangeDifficulty = (newDifficulty: string) => {
++        if (loading || categoryLock.current) return
+         localStorage.setItem("fluency-lab:difficulty", newDifficulty)
+         setDifficulty(newDifficulty)
+-        const newFiltered = phrases.filter((p) => p.difficulty === newDifficulty)
++        const newFiltered = phrases.filter(
++            (p) => p.difficulty === newDifficulty && (effectiveCategory === "all" || p.category === effectiveCategory)
++        )
+         setCurrentIndex(Math.floor(Math.random() * newFiltered.length))
+         setAnswer("")
+         setFeedback(null)
+         setError(null)
+-        phraseStartRef.current = Date.now() // reinicia o cronômetro para a nova frase
++        phraseStartRef.current = Date.now()
+     }
+ 
+-    // Alterna o favorito: remove se já existe, adiciona se não existe
+-    const toggleFavorite = (id: number) => {
+-        if (!favorites.includes(id)) {
++    // Alterna o favorito no banco — atualização otimista (muda a tela antes
++    // da resposta do servidor, desfaz se a requisição falhar)
++    const toggleFavorite = async (id: number) => {
++        const jaFavoritada = favorites.includes(id)
++
++        if (!jaFavoritada) {
+             // Aciona a animação de pop apenas ao favoritar (não ao desfavoritar)
+             setJustFavorited(true)
+             setTimeout(() => setJustFavorited(false), 300)
+         }
+-        setFavorites((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]))
++
++        setFavorites((prev) => (jaFavoritada ? prev.filter((f) => f !== id) : [...prev, id]))
++
++        try {
++            if (jaFavoritada) {
++                await apiClient.delete(`/favoritos.php?phrase_id=${id}`)
++            } else {
++                await apiClient.post("/favoritos.php", { phrase_id: id })
++            }
++        } catch {
++            // Desfaz a mudança otimista se a requisição falhar
++            setFavorites((prev) => (jaFavoritada ? [...prev, id] : prev.filter((f) => f !== id)))
++        }
+     }
+ 
+     // Convidado esgotou as questões grátis → convida a criar conta / entrar.
+@@ -254,6 +302,24 @@ export function PracticeController({ phrases }: Props) {
+         )
+     }
+ 
++    // Sem frases nessa dificuldade (ex: localStorage com valor antigo que não bate
++    // com nenhuma frase retornada pelo servidor) — evita crash acessando phrase.id
++    if (!phrase) {
++        return (
++            <div className="page-enter mx-auto flex max-w-lg flex-col items-center gap-4 px-5 py-20 text-center">
++                <p className="text-sm text-gray-500">
++                    Nenhuma frase disponível para esta dificuldade no momento.
++                </p>
++                <button
++                    onClick={() => handleChangeDifficulty("medium")}
++                    className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
++                >
++                    Tentar dificuldade Médio
++                </button>
++            </div>
++        )
++    }
++
+     return (
+         <div className="page-enter mx-auto max-w-5xl bg-white px-5 pt-10 pb-28">
+             {/* Região aria-live sempre presente no DOM — screen readers anunciam ao receber texto */}
+@@ -270,18 +336,36 @@ export function PracticeController({ phrases }: Props) {
+                 </p>
+             )}
+ 
++            <div className="mb-5 flex flex-wrap items-center gap-3">
++                <label htmlFor="practice-category" className="text-sm font-semibold text-slate-700">Categoria · Pro</label>
++                <select id="practice-category" value={category}
++                    disabled={!isPro || loading || categoryLoading}
++                    onChange={(event) => handleChangeCategory(event.target.value)}
++                    className="max-w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm disabled:opacity-50">
++                    <option value="">Todas as categorias</option>
++                    {categories.map((name) => <option key={name} value={name}>{name}</option>)}
++                </select>
++                {!isPro && <a href="/planos" className="text-sm font-semibold text-blue-600">Desbloquear com Pro</a>}
++                {categoryLoading && <span role="status" className="text-sm text-slate-500">Carregando categoria…</span>}
++            </div>
++
+             <PracticeHeader
+-                difficulty={difficulty}
+-                onChangeDifficulty={handleChangeDifficulty}
+-                isFav={isFav}
+-                justFavorited={justFavorited}
+-                onToggleFavorite={() => toggleFavorite(phrase.id)}
+-                showFavorite={!isGuest}
+-            />
++            difficulty={difficulty}
++            onChangeDifficulty={handleChangeDifficulty}
++            category={effectiveCategory}
++            onChangeCategory={handleChangeCategory}
++            categories={categories}
++            isPremium={isPremium}
++            isFav={isFav}
++            justFavorited={justFavorited}
++            onToggleFavorite={() => toggleFavorite(phrase.id)}
++            showFavorite={!isGuest}
++        />
+ 
+-            <PhraseCard phrase={phrase} />
++            {!phrase && <p role="status" className="rounded-2xl bg-slate-50 p-6 text-slate-600">Nenhuma frase nesta combinação. Escolha outra categoria ou dificuldade.</p>}
++            {phrase && <PhraseCard phrase={phrase} />}
+ 
+-            {!feedback && (
++            {phrase && !feedback && !categoryLoading && (
+                 <AnswerForm
+                     loading={loading}
+                     answer={answer}
+@@ -305,4 +389,4 @@ export function PracticeController({ phrases }: Props) {
+             {feedback && <FeedbackCard feedback={feedback} answer={answer} onNext={handleNext} />}
+         </div>
+     )
+-}
++}
+\ No newline at end of file
+diff --git a/frontend/app/_components/practice/practice-header.tsx b/frontend/app/_components/practice/practice-header.tsx
+index 8703cb7..ad09758 100644
+--- a/frontend/app/_components/practice/practice-header.tsx
++++ b/frontend/app/_components/practice/practice-header.tsx
+@@ -1,10 +1,22 @@
+-import { StarIcon } from "lucide-react"
++import { StarIcon, Lock, ChevronDown } from "lucide-react"
+ import { Tabs, TabsList, TabsTrigger } from "@/app/_components/ui/tabs"
+ import { cn } from "@/app/_lib/utils"
++import {
++    Select,
++    SelectContent,
++    SelectItem,
++    SelectTrigger,
++    SelectValue,
++} from "@/app/_components/ui/select"
++
+ 
+ type Props = {
+     difficulty: string
+     onChangeDifficulty: (value: string) => void
++    category: string
++    onChangeCategory: (value: string) => void
++    categories: string[]
++    isPremium: boolean
+     isFav: boolean
+     justFavorited: boolean
+     onToggleFavorite: () => void
+@@ -14,29 +26,49 @@ type Props = {
+ export function PracticeHeader({
+     difficulty,
+     onChangeDifficulty,
++    category,
++    onChangeCategory,
++    categories,
++    isPremium,
+     isFav,
+     justFavorited,
+     onToggleFavorite,
+     showFavorite,
+ }: Props) {
+     return (
+-        <div className="mb-6 flex items-center justify-between">
+-            {/* Tabs de dificuldade — controladas e persistidas no localStorage */}
+-            <Tabs value={difficulty} onValueChange={onChangeDifficulty} className="w-fit">
+-                <TabsList>
+-                    <TabsTrigger value="easy" className="px-5">
+-                        Fácil
+-                    </TabsTrigger>
+-                    <TabsTrigger value="medium" className="px-5">
+-                        Médio
+-                    </TabsTrigger>
+-                    <TabsTrigger value="hard" className="px-5">
+-                        Difícil
+-                    </TabsTrigger>
+-                </TabsList>
+-            </Tabs>
++        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
++            <div className="flex flex-wrap items-center gap-3">
++                <Tabs value={difficulty} onValueChange={onChangeDifficulty} className="w-fit">
++                    <TabsList>
++                        <TabsTrigger value="easy" className="px-5">Fácil</TabsTrigger>
++                        <TabsTrigger value="medium" className="px-5">Médio</TabsTrigger>
++                        <TabsTrigger value="hard" className="px-5">Difícil</TabsTrigger>
++                    </TabsList>
++                </Tabs>
++
++                {isPremium ? (
++                    <Select value={category} onValueChange={onChangeCategory}>
++                        <SelectTrigger className="h-9 w-fit gap-2 rounded-xl border-slate-200 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-100 focus:ring-offset-0">
++                            <SelectValue />
++                        </SelectTrigger>
++                        <SelectContent>
++                            <SelectItem value="all">Todas as categorias</SelectItem>
++                            {categories.map((c) => (
++                                <SelectItem key={c} value={c}>{c}</SelectItem>
++                            ))}
++                        </SelectContent>
++                    </Select>
++                ) : (
++                    <a
++                        href="/planos"
++                        className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm font-medium text-amber-700 transition hover:bg-amber-100"
++                    >
++                        <Lock size={13} />
++                        Categorias — só no Pro
++                    </a>
++                )}
++            </div>
+ 
+-            {/* Badge de favoritar — oculto no modo convidado */}
+             {showFavorite && (
+                 <button
+                     onClick={onToggleFavorite}
+@@ -48,12 +80,10 @@ export function PracticeHeader({
+                         justFavorited && "scale-125"
+                     )}
+                 >
+-                    <StarIcon
+-                        className={cn("size-4 transition-all duration-200", isFav && "fill-white")}
+-                    />
++                    <StarIcon className={cn("size-4 transition-all duration-200", isFav && "fill-white")} />
+                     {isFav ? "Favoritada" : "Favoritar"}
+                 </button>
+             )}
+-        </div>
++        </div>  
+     )
+-}
++}
+\ No newline at end of file
+diff --git a/frontend/app/_components/profile/favorite-questions.tsx b/frontend/app/_components/profile/favorite-questions.tsx
+index 7cd06f0..a6f295e 100644
+--- a/frontend/app/_components/profile/favorite-questions.tsx
++++ b/frontend/app/_components/profile/favorite-questions.tsx
+@@ -2,49 +2,43 @@
+ 
+ import { useState, useEffect } from "react"
+ import { Star, ChevronDown } from "lucide-react"
+-import { FRASES, DIFFICULTY_STYLES, DIFFICULTY_LABELS } from "@/app/_lib/practice"
++import { DIFFICULTY_STYLES, DIFFICULTY_LABELS } from "@/app/_lib/practice"
++import { apiClient } from "@/app/_lib/api"
+ 
+-const ALL_PHRASES = FRASES.flat()
++type FavoritePhrase = {
++    id: number
++    pt: string
++    en: string
++    difficulty: keyof typeof DIFFICULTY_STYLES
++    category: string
++}
+ 
+ export function FavoriteQuestions() {
+     const [open, setOpen] = useState(false)
+-    // Sempre começa vazio — igual no servidor e na primeira renderização do cliente
+-    const [favoriteIds, setFavoriteIds] = useState<number[]>([])
++    const [phrases, setPhrases] = useState<FavoritePhrase[]>([])
+     const [hidratado, setHidratado] = useState(false)
+ 
+-    // Só lê o localStorage DEPOIS de montar (fora da renderização inicial/hidratação)
++    // Busca as frases favoritadas reais do usuário, direto do banco
+     useEffect(() => {
+-        try {
+-            const stored = localStorage.getItem("fluency-lab:favorites")
+-            setFavoriteIds(stored ? JSON.parse(stored) : [])
+-        } catch {
+-            setFavoriteIds([])
+-        } finally {
+-            setHidratado(true)
+-        }
++        apiClient
++            .get("/favoritos.php")
++            .then((res) => setPhrases(res.data))
++            .catch(() => setPhrases([]))
++            .finally(() => setHidratado(true))
+     }, [])
+ 
+-    useEffect(() => {
+-        function onStorage(e: StorageEvent) {
+-            if (e.key !== "fluency-lab:favorites") return
+-            try {
+-                setFavoriteIds(e.newValue ? JSON.parse(e.newValue) : [])
+-            } catch {
+-                // ignora
+-            }
++    async function remove(id: number) {
++        // Atualização otimista: some da lista antes da resposta do servidor
++        setPhrases((prev) => prev.filter((p) => p.id !== id))
++        try {
++            await apiClient.delete(`/favoritos.php?phrase_id=${id}`)
++        } catch {
++            // Se falhar, o ideal seria recarregar a lista real — mas como esse card
++            // já vai fechar/reabrir com frequência, um refetch simples resolve
++            apiClient.get("/favoritos.php").then((res) => setPhrases(res.data)).catch(() => {})
+         }
+-        window.addEventListener("storage", onStorage)
+-        return () => window.removeEventListener("storage", onStorage)
+-    }, [])
+-
+-    function remove(id: number) {
+-        const next = favoriteIds.filter((f) => f !== id)
+-        setFavoriteIds(next)
+-        localStorage.setItem("fluency-lab:favorites", JSON.stringify(next))
+     }
+ 
+-    const phrases = ALL_PHRASES.filter((p) => favoriteIds.includes(p.id))
+-
+     return (
+         <div className="rounded-2xl border border-[#dce8ff] bg-white shadow-[0_2px_16px_rgba(37,99,235,0.08)]">
+             <button
+@@ -65,29 +59,18 @@ export function FavoriteQuestions() {
+             </button>
+ 
+             {open && (
+-                <div
+-                    className="flex flex-col gap-3 px-5 pb-5"
+-                    style={{ animation: "fadeUp 0.2s ease" }}
+-                >
++                <div className="flex flex-col gap-3 px-5 pb-5" style={{ animation: "fadeUp 0.2s ease" }}>
+                     {phrases.length === 0 ? (
+                         <div className="flex flex-col items-center gap-2 py-6 text-center text-sm text-[#94a3b8]">
+                             <Star className="size-5 text-slate-300" aria-hidden="true" />
+-                            <span>
+-                                Nenhuma frase favoritada ainda. Toque no ícone de estrela durante a
+-                                prática!
+-                            </span>
++                            <span>Nenhuma frase favoritada ainda. Toque no ícone de estrela durante a prática!</span>
+                         </div>
+                     ) : (
+                         phrases.map((p) => (
+-                            <div
+-                                key={p.id}
+-                                className="rounded-xl border border-[#e8f0fe] bg-[#f8faff] p-4"
+-                            >
++                            <div key={p.id} className="rounded-xl border border-[#e8f0fe] bg-[#f8faff] p-4">
+                                 <div className="flex items-start justify-between gap-2">
+                                     <div className="flex-1">
+-                                        <p className="mb-1 text-sm font-semibold text-[#1e293b]">
+-                                            {p.pt}
+-                                        </p>
++                                        <p className="mb-1 text-sm font-semibold text-[#1e293b]">{p.pt}</p>
+                                         <p className="text-sm text-[#2563eb]">{p.en}</p>
+                                     </div>
+                                     <button
+@@ -99,9 +82,7 @@ export function FavoriteQuestions() {
+                                     </button>
+                                 </div>
+                                 <div className="mt-3 flex items-center gap-2">
+-                                    <span
+-                                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${DIFFICULTY_STYLES[p.difficulty]}`}
+-                                    >
++                                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${DIFFICULTY_STYLES[p.difficulty]}`}>
+                                         {DIFFICULTY_LABELS[p.difficulty]}
+                                     </span>
+                                     <span className="text-[11px] text-[#94a3b8]">{p.category}</span>
+@@ -113,4 +94,4 @@ export function FavoriteQuestions() {
+             )}
+         </div>
+     )
+-}
++}
+\ No newline at end of file
+diff --git a/frontend/app/_components/profile/weekly-report.tsx b/frontend/app/_components/profile/weekly-report.tsx
+new file mode 100644
+index 0000000..69d9212
+--- /dev/null
++++ b/frontend/app/_components/profile/weekly-report.tsx
+@@ -0,0 +1,37 @@
++import { fetchFromApi } from "@/app/_lib/server-api"
++import { type WeeklyPoint } from "@/app/_lib/progress"
++import { WeeklyChart } from "@/app/_components/progress/weekly-chart"
++
++type DetailedWeek = WeeklyPoint & { inicio: string; acertos: number; segundos: number }
++
++export async function WeeklyReport() {
++    let weeks: DetailedWeek[]
++    try {
++        weeks = await fetchFromApi<DetailedWeek[]>("/user/progress-weekly.php?detailed=1")
++    } catch {
++        return <p role="status" className="rounded-2xl bg-slate-50 p-5 text-sm text-slate-600">Não foi possível carregar o relatório Pro. Recarregue a página para tentar novamente.</p>
++    }
++    const total = weeks.reduce((sum, week) => sum + week.treinos, 0)
++    return (
++        <section aria-label="Relatório semanal Pro" className="space-y-4">
++            <h2 className="text-lg font-bold text-slate-800">Seu relatório semanal · Pro</h2>
++            <WeeklyChart data={weeks} />
++            {total === 0 && <p className="text-sm text-slate-500">Comece a praticar para acompanhar sua evolução aqui.</p>}
++            <div className="overflow-x-auto rounded-2xl border border-slate-200 p-4">
++                <table className="w-full text-left text-sm">
++                    <caption className="mb-3 text-left text-slate-500">Últimas 12 semanas · a semana atual ainda está em andamento</caption>
++                    <thead><tr>{["Semana de", "XP", "Treinos", "Acertos", "Tempo"].map((label) => <th key={label} scope="col" className="px-2 py-3">{label}</th>)}</tr></thead>
++                    <tbody>{weeks.map((week) => (
++                        <tr key={week.inicio} className="border-t border-slate-100">
++                            <th scope="row" className="whitespace-nowrap px-2 py-3 font-medium">{week.inicio.split("-").reverse().join("/")}</th>
++                            <td className="px-2 py-3">{week.xp}</td>
++                            <td className="px-2 py-3">{week.treinos}</td>
++                            <td className="px-2 py-3">{week.treinos ? `${week.acertos}/${week.treinos} (${Math.round(week.acertos / week.treinos * 100)}%)` : "—"}</td>
++                            <td className="whitespace-nowrap px-2 py-3">{Math.floor(week.segundos / 60)} min {week.segundos % 60} s</td>
++                        </tr>
++                    ))}</tbody>
++                </table>
++            </div>
++        </section>
++    )
++}
+diff --git a/frontend/app/_components/progress/stats-cards.tsx b/frontend/app/_components/progress/stats-cards.tsx
+index bddbaaf..626ffd7 100644
+--- a/frontend/app/_components/progress/stats-cards.tsx
++++ b/frontend/app/_components/progress/stats-cards.tsx
+@@ -56,7 +56,7 @@ export function StatsCards({ stats, limit }: Props) {
+     const cards = limit ? buildCards(stats).slice(0, limit) : buildCards(stats)
+ 
+     return (
+-        <div className="grid grid-cols-2 gap-3">
++        <div className="grid grid-cols-2 gap-3 mb-10">
+             {cards.map((card) => {
+                 const Icon = card.icon
+ 
+diff --git a/frontend/app/cursos/page.tsx b/frontend/app/cursos/page.tsx
+index 415ce67..5b69ef6 100644
+--- a/frontend/app/cursos/page.tsx
++++ b/frontend/app/cursos/page.tsx
+@@ -22,12 +22,18 @@ export default async function CursosPage() {
+                 <div className="mx-auto max-w-5xl">
+                     {/* Header */}
+                     <div className="mb-10 text-center">
+-                        <div className="mb-8 inline-flex items-center gap-3 rounded-3xl border border-gray-200 bg-white/80 px-6 py-3 shadow-xl backdrop-blur-sm">
+-                            <h1 className="animate-float bg-gradient-to-r from-blue-700 to-blue-600 bg-clip-text text-4xl font-bold text-blue-600 text-transparent md:text-5xl">
+-                                Nossos Cursos
+-                            </h1>
+-                        </div>
+-                        <p className="mx-auto max-w-2xl text-xl leading-relaxed text-gray-600">
++                        <div className="mb-8 text-center">
++                        <div className="mb-2 flex items-center justify-center gap-2">
++                        <span className="h-2 w-2 rounded-full bg-blue-600"></span>
++
++                        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
++                                 Explore seus cursos
++                        </h1>
++
++                        <span className="h-2 w-2 rounded-full bg-blue-600"></span>
++                    </div>
++
++                    <p className="mx-auto max-w-2xl leading-relaxed text-sm font-medium text-slate-500">
+                             Escolha seu nível e comece sua jornada rumo à fluência no inglês. <br />
+                             <span className="font-semibold text-blue-600">
+                                 {" "}
+@@ -35,6 +41,8 @@ export default async function CursosPage() {
+                             </span>
+                         </p>
+                     </div>
++                        
++                    </div>
+ 
+                     {/* Cards HORIZONTAIS empilhados */}
+                     <div className="mx-auto max-w-5xl space-y-8">
+diff --git a/frontend/app/practice/page.tsx b/frontend/app/practice/page.tsx
+index b96ddcd..1e7f1ac 100644
+--- a/frontend/app/practice/page.tsx
++++ b/frontend/app/practice/page.tsx
+@@ -5,11 +5,14 @@ import NavLayout from "@/app/_layouts/nav-layout"
+ type Phrase = { id: number; pt: string; en: string; difficulty: string; category: string }
+ 
+ export default async function PracticePage() {
+-    const phrases = await fetchFromApi<Phrase[]>("/practice/phrases.php")
++    const [phrases, planStatus] = await Promise.all([
++        fetchFromApi<Phrase[]>("/practice/phrases.php"),
++        fetchFromApi<{ active: boolean }>("/my-plan.php").catch(() => ({ active: false })),
++    ])
+ 
+     return (
+         <NavLayout>
+-            <PracticeController phrases={phrases} />
++            <PracticeController phrases={phrases} isPremium={planStatus.active} />
+         </NavLayout>
+     )
+-}
++}
+\ No newline at end of file
+diff --git a/frontend/app/profile/page.tsx b/frontend/app/profile/page.tsx
+index a7ef643..01cdf5f 100644
+--- a/frontend/app/profile/page.tsx
++++ b/frontend/app/profile/page.tsx
+@@ -1,4 +1,4 @@
+-import { Star, Trophy, Flame, CircleCheck } from "lucide-react"
++import { Star, Trophy, Flame, CircleCheck, Lock } from "lucide-react"
+ import { ProfileHeader } from "@/app/_components/profile/profile-header"
+ import { StatsGrid } from "@/app/_components/profile/stats-grid"
+ import { XpProgress } from "@/app/_components/profile/xp-progress"
+@@ -7,6 +7,7 @@ import { EditProfileDialog } from "@/app/_components/profile/edit-profile-dialog
+ import { SettingsDialog } from "@/app/_components/profile/settings-dialog"
+ import { FavoriteQuestions } from "@/app/_components/profile/favorite-questions"
+ import { LogoutButton } from "@/app/_components/profile/logout-button"
++import { WeeklyChart } from "@/app/_components/progress/weekly-chart"
+ import { fetchFromApi } from "@/app/_lib/server-api"
+ import { getLevel, levelLabel, type LeaderboardUser } from "@/app/_lib/ranking"
+ import { type DashboardData } from "@/app/_lib/progress"
+@@ -15,50 +16,26 @@ import NavLayout from "@/app/_layouts/nav-layout"
+ import PremiumCard from "../_components/pricing/PremiumCard"
+ 
+ type User = { id: number; name: string; email: string; phone: string | null; role: string; avatar: string | null }
+-
++type WeeklyPoint = { week: string; xp: number; treinos: number }
+ 
+ export default async function ProfilePage() {
+-    const [user, dashboardData, leaderboard] = await Promise.all([
++    const [user, dashboardData, leaderboard, planStatus, weekly] = await Promise.all([
+         fetchFromApi<User>("/profile.php"),
+         fetchFromApi<DashboardData>("/dashboard.php"),
+         fetchFromApi<LeaderboardUser[]>("/ranking.php"),
++        fetchFromApi<{ active: boolean }>("/my-plan.php").catch(() => ({ active: false })),
++        fetchFromApi<WeeklyPoint[]>("/user/progress-weekly.php").catch(() => []),
+     ])
+ 
+     const { level, currentXp, needed } = getLevel(dashboardData.xp_total)
+-    const levelLabelText = levelLabel(level) // em vez de getLevelLabel(level)
+-
+-    // Posição do usuário atual dentro do leaderboard (1-indexed)
++    const levelLabelText = levelLabel(level)
+     const posicao = leaderboard.findIndex((u) => u.id === user.id) + 1
+ 
+     const stats = [
+-        {
+-            icon: Star,
+-            iconColor: "text-amber-500",
+-            iconBg: "bg-amber-50",
+-            value: dashboardData.xp_total.toLocaleString(),
+-            label: "Pontos",
+-        },
+-        {
+-            icon: Trophy,
+-            iconColor: "text-blue-600",
+-            iconBg: "bg-blue-50",
+-            value: posicao > 0 ? `#${posicao}` : "—",
+-            label: "Posição",
+-        },
+-        {
+-            icon: Flame,
+-            iconColor: "text-orange-500",
+-            iconBg: "bg-orange-50",
+-            value: `${dashboardData.streak}`,
+-            label: "Sequência",
+-        },
+-        {
+-            icon: CircleCheck,
+-            iconColor: "text-emerald-600",
+-            iconBg: "bg-emerald-50",
+-            value: `${dashboardData.total_treinos}`,
+-            label: "Concluídos",
+-        },
++        { icon: Star, iconColor: "text-amber-500", iconBg: "bg-amber-50", value: dashboardData.xp_total.toLocaleString(), label: "Pontos" },
++        { icon: Trophy, iconColor: "text-blue-600", iconBg: "bg-blue-50", value: posicao > 0 ? `#${posicao}` : "—", label: "Posição" },
++        { icon: Flame, iconColor: "text-orange-500", iconBg: "bg-orange-50", value: `${dashboardData.streak}`, label: "Sequência" },
++        { icon: CircleCheck, iconColor: "text-emerald-600", iconBg: "bg-emerald-50", value: `${dashboardData.total_treinos}`, label: "Concluídos" },
+     ]
+ 
+     return (
+@@ -67,7 +44,7 @@ export default async function ProfilePage() {
+                 <ProfileHeader
+                     name={user.name}
+                     rankLabel={posicao > 0 ? `#${posicao} no Ranking Geral` : "Ainda sem posição"}
+-                    avatarSlot={<AvatarUpload name={user.name} avatarSrc={user.avatar ?? undefined}/>}
++                    avatarSlot={<AvatarUpload name={user.name} avatarSrc={user.avatar ?? undefined} />}
+                 >
+                     <div className="flex items-center gap-2">
+                         <EditProfileDialog
+@@ -88,12 +65,41 @@ export default async function ProfilePage() {
+                     levelLabel={levelLabelText}
+                 />
+ 
++                <FavoriteQuestions />
++
++                {/* Relatório semanal detalhado — exclusivo Pro */}
++                {planStatus.active ? (
++                    <WeeklyChart data={weekly} />
++                ) : (
++                    <div className="rounded-2xl border border-[#dce8ff] bg-white p-6 shadow-[0_2px_16px_rgba(37,99,235,0.08)]">
++                        <div className="flex flex-col items-center gap-3 py-4 text-center">
++                            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50">
++                                <Lock size={20} className="text-amber-500" />
++                            </div>
++                            <div>
++                                <p className="text-sm font-semibold text-gray-900">Relatório semanal detalhado</p>
++                                <p className="mt-1 max-w-xs text-sm text-gray-500">
++                                    Assinantes Pro acompanham XP e treinos das últimas 12 semanas em um gráfico completo.
++                                </p>
++                            </div>
++                            <a
++                                href="/planos"
++                                className="mt-1 rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
++                            >
++                                Assinar plano Pro
++                            </a>
++                        </div>
++                    </div>
++                )}
++
++                
++
+                 <PremiumCard />
+ 
+-                <FavoriteQuestions />
++                
+ 
+                 <LogoutButton />
+             </div>
+         </NavLayout>
+     )
+-}
++}
+\ No newline at end of file
+diff --git a/frontend/app/progress/page.tsx b/frontend/app/progress/page.tsx
+index 64c3c75..e19b268 100644
+--- a/frontend/app/progress/page.tsx
++++ b/frontend/app/progress/page.tsx
+@@ -10,19 +10,22 @@ import {
+ } from "@/app/_lib/progress"
+ import { ConsistencyHeatmap } from "@/app/_components/progress/consistency-heatmap"
+ import { WeeklyChart } from "@/app/_components/progress/weekly-chart"
+-import { StatsCards } from "@/app/_components/progress/stats-cards" // idem
++import { StatsCards } from "@/app/_components/progress/stats-cards"
++import { Lock } from "lucide-react"
+ import NavLayout from "@/app/_layouts/nav-layout"
+ 
+ export default async function ProgressPage() {
+     let statsData: StatsData
+     let weeklyData: WeeklyPoint[]
+     let calendarData: CalendarData[]
++    let planStatus: { active: boolean }
+ 
+     try {
+-        ;[statsData, weeklyData, calendarData] = await Promise.all([
++        ;[statsData, weeklyData, calendarData, planStatus] = await Promise.all([
+             fetchFromApi<StatsData>("/user/stats.php"),
+             fetchFromApi<WeeklyPoint[]>("/user/progress-weekly.php"),
+             fetchFromApi<CalendarData[]>("/user/calendar.php"),
++            fetchFromApi<{ active: boolean }>("/my-plan.php").catch(() => ({ active: false })),
+         ])
+     } catch {
+         redirect("/login") // sem sessão válida, manda pro login
+@@ -36,16 +39,51 @@ export default async function ProgressPage() {
+         <NavLayout>
+             <main className="min-h-screen bg-gray-50 px-4 py-10">
+                 <div className="mx-auto max-w-3xl space-y-6">
+-                    <div className="text-center">
+-                        <h1 className="text-2xl font-bold text-slate-800">Consistência</h1>
+-                        <p className="mt-1 text-sm text-slate-500">Seu histórico de atividade</p>
++                    <div className="mb-8 text-center">
++                        <div className="mb-2 flex items-center justify-center gap-2">
++                            <span className="h-2 w-2 rounded-full bg-blue-600"></span>
++
++                            <h1 className="text-3xl font-bold tracking-tight text-slate-900">
++                                Seu progresso
++                            </h1>
++
++                            <span className="h-2 w-2 rounded-full bg-blue-600"></span>
++                        </div>
++
++                        <p className="text-sm font-medium text-slate-500">
++                            Acompanhe sua evolução ao longo do tempo.
++                        </p>
+                     </div>
+ 
+                     <ConsistencyHeatmap weeks={weeks} currentWeekIdx={currentWeekIdx} />
+                     <StatsCards stats={stats} />
+-                    <WeeklyChart data={weeklyData} />
++
++                    {/* Relatório semanal detalhado — exclusivo Pro */}
++                    {planStatus.active ? (
++                        <WeeklyChart data={weeklyData} />
++                    ) : (
++                        <div className="rounded-2xl border border-[#dce8ff] bg-white p-6 shadow-[0_2px_16px_rgba(37,99,235,0.08)]">
++                            <div className="flex flex-col items-center gap-3 py-4 text-center">
++                                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50">
++                                    <Lock size={20} className="text-amber-500" />
++                                </div>
++                                <div>
++                                    <p className="text-sm font-semibold text-gray-900">Relatório semanal detalhado</p>
++                                    <p className="mt-1 max-w-xs text-sm text-gray-500">
++                                        Assinantes Pro acompanham XP e treinos das últimas 12 semanas em um gráfico completo.
++                                    </p>
++                                </div>
++                                <a
++                                    href="/planos"
++                                    className="mt-1 rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
++                                >
++                                    Assinar plano Pro
++                                </a>
++                            </div>
++                        </div>
++                    )}
+                 </div>
+             </main>
+         </NavLayout>
+     )
+-}
++}
+\ No newline at end of file
+diff --git a/frontend/app/ranking/page.tsx b/frontend/app/ranking/page.tsx
+index bb1e1a9..befb667 100644
+--- a/frontend/app/ranking/page.tsx
++++ b/frontend/app/ranking/page.tsx
+@@ -37,12 +37,21 @@ export default async function RankingPage() {
+     return (
+         <NavLayout>
+             <main className="page-enter mx-auto flex max-w-5xl flex-col gap-6 px-4 pt-8 pb-25">
+-                <div className="flex flex-col items-center gap-1">
+-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">Ranking</h1>
+-                    <p className="mt-1 text-sm text-slate-400">
+-                        Veja como você se compara com outros
++                <div className="mb-8 text-center">
++                        <div className="mb-2 flex items-center justify-center gap-2">
++                        <span className="h-2 w-2 rounded-full bg-blue-600"></span>
++
++                        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
++                                 Desempenho da comunidade
++                        </h1>
++
++                        <span className="h-2 w-2 rounded-full bg-blue-600"></span>
++                    </div>
++
++                    <p className="text-sm font-medium text-slate-500">
++                     Veja quem está se destacando nos estudos.
+                     </p>
+-                </div>
++                    </div>
+ 
+                 {leaderboard.length === 0 ? (
+                     <p className="py-16 text-center text-sm text-slate-400">

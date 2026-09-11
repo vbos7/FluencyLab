@@ -1,7 +1,8 @@
 <?php
-require_once __DIR__ . '/cors.php';
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/config/mail.php';
+
+require_once __DIR__.'/cors.php';
+require_once __DIR__.'/db.php';
+require_once __DIR__.'/config/mail.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['error' => 'Método não permitido'], 405);
@@ -11,13 +12,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $body = json_decode(file_get_contents('php://input'), true);
 $email = trim($body['email'] ?? '');
 
-if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if (empty($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
     json_out(['errors' => ['Email inválido']], 422);
     exit;
 }
 
 try {
-    $stmt = $pdo->prepare("SELECT id, name FROM users WHERE email = ?");
+    $stmt = $pdo->prepare('SELECT id, name FROM users WHERE email = ?');
     $stmt->execute([$email]);
     $user = $stmt->fetch();
 
@@ -28,11 +29,11 @@ try {
         $codigoHash = password_hash($codigo, PASSWORD_DEFAULT);
         $expiraEm = date('Y-m-d H:i:s', strtotime('+15 minutes'));
 
-        $stmt = $pdo->prepare("UPDATE password_resets SET used = 1 WHERE user_id = ? AND used = 0");
+        $stmt = $pdo->prepare('UPDATE password_resets SET used = 1 WHERE user_id = ? AND used = 0');
         $stmt->execute([$user['id']]);
 
         $stmt = $pdo->prepare(
-            "INSERT INTO password_resets (user_id, code_hash, expires_at) VALUES (?, ?, ?)"
+            'INSERT INTO password_resets (user_id, code_hash, expires_at) VALUES (?, ?, ?)'
         );
         $stmt->execute([$user['id'], $codigoHash, $expiraEm]);
 
@@ -42,7 +43,7 @@ try {
             templateEmailCodigo($user['name'], $codigo)
         );
 
-        if (!$enviado) {
+        if (! $enviado) {
             error_log("Falha ao enviar código de recuperação para user_id={$user['id']}");
         }
     }

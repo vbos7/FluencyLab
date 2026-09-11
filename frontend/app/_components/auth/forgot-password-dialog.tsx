@@ -89,24 +89,24 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
     // ── Submit handlers conectados na API real ─────────────────
 
     async function submitEmail() {
-    if (!email) {
-        setError("Digite seu e-mail.")
-        return
-    }
-    setError("")
-    setLoading(true)
+        if (!email) {
+            setError("Digite seu e-mail.")
+            return
+        }
+        setError("")
+        setLoading(true)
 
-    try {
-        await apiClient.post("/forgot-password.php", { email })
-        setStep("code")
-        setTimeout(() => codeRefs.current[0]?.focus(), 120)
-    } catch (err: any) {
-        const apiErrors = err.response?.data?.errors
-        setError(apiErrors?.[0] ?? "Não foi possível enviar o código. Tente novamente.")
-    } finally {
-        setLoading(false)
+        try {
+            await apiClient.post("/forgot-password.php", { email })
+            setStep("code")
+            setTimeout(() => codeRefs.current[0]?.focus(), 120)
+        } catch (err: any) {
+            const apiErrors = err.response?.data?.errors
+            setError(apiErrors?.[0] ?? "Não foi possível enviar o código. Tente novamente.")
+        } finally {
+            setLoading(false)
+        }
     }
-}
 
     function submitCode() {
         // A validação real do código só acontece junto com a troca de senha
@@ -178,7 +178,11 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                                     className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 outline-none"
                                 />
                             </div>
-                            {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
+                            {error && (
+                                <p role="alert" className="text-xs text-red-600">
+                                    {error}
+                                </p>
+                            )}
                             <button onClick={submitEmail} disabled={loading} className={btnClass}>
                                 {loading ? "Enviando..." : "Enviar código"}
                             </button>
@@ -197,11 +201,16 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                         </DialogHeader>
 
                         <div className="mt-2 flex flex-col gap-4">
-                            <div className="flex items-center justify-center gap-2" onPaste={handleCodePaste}>
+                            <div
+                                className="flex items-center justify-center gap-2"
+                                onPaste={handleCodePaste}
+                            >
                                 {code.map((digit, i) => (
                                     <input
                                         key={i}
-                                        ref={(el) => { codeRefs.current[i] = el }}
+                                        ref={(el) => {
+                                            codeRefs.current[i] = el
+                                        }}
                                         type="text"
                                         inputMode="numeric"
                                         maxLength={1}
@@ -311,7 +320,11 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                                 </p>
                             )}
 
-                            <button onClick={submitPassword} disabled={loading} className={`${btnClass} mt-1`}>
+                            <button
+                                onClick={submitPassword}
+                                disabled={loading}
+                                className={`${btnClass} mt-1`}
+                            >
                                 {loading ? "Salvando..." : "Salvar nova senha"}
                             </button>
                         </div>
