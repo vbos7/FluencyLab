@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/_components/ui/avatar"
 import { fetchFromApi } from "@/app/_lib/server-api"
-import { type LeaderboardUser, initials } from "@/app/_lib/ranking"
+import { type LeaderboardUser } from "@/app/_lib/ranking"
+import { fallbackAvatarSrc } from "@/app/_lib/fallback-avatar"
 import { cn } from "@/app/_lib/utils"
 
 // Configuração visual de cada posição do pódio (índice 0, 1, 2)
@@ -87,19 +88,31 @@ export async function RankingTop3() {
                                             config.ringClass
                                         )}
                                     >
-                                        {user.github ? (
+                                        {user.avatar ? (
+                                            <AvatarImage src={user.avatar} alt={user.name} />
+                                        ) : user.github ? (
                                             <AvatarImage
                                                 src={`https://github.com/${user.github}.png`}
                                                 alt={`@${user.github}`}
                                             />
-                                        ) : null}
+                                        ) : (
+                                            <AvatarImage
+                                                src={fallbackAvatarSrc(user.id)}
+                                                alt={user.name}
+                                            />
+                                        )}
                                         <AvatarFallback
                                             className={cn(
                                                 "text-xs font-semibold",
                                                 config.fallbackBg
                                             )}
                                         >
-                                            {initials(user.name)}
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img
+                                                src={fallbackAvatarSrc(user.id)}
+                                                alt={user.name}
+                                                className="size-full object-cover"
+                                            />
                                         </AvatarFallback>
                                     </Avatar>
                                     <span className="absolute -right-0.5 -bottom-0.5 text-[10px] leading-none">

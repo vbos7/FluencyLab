@@ -5,18 +5,15 @@
  *
  * O front (localhost:3000) e a API (localhost:8000) são origens diferentes, então
  * o avatar precisa sair daqui como URL absoluta para a tag <img> do Next.js
- * carregar. Prioriza APP_URL do .env; sem ela, deriva do próprio request.
+ * carregar. Deriva sempre do host da própria requisição — NÃO usar APP_URL
+ * aqui, pois aquela variável é a URL pública do FRONT, não do backend que
+ * de fato serve o arquivo.
  */
 
 require_once __DIR__.'/../env.php';
 
 function app_url(): string
 {
-    $configured = env('APP_URL');
-    if ($configured !== '') {
-        return rtrim($configured, '/');
-    }
-
     $https = ($_SERVER['HTTPS'] ?? '') === 'on'
         || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
 

@@ -56,9 +56,9 @@ try {
     };
 
     $nomeArquivo = "user_{$userId}_".time().'.'.$extensao;
-    $pastaFisica = __DIR__.'/uploads/avatars/';
+    $pastaFisica = __DIR__.'/../public/uploads/avatars/';
     $caminhoCompleto = $pastaFisica.$nomeArquivo;
-    $caminhoRelativo = 'api/uploads/avatars/'.$nomeArquivo;
+    $caminhoRelativo = 'public/uploads/avatars/'.$nomeArquivo;
 
     if (! is_dir($pastaFisica)) {
         mkdir($pastaFisica, 0755, true);

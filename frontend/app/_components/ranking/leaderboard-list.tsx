@@ -1,7 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/_components/ui/avatar"
 import { Badge } from "@/app/_components/ui/badge"
 import { cn } from "@/app/_lib/utils"
-import { type LeaderboardUser, initials } from "@/app/_lib/ranking"
+import { type LeaderboardUser } from "@/app/_lib/ranking"
+import { fallbackAvatarSrc } from "@/app/_lib/fallback-avatar"
 
 type Props = {
     rows: LeaderboardUser[]
@@ -36,7 +37,9 @@ export function LeaderboardList({ rows, startIdx }: Props) {
                                     src={`https://github.com/${user.github}.png`}
                                     alt={`@${user.github}`}
                                 />
-                            ) : null}
+                            ) : (
+                                <AvatarImage src={fallbackAvatarSrc(user.id)} alt={user.name} />
+                            )}
                             <AvatarFallback
                                 className={cn(
                                     "rounded-none text-sm font-semibold",
@@ -45,7 +48,12 @@ export function LeaderboardList({ rows, startIdx }: Props) {
                                         : "bg-slate-100 text-slate-600"
                                 )}
                             >
-                                {initials(user.name)}
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={fallbackAvatarSrc(user.id)}
+                                    alt={user.name}
+                                    className="size-full object-cover"
+                                />
                             </AvatarFallback>
                         </Avatar>
 
