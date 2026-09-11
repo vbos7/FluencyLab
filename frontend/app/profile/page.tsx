@@ -75,7 +75,11 @@ export default async function ProfilePage() {
                     name={user.name}
                     rankLabel={posicao > 0 ? `#${posicao} no Ranking Geral` : "Ainda sem posição"}
                     avatarSlot={
-                        <AvatarUpload name={user.name} avatarSrc={user.avatar ?? undefined} />
+                        <AvatarUpload
+                            id={user.id}
+                            name={user.name}
+                            avatarSrc={user.avatar ?? undefined}
+                        />
                     }
                 >
                     <div className="flex items-center gap-2">

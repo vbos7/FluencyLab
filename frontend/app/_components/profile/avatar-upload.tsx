@@ -13,13 +13,15 @@ import {
 import { Button } from "@/app/_components/ui/button"
 import { Avatar, AvatarImage, AvatarFallback, AvatarBadge } from "@/app/_components/ui/avatar"
 import { apiClient } from "@/app/_lib/api"
+import { fallbackAvatarSrc } from "@/app/_lib/fallback-avatar"
 
 type Props = {
+    id: number
     name: string
     avatarSrc?: string
 }
 
-export function AvatarUpload({ name, avatarSrc }: Props) {
+export function AvatarUpload({ id, name, avatarSrc }: Props) {
     const [open, setOpen] = useState(false)
     const [avatarAtual, setAvatarAtual] = useState<string | undefined>(avatarSrc)
     const [arquivoSelecionado, setArquivoSelecionado] = useState<File | null>(null)
@@ -27,12 +29,6 @@ export function AvatarUpload({ name, avatarSrc }: Props) {
     const [enviando, setEnviando] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
     const inputRef = useRef<HTMLInputElement>(null)
-
-    const initials = name
-        .split(" ")
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join("")
 
     function handleSelecionarArquivo(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0]
@@ -95,8 +91,15 @@ export function AvatarUpload({ name, avatarSrc }: Props) {
                     style={{ background: "linear-gradient(135deg,#1d4ed8,#60a5fa)" }}
                 >
                     <Avatar className="h-full w-full">
-                        {avatarAtual && <AvatarImage src={avatarAtual} alt={name} />}
-                        <AvatarFallback>{initials}</AvatarFallback>
+                        <AvatarImage src={avatarAtual ?? fallbackAvatarSrc(id)} alt={name} />
+                        <AvatarFallback>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={fallbackAvatarSrc(id)}
+                                alt={name}
+                                className="size-full object-cover"
+                            />
+                        </AvatarFallback>
                         <AvatarBadge className="bg-green-600" />
                     </Avatar>
                 </div>
@@ -124,8 +127,15 @@ export function AvatarUpload({ name, avatarSrc }: Props) {
                         style={{ background: "linear-gradient(135deg,#1d4ed8,#60a5fa)" }}
                     >
                         <Avatar className="h-full w-full">
-                            {preview && <AvatarImage src={preview} alt={name} />}
-                            <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
+                            <AvatarImage src={preview ?? fallbackAvatarSrc(id)} alt={name} />
+                            <AvatarFallback className="text-2xl">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={fallbackAvatarSrc(id)}
+                                    alt={name}
+                                    className="size-full object-cover"
+                                />
+                            </AvatarFallback>
                         </Avatar>
                     </div>
 

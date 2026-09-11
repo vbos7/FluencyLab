@@ -1,4 +1,5 @@
 import type { TopUser } from "@/app/_lib/admin"
+import { fallbackAvatarSrc } from "@/app/_lib/fallback-avatar"
 import { cn } from "@/app/_lib/utils"
 
 // Exibe os usuários com maior XP (já vêm ordenados por XP desc do backend)
@@ -27,14 +28,12 @@ export function TopUsers({ users }: { users: TopUser[] }) {
                             {i + 1}
                         </span>
 
-                        {/* Avatar com iniciais */}
-                        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[11px] font-bold text-blue-600">
-                            {user.name
-                                .split(" ")
-                                .slice(0, 2)
-                                .map((n) => n[0])
-                                .join("")}
-                        </div>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={fallbackAvatarSrc(user.id)}
+                            alt={user.name}
+                            className="size-8 shrink-0 rounded-full object-cover"
+                        />
 
                         {/* Nome e email */}
                         <div className="min-w-0 flex-1">

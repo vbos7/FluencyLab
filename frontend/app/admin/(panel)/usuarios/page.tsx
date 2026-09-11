@@ -6,6 +6,7 @@ import AppLayout from "@/app/_layouts/app-layout"
 import { type BreadcrumbItem } from "@/app/_lib/utils"
 import { type AdminUser } from "@/app/_lib/admin"
 import { apiErrorMessage, deleteUser, listUsers } from "@/app/_lib/admin-api"
+import { fallbackAvatarSrc } from "@/app/_lib/fallback-avatar"
 import { cn } from "@/app/_lib/utils"
 import { CardContainer } from "@/app/_components/admin/profile/card-container"
 import { Button } from "@/app/_components/ui/button"
@@ -22,14 +23,6 @@ function levelColor(level: number) {
     if (level >= 10) return "bg-blue-100 text-blue-700"
     if (level >= 5) return "bg-violet-100 text-violet-700"
     return "bg-slate-100 text-slate-600"
-}
-
-function initials(name: string) {
-    return name
-        .split(" ")
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join("")
 }
 
 // Backend devolve datetime "YYYY-MM-DD HH:MM:SS".
@@ -131,9 +124,12 @@ export default function UsuariosPage() {
                                     >
                                         <td className="px-5 py-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">
-                                                    {initials(user.name)}
-                                                </div>
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img
+                                                    src={fallbackAvatarSrc(user.id)}
+                                                    alt={user.name}
+                                                    className="size-9 shrink-0 rounded-full object-cover"
+                                                />
                                                 <div>
                                                     <p className="font-medium text-slate-800">
                                                         {user.name}

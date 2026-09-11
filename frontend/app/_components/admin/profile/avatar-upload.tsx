@@ -5,16 +5,8 @@ import { toast } from "sonner"
 import { Button } from "@/app/_components/ui/button"
 import { type User } from "@/app/_lib/utils"
 import { apiErrorMessage, deleteAvatar, uploadAvatar } from "@/app/_lib/admin-api"
+import { fallbackAvatarSrc } from "@/app/_lib/fallback-avatar"
 import { CardRow } from "./card-row"
-
-// Gera iniciais do nome
-function initials(name: string) {
-    return name
-        .split(" ")
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join("")
-}
 
 // /profile.php já devolve o avatar como URL absoluta; usa direto.
 export function AvatarUpload({ user, onUpdated }: { user: User; onUpdated?: () => void }) {
@@ -60,19 +52,13 @@ export function AvatarUpload({ user, onUpdated }: { user: User; onUpdated?: () =
         <CardRow label="Foto de perfil" description="PNG ou JPEG, máx. 2 MB">
             <div className="flex flex-col items-end gap-1.5">
                 <div className="flex items-center gap-3">
-                    {/* Avatar atual ou iniciais */}
-                    {preview ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                            src={preview}
-                            alt={user.name}
-                            className="size-10 rounded-full object-cover ring-2 ring-slate-100"
-                        />
-                    ) : (
-                        <div className="flex size-10 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-600">
-                            {initials(user.name)}
-                        </div>
-                    )}
+                    {/* Avatar atual ou imagem de exemplo, quando o usuário não tem foto própria */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                        src={preview ?? fallbackAvatarSrc(user.id)}
+                        alt={user.name}
+                        className="size-10 rounded-full object-cover ring-2 ring-slate-100"
+                    />
 
                     <label htmlFor="avatar-upload" className="cursor-pointer">
                         <input
