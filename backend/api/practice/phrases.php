@@ -11,6 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 if (isset($_GET['category']) || isset($_GET['category_id'])) {
+    if (! isset($_SESSION['user_id'])) {
+        json_out(['error' => 'Não autenticado'], 401);
+        exit;
+    }
     requirePro($pdo);
 }
 

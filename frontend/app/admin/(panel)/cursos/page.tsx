@@ -87,7 +87,10 @@ export default function CursosPage() {
                             <tbody>
                                 {!loading && courses.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="px-5 py-10 text-center text-slate-400">
+                                        <td
+                                            colSpan={5}
+                                            className="px-5 py-10 text-center text-slate-400"
+                                        >
                                             Nenhum curso cadastrado.
                                         </td>
                                     </tr>
@@ -101,8 +104,12 @@ export default function CursosPage() {
                                         )}
                                     >
                                         <td className="px-5 py-3">
-                                            <div className="font-medium text-slate-800">{course.title}</div>
-                                            <div className="text-xs text-slate-400">/{course.slug}</div>
+                                            <div className="font-medium text-slate-800">
+                                                {course.title}
+                                            </div>
+                                            <div className="text-xs text-slate-400">
+                                                /{course.slug}
+                                            </div>
                                         </td>
                                         <td className="px-5 py-3 text-slate-600">
                                             {COURSE_LEVEL_LABELS[course.level]}

@@ -38,20 +38,20 @@ export default async function RankingPage() {
         <NavLayout>
             <main className="page-enter mx-auto flex max-w-5xl flex-col gap-6 px-4 pt-8 pb-25">
                 <div className="mb-8 text-center">
-                        <div className="mb-2 flex items-center justify-center gap-2">
+                    <div className="mb-2 flex items-center justify-center gap-2">
                         <span className="h-2 w-2 rounded-full bg-blue-600"></span>
 
                         <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-                                 Desempenho da comunidade
+                            Desempenho da comunidade
                         </h1>
 
                         <span className="h-2 w-2 rounded-full bg-blue-600"></span>
                     </div>
 
                     <p className="text-sm font-medium text-slate-500">
-                     Veja quem está se destacando nos estudos.
+                        Veja quem está se destacando nos estudos.
                     </p>
-                    </div>
+                </div>
 
                 {leaderboard.length === 0 ? (
                     <p className="py-16 text-center text-sm text-slate-400">

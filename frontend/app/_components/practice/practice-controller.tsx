@@ -1,7 +1,6 @@
 "use client"
 
 import { apiClient } from "@/app/_lib/api"
-import { toast } from "sonner"
 import { Sparkles } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { type Phrase, type Feedback } from "@/app/_lib/practice"
@@ -78,11 +77,11 @@ export function PracticeController({ phrases, isPremium }: Props) {
 
     const effectiveCategory = isPremium ? category : "all"
 
-    
-
     // Frases filtradas pela dificuldade ativa
     const filteredPhrases = phrases.filter(
-        (p) => p.difficulty === difficulty && (effectiveCategory === "all" || p.category === effectiveCategory)
+        (p) =>
+            p.difficulty === difficulty &&
+            (effectiveCategory === "all" || p.category === effectiveCategory)
     )
 
     const handleChangeCategory = (newCategory: string) => {
@@ -90,7 +89,8 @@ export function PracticeController({ phrases, isPremium }: Props) {
         localStorage.setItem("fluency-lab:category", newCategory)
         setCategory(newCategory)
         const newFiltered = phrases.filter(
-            (p) => p.difficulty === difficulty && (newCategory === "all" || p.category === newCategory)
+            (p) =>
+                p.difficulty === difficulty && (newCategory === "all" || p.category === newCategory)
         )
         setCurrentIndex(Math.floor(Math.random() * newFiltered.length))
         setAnswer("")
@@ -99,15 +99,19 @@ export function PracticeController({ phrases, isPremium }: Props) {
         phraseStartRef.current = Date.now()
     }
 
-    
-
     // Índice da frase atual dentro de filteredPhrases — inicializado aleatoriamente
+    // (mesmo filtro de dificuldade + categoria que filteredPhrases, senão o índice
+    // sorteado pode cair fora do range da lista realmente exibida)
     const [currentIndex, setCurrentIndex] = useState(() => {
         const saved =
             typeof window !== "undefined"
                 ? (localStorage.getItem("fluency-lab:difficulty") ?? "medium")
                 : "medium"
-        const initial = phrases.filter((p) => p.difficulty === saved)
+        const initial = phrases.filter(
+            (p) =>
+                p.difficulty === saved &&
+                (effectiveCategory === "all" || p.category === effectiveCategory)
+        )
         return Math.floor(Math.random() * initial.length)
     })
 
@@ -211,7 +215,7 @@ export function PracticeController({ phrases, isPremium }: Props) {
 
     // Avança para uma frase aleatória diferente da atual (dentro da dificuldade ativa)
     const handleNext = () => {
-        if (!phrase || loading || categoryLock.current) return
+        if (!phrase || loading) return
         // "Pular" (sem feedback na tela) também consome uma questão do convidado.
         // Já o "próxima" após responder não conta de novo (a verificação já contou).
         if (isGuest && feedback === null) setGuestUsed((n) => n + 1)
@@ -232,11 +236,13 @@ export function PracticeController({ phrases, isPremium }: Props) {
 
     // Troca a dificuldade ativa, persiste no localStorage e sorteia nova frase
     const handleChangeDifficulty = (newDifficulty: string) => {
-        if (loading || categoryLock.current) return
+        if (loading) return
         localStorage.setItem("fluency-lab:difficulty", newDifficulty)
         setDifficulty(newDifficulty)
         const newFiltered = phrases.filter(
-            (p) => p.difficulty === newDifficulty && (effectiveCategory === "all" || p.category === effectiveCategory)
+            (p) =>
+                p.difficulty === newDifficulty &&
+                (effectiveCategory === "all" || p.category === effectiveCategory)
         )
         setCurrentIndex(Math.floor(Math.random() * newFiltered.length))
         setAnswer("")
@@ -308,14 +314,25 @@ export function PracticeController({ phrases, isPremium }: Props) {
         return (
             <div className="page-enter mx-auto flex max-w-lg flex-col items-center gap-4 px-5 py-20 text-center">
                 <p className="text-sm text-gray-500">
-                    Nenhuma frase disponível para esta dificuldade no momento.
+                    Nenhuma frase disponível para esta combinação de dificuldade e categoria no
+                    momento.
                 </p>
-                <button
-                    onClick={() => handleChangeDifficulty("medium")}
-                    className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-                >
-                    Tentar dificuldade Médio
-                </button>
+                <div className="flex flex-wrap justify-center gap-2">
+                    <button
+                        onClick={() => handleChangeDifficulty("medium")}
+                        className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                    >
+                        Tentar dificuldade Médio
+                    </button>
+                    {effectiveCategory !== "all" && (
+                        <button
+                            onClick={() => handleChangeCategory("all")}
+                            className="rounded-2xl border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        >
+                            Ver todas as categorias
+                        </button>
+                    )}
+                </div>
             </div>
         )
     }
@@ -336,36 +353,31 @@ export function PracticeController({ phrases, isPremium }: Props) {
                 </p>
             )}
 
-            <div className="mb-5 flex flex-wrap items-center gap-3">
-                <label htmlFor="practice-category" className="text-sm font-semibold text-slate-700">Categoria · Pro</label>
-                <select id="practice-category" value={category}
-                    disabled={!isPro || loading || categoryLoading}
-                    onChange={(event) => handleChangeCategory(event.target.value)}
-                    className="max-w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm disabled:opacity-50">
-                    <option value="">Todas as categorias</option>
-                    {categories.map((name) => <option key={name} value={name}>{name}</option>)}
-                </select>
-                {!isPro && <a href="/planos" className="text-sm font-semibold text-blue-600">Desbloquear com Pro</a>}
-                {categoryLoading && <span role="status" className="text-sm text-slate-500">Carregando categoria…</span>}
-            </div>
-
             <PracticeHeader
-            difficulty={difficulty}
-            onChangeDifficulty={handleChangeDifficulty}
-            category={effectiveCategory}
-            onChangeCategory={handleChangeCategory}
-            categories={categories}
-            isPremium={isPremium}
-            isFav={isFav}
-            justFavorited={justFavorited}
-            onToggleFavorite={() => toggleFavorite(phrase.id)}
-            showFavorite={!isGuest}
-        />
+                difficulty={difficulty}
+                onChangeDifficulty={handleChangeDifficulty}
+                category={effectiveCategory}
+                onChangeCategory={handleChangeCategory}
+                categories={categories}
+                isPremium={isPremium}
+            />
 
-            {!phrase && <p role="status" className="rounded-2xl bg-slate-50 p-6 text-slate-600">Nenhuma frase nesta combinação. Escolha outra categoria ou dificuldade.</p>}
-            {phrase && <PhraseCard phrase={phrase} />}
+            {!phrase && (
+                <p role="status" className="rounded-2xl bg-slate-50 p-6 text-slate-600">
+                    Nenhuma frase nesta combinação. Escolha outra categoria ou dificuldade.
+                </p>
+            )}
+            {phrase && (
+                <PhraseCard
+                    phrase={phrase}
+                    isFav={isFav}
+                    justFavorited={justFavorited}
+                    onToggleFavorite={() => toggleFavorite(phrase.id)}
+                    showFavorite={!isGuest}
+                />
+            )}
 
-            {phrase && !feedback && !categoryLoading && (
+            {phrase && !feedback && (
                 <AnswerForm
                     loading={loading}
                     answer={answer}

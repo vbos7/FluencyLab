@@ -1,7 +1,8 @@
 <?php
-require_once __DIR__ . '/cors.php';
-require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/lib/url.php';
+
+require_once __DIR__.'/cors.php';
+require_once __DIR__.'/db.php';
+require_once __DIR__.'/lib/url.php';
 
 if (empty($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
@@ -39,7 +40,7 @@ if ($infoImagem === false) {
     exit;
 }
 $mime = $infoImagem['mime'] ?? '';
-if (!in_array($mime, $tiposPermitidos, true)) {
+if (! in_array($mime, $tiposPermitidos, true)) {
     json_out(['error' => 'Formato inválido. Use JPG, PNG ou WEBP.'], 422);
     exit;
 }
@@ -50,37 +51,37 @@ try {
     // Extensão real a partir do MIME detectado (não do nome/tipo enviado)
     $extensao = match ($mime) {
         'image/jpeg' => 'jpg',
-        'image/png'  => 'png',
+        'image/png' => 'png',
         'image/webp' => 'webp',
     };
 
-    $nomeArquivo = "user_{$userId}_" . time() . "." . $extensao;
-    $pastaFisica = __DIR__ . '/uploads/avatars/';
-    $caminhoCompleto = $pastaFisica . $nomeArquivo;
-    $caminhoRelativo = 'api/uploads/avatars/' . $nomeArquivo;
+    $nomeArquivo = "user_{$userId}_".time().'.'.$extensao;
+    $pastaFisica = __DIR__.'/uploads/avatars/';
+    $caminhoCompleto = $pastaFisica.$nomeArquivo;
+    $caminhoRelativo = 'api/uploads/avatars/'.$nomeArquivo;
 
-    if (!is_dir($pastaFisica)) {
+    if (! is_dir($pastaFisica)) {
         mkdir($pastaFisica, 0755, true);
     }
 
     // Sem GD por enquanto: só move o arquivo original pro destino, sem redimensionar
-    if (!move_uploaded_file($arquivo['tmp_name'], $caminhoCompleto)) {
+    if (! move_uploaded_file($arquivo['tmp_name'], $caminhoCompleto)) {
         json_out(['error' => 'Falha ao salvar o arquivo no servidor'], 500);
         exit;
     }
 
     // Remove o avatar antigo do disco, se existir
-    $stmt = $pdo->prepare("SELECT avatar FROM users WHERE id = ?");
+    $stmt = $pdo->prepare('SELECT avatar FROM users WHERE id = ?');
     $stmt->execute([$userId]);
     $avatarAntigo = $stmt->fetchColumn();
     if ($avatarAntigo) {
-        $caminhoAntigoFisico = $pastaFisica . basename($avatarAntigo);
+        $caminhoAntigoFisico = $pastaFisica.basename($avatarAntigo);
         if (file_exists($caminhoAntigoFisico)) {
             unlink($caminhoAntigoFisico);
         }
     }
 
-    $stmt = $pdo->prepare("UPDATE users SET avatar = ? WHERE id = ?");
+    $stmt = $pdo->prepare('UPDATE users SET avatar = ? WHERE id = ?');
     $stmt->execute([$caminhoRelativo, $userId]);
 
     json_out(['success' => true, 'avatar_url' => avatar_url($caminhoRelativo)]);

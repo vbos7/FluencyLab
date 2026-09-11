@@ -2,12 +2,15 @@
 
 function hasActivePro(PDO $pdo, ?int $userId): bool
 {
-    if (! $userId) return false;
+    if (! $userId) {
+        return false;
+    }
     $stmt = $pdo->prepare("SELECT up.id FROM user_plan up
         JOIN plans p ON p.id = up.plan_id
         WHERE up.user_id = ? AND up.status = 'active' AND p.name = 'Pro'
         AND (up.expires_at IS NULL OR up.expires_at > NOW()) LIMIT 1");
     $stmt->execute([$userId]);
+
     return (bool) $stmt->fetchColumn();
 }
 

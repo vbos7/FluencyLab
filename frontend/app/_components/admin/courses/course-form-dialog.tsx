@@ -145,7 +145,7 @@ export function CourseFormDialog({
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Do que se trata este curso…"
                             rows={3}
-                            className="w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+                            className="border-input focus-visible:border-ring focus-visible:ring-ring/50 w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus-visible:ring-2"
                         />
                     </div>
 

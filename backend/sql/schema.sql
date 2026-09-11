@@ -167,6 +167,17 @@ CREATE TABLE IF NOT EXISTS phrases (
     CONSTRAINT fk_phrases_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT
 );
 
+-- Frases que o aluno marcou como favoritas (usado na aba "Favoritas" do perfil).
+CREATE TABLE IF NOT EXISTS favorite_phrases (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT NOT NULL,
+    phrase_id  INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_favorite (user_id, phrase_id),
+    FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
+    FOREIGN KEY (phrase_id) REFERENCES phrases(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS attempts (
     id          INT AUTO_INCREMENT PRIMARY KEY,
     user_id     INT          NOT NULL,

@@ -15,7 +15,9 @@ if (! isset($_SESSION['user_id'])) {
 }
 
 $detailed = isset($_GET['detailed']);
-if ($detailed) requirePro($pdo);
+if ($detailed) {
+    requirePro($pdo);
+}
 
 $stmt = $pdo->prepare('
     SELECT

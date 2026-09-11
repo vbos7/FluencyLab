@@ -23,25 +23,25 @@ export default async function CursosPage() {
                     {/* Header */}
                     <div className="mb-10 text-center">
                         <div className="mb-8 text-center">
-                        <div className="mb-2 flex items-center justify-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                            <div className="mb-2 flex items-center justify-center gap-2">
+                                <span className="h-2 w-2 rounded-full bg-blue-600"></span>
 
-                        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-                                 Explore seus cursos
-                        </h1>
+                                <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+                                    Explore seus cursos
+                                </h1>
 
-                        <span className="h-2 w-2 rounded-full bg-blue-600"></span>
-                    </div>
+                                <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                            </div>
 
-                    <p className="mx-auto max-w-2xl leading-relaxed text-sm font-medium text-slate-500">
-                            Escolha seu nível e comece sua jornada rumo à fluência no inglês. <br />
-                            <span className="font-semibold text-blue-600">
-                                {" "}
-                                Aulas práticas e eficazes.
-                            </span>
-                        </p>
-                    </div>
-                        
+                            <p className="mx-auto max-w-2xl text-sm leading-relaxed font-medium text-slate-500">
+                                Escolha seu nível e comece sua jornada rumo à fluência no inglês.{" "}
+                                <br />
+                                <span className="font-semibold text-blue-600">
+                                    {" "}
+                                    Aulas práticas e eficazes.
+                                </span>
+                            </p>
+                        </div>
                     </div>
 
                     {/* Cards HORIZONTAIS empilhados */}

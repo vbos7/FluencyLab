@@ -12,8 +12,8 @@ export function MaintenanceScreen({ appName = "FluencyLab" }: { appName?: string
                 {appName} em manutenção
             </h1>
             <p className="max-w-sm text-sm text-slate-500">
-                Estamos fazendo alguns ajustes para melhorar sua experiência. Volte em
-                instantes — já já estará tudo no ar de novo.
+                Estamos fazendo alguns ajustes para melhorar sua experiência. Volte em instantes —
+                já já estará tudo no ar de novo.
             </p>
         </main>
     )
