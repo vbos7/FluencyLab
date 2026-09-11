@@ -61,6 +61,27 @@ export type AdminCategory = {
     phrase_count: number
 }
 
+// ─── Cursos ──────────────────────────────────────────────────────────────────
+
+export type CourseLevel = "basico" | "intermediario" | "avancado"
+
+// GET /api/admin/courses.php
+export type AdminCourse = {
+    id: number
+    slug: string
+    title: string
+    description: string | null
+    level: CourseLevel
+    order_num: number
+    lesson_count: number
+}
+
+export const COURSE_LEVEL_LABELS: Record<CourseLevel, string> = {
+    basico: "Básico",
+    intermediario: "Intermediário",
+    avancado: "Avançado",
+}
+
 // Rótulo/estilo por dificuldade — o backend guarda em inglês, a UI mostra em PT.
 export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
     easy: "Fácil",

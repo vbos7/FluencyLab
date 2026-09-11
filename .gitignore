@@ -15,3 +15,5 @@ backend/api/uploads/
 .DS_Store
 .idea/
 .claude/
+docs/apresentacao/
+flab-shots/
