@@ -270,12 +270,16 @@ CREATE TABLE IF NOT EXISTS plan_features (
 );
 
 CREATE TABLE IF NOT EXISTS user_plan (
-    id         INT AUTO_INCREMENT PRIMARY KEY,
-    user_id    INT  NOT NULL,
-    plan_id    INT  NOT NULL,
-    started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    expires_at DATETIME NULL,                    -- NULL = vitalício
-    status     ENUM('active','canceled','expired') NOT NULL DEFAULT 'active',
+    id                INT AUTO_INCREMENT PRIMARY KEY,
+    user_id           INT  NOT NULL,
+    plan_id           INT  NOT NULL,
+    started_at        DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at        DATETIME NULL,                    -- NULL = vitalício
+    status            ENUM('active','canceled','expired') NOT NULL DEFAULT 'active',
+    -- Id da Checkout Session da Stripe que originou esta linha. UNIQUE garante que o
+    -- webhook e a confirmação síncrona do retorno do checkout não dupliquem o plano
+    -- se ambos tentarem gravar a mesma sessão (idempotência).
+    stripe_session_id VARCHAR(255) NULL UNIQUE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (plan_id) REFERENCES plans(id)
 );
@@ -451,6 +455,15 @@ SET @ddl := IF(
     (SELECT COUNT(*) FROM information_schema.COLUMNS
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'plans' AND COLUMN_NAME = 'features') = 1,
     'ALTER TABLE plans DROP COLUMN features',
+    'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
+-- 10) adiciona user_plan.stripe_session_id em bancos criados antes da integração
+--     Stripe (Checkout Session hospedado; ver backend/api/stripe/).
+SET @ddl := IF(
+    (SELECT COUNT(*) FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'user_plan' AND COLUMN_NAME = 'stripe_session_id') = 0,
+    'ALTER TABLE user_plan ADD COLUMN stripe_session_id VARCHAR(255) NULL UNIQUE',
     'SELECT 1');
 PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
 

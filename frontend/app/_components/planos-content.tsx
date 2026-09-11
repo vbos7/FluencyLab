@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import CheckoutModal from "@/app/_components/checkout-modal"
-import { type Feature, type ProPlan } from "@/app/_lib/plans"
+import { apiClient } from "@/app/_lib/api"
+import { type CheckoutSession, type Feature, type ProPlan } from "@/app/_lib/plans"
 
 const featuresF = [
     { label: "Traduções ilimitadas por dia", included: true },
@@ -48,7 +48,23 @@ function FeatureItem({ f }: { f: Feature }) {
 }
 
 export default function PlanosContent({ proPlan }: { proPlan: ProPlan }) {
-    const [showCheckout, setShowCheckout] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState("")
+
+    async function handleAssinar() {
+        if (!proPlan) return
+        setLoading(true)
+        setError("")
+        try {
+            const res = await apiClient.post<CheckoutSession>("/stripe/create-checkout-session.php", {
+                plan_id: proPlan.id,
+            })
+            window.location.href = res.data.url
+        } catch {
+            setError("Não foi possível iniciar o checkout. Tente novamente.")
+            setLoading(false)
+        }
+    }
 
     return (
         <div className="relative grid min-h-screen place-items-center overflow-hidden p-7">
@@ -112,30 +128,24 @@ export default function PlanosContent({ proPlan }: { proPlan: ProPlan }) {
                             ))}
                         </ul>
                         <button
-                            onClick={() => setShowCheckout(true)}
-                            disabled={!proPlan}
+                            onClick={handleAssinar}
+                            disabled={!proPlan || loading}
                             className="mt-2 w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            Assinar Pro
+                            {loading ? "Redirecionando..." : "Assinar Pro"}
                         </button>
+                        {error && (
+                            <p role="alert" className="text-center text-xs text-red-600">
+                                {error}
+                            </p>
+                        )}
                     </div>
                 </div>
 
                 <p className="mt-8 text-center text-xs text-gray-400">
-                    Pagamento via Pix ou cartão. Cancele quando quiser.
+                    Pagamento processado com segurança pela Stripe. Cancele quando quiser.
                 </p>
             </main>
-
-            {/* Modal */}
-            {showCheckout && proPlan && (
-                <CheckoutModal
-                    planId={proPlan.id}
-                    planName={proPlan.name}
-                    price={Number(proPlan.price)}
-                    billingPeriod={proPlan.billing_period}
-                    onClose={() => setShowCheckout(false)}
-                />
-            )}
         </div>
     )
 }

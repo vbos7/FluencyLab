@@ -113,7 +113,7 @@ export default async function ProfilePage() {
                     />
                 )}
 
-                <PremiumCard />
+                {!planStatus.active && <PremiumCard />}
 
                 <LogoutButton />
             </div>

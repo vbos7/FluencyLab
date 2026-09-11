@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import NavLayout from "@/app/_layouts/nav-layout"
 import { WelcomeHeader } from "@/app/_components/home/welcome-header"
 import { OnboardingDialog } from "@/app/_components/home/onboarding-dialog"
@@ -9,6 +10,7 @@ import { computeStats, type DashboardData } from "@/app/_lib/progress"
 import { getLevel } from "@/app/_lib/ranking"
 import { CoursesCard } from "@/app/_components/home/courses-card"
 import ProModal from "@/app/_components/pro-modal"
+import { CheckoutThankYouModal } from "@/app/_components/checkout-thank-you-modal"
 import { fetchFromApi } from "../_lib/server-api"
 
 type Users = { id: number; name: string; email: string; phone: string | null; role: string }
@@ -29,6 +31,9 @@ export default async function HomePage() {
         <NavLayout>
             <ProModal />
             <OnboardingDialog />
+            <Suspense fallback={null}>
+                <CheckoutThankYouModal />
+            </Suspense>
             <div className="page-enter relative mx-auto min-h-dvh max-w-5xl bg-white px-4 pb-24 sm:px-6 lg:px-8">
                 <WelcomeHeader name={user.name} />
 
