@@ -7,11 +7,22 @@
 import { apiClient } from "@/app/_lib/api"
 import type {
     AdminCategory,
+    AdminCourse,
     AdminPhrase,
     AdminSettings,
     AdminUser,
+    CourseLevel,
     Difficulty,
 } from "@/app/_lib/admin"
+
+// Campos enviados ao criar/editar um curso.
+export type CourseInput = {
+    slug: string
+    title: string
+    description: string
+    level: CourseLevel
+    order_num: number
+}
 
 // ─── Usuários ──────────────────────────────────────────────────────────────────
 
@@ -75,6 +86,25 @@ export async function updateCategory(id: number, name: string): Promise<void> {
 
 export async function deleteCategory(id: number): Promise<void> {
     await apiClient.delete(`/admin/categories.php?id=${id}`)
+}
+
+// ─── Cursos ──────────────────────────────────────────────────────────────────
+
+export async function listCourses(): Promise<AdminCourse[]> {
+    const { data } = await apiClient.get<AdminCourse[]>("/admin/courses.php")
+    return data
+}
+
+export async function createCourse(payload: CourseInput): Promise<void> {
+    await apiClient.post("/admin/courses.php", payload)
+}
+
+export async function updateCourse(id: number, payload: CourseInput): Promise<void> {
+    await apiClient.put(`/admin/courses.php?id=${id}`, payload)
+}
+
+export async function deleteCourse(id: number): Promise<void> {
+    await apiClient.delete(`/admin/courses.php?id=${id}`)
 }
 
 // ─── Configurações ──────────────────────────────────────────────────────────────
