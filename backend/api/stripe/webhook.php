@@ -23,10 +23,18 @@ $payload       = file_get_contents('php://input');
 $sigHeader     = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
 $webhookSecret = env('STRIPE_WEBHOOK_SECRET');
 
+// Sem o segredo não há como saber se o evento veio mesmo da Stripe: qualquer um
+// poderia forjar um checkout.session.completed "pago" e ganhar o plano. Recusa
+// com 500 (a Stripe tenta de novo depois que o segredo for configurado).
+if ($webhookSecret === '') {
+    error_log('[stripe/webhook] STRIPE_WEBHOOK_SECRET ausente — evento recusado');
+    http_response_code(500);
+
+    exit;
+}
+
 try {
-    $event = $webhookSecret !== ''
-        ? \Stripe\Webhook::constructEvent($payload, $sigHeader, $webhookSecret)
-        : \Stripe\Event::constructFrom(json_decode($payload, true));
+    $event = \Stripe\Webhook::constructEvent($payload, $sigHeader, $webhookSecret);
 } catch (\Exception $e) {
     http_response_code(400);
 
