@@ -1,11 +1,13 @@
 <?php
 
-require_once __DIR__.'/cors.php';
-require_once __DIR__.'/db.php';
+require_once __DIR__ . '/cors.php';
+
+require_once __DIR__ . '/db.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if (empty($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
+
     exit;
 }
 
@@ -49,6 +51,7 @@ try {
     );
     $stmt->execute([$userId]);
     $treinosPorSemana = [];
+
     foreach ($stmt->fetchAll() as $row) {
         $treinosPorSemana[(int) $row['week_key']] = (int) $row['treinos'];
     }
@@ -62,6 +65,7 @@ try {
     );
     $stmt->execute([$userId]);
     $xpPorSemana = [];
+
     foreach ($stmt->fetchAll() as $row) {
         $xpPorSemana[(int) $row['week_key']] = (int) $row['xp'];
     }
@@ -69,27 +73,29 @@ try {
     // Monta as últimas 12 semanas em ordem, preenchendo com 0 onde não há dados
     $weekly = [];
     $monday = new DateTime('monday this week');
+
     for ($i = 11; $i >= 0; $i--) {
         $weekStart = (clone $monday)->modify("-{$i} week");
-        $weekKey = (int) $weekStart->format('oW'); // ano ISO + semana ISO, bate com YEARWEEK(mode 3)
-        $weekly[] = [
-            'week' => $weekStart->format('d/m'),
+        $weekKey   = (int) $weekStart->format('oW'); // ano ISO + semana ISO, bate com YEARWEEK(mode 3)
+        $weekly[]  = [
+            'week'    => $weekStart->format('d/m'),
             'treinos' => $treinosPorSemana[$weekKey] ?? 0,
-            'xp' => $xpPorSemana[$weekKey] ?? 0,
+            'xp'      => $xpPorSemana[$weekKey] ?? 0,
         ];
     }
 
     $diasComAtividade = [];
+
     foreach ($consistencia as $item) {
         if ($item['atividades'] > 0) {
             $diasComAtividade[$item['dia']] = true;
         }
     }
 
-    $hoje = new DateTime('today');
+    $hoje   = new DateTime('today');
     $cursor = clone $hoje;
 
-    if (! isset($diasComAtividade[$cursor->format('Y-m-d')])) {
+    if (!isset($diasComAtividade[$cursor->format('Y-m-d')])) {
         $cursor->modify('-1 day');
     }
 
@@ -100,13 +106,13 @@ try {
     }
 
     json_out([
-        'total_treinos' => (int) $stats['total_treinos'],
-        'taxa_acerto' => (int) ($stats['taxa_acerto'] ?? 0),
+        'total_treinos'        => (int) $stats['total_treinos'],
+        'taxa_acerto'          => (int) ($stats['taxa_acerto'] ?? 0),
         'tempo_total_segundos' => (int) $stats['tempo_total_segundos'],
-        'xp_total' => (int) $xp['xp_total'],
-        'streak' => $streak,
-        'consistencia' => $consistencia,
-        'weekly' => $weekly,
+        'xp_total'             => (int) $xp['xp_total'],
+        'streak'               => $streak,
+        'consistencia'         => $consistencia,
+        'weekly'               => $weekly,
     ]);
 
 } catch (PDOException $e) {

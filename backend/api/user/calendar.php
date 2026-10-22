@@ -1,15 +1,19 @@
 <?php
 
-require_once __DIR__.'/../cors.php';
-require_once __DIR__.'/../db.php';
+require_once __DIR__ . '/../cors.php';
+
+require_once __DIR__ . '/../db.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     json_out(['error' => 'Método não permitido'], 405);
+
     exit;
 }
-if (! isset($_SESSION['user_id'])) {
+
+if (!isset($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
+
     exit;
 }
 
@@ -28,7 +32,7 @@ $resultado = array_map(function ($row) {
         $count >= 6 => 3,
         $count >= 3 => 2,
         $count >= 1 => 1,
-        default => 0,
+        default     => 0,
     };
 
     return ['date' => $row['date'], 'level' => $level];

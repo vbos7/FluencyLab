@@ -9,10 +9,10 @@
  * logins do painel.
  */
 
-require_once __DIR__.'/../guard.php';
+require_once __DIR__ . '/../guard.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
-require_once __DIR__.'/../../lib/webauthn.php';
+require_once __DIR__ . '/../../lib/webauthn.php';
 
 use lbuchs\WebAuthn\WebAuthnException;
 
@@ -20,27 +20,31 @@ requireAdmin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['error' => 'Método não permitido'], 405);
+
     exit;
 }
 
 $userId = (int) $_SESSION['user_id'];
-$body = json_decode(file_get_contents('php://input'), true) ?? [];
+$body   = json_decode(file_get_contents('php://input'), true) ?? [];
 
-$clientDataJSON = b64u_decode((string) ($body['clientDataJSON'] ?? ''));
+$clientDataJSON    = b64u_decode((string) ($body['clientDataJSON'] ?? ''));
 $attestationObject = b64u_decode((string) ($body['attestationObject'] ?? ''));
-$apelido = trim((string) ($body['name'] ?? '')) ?: null;
+$apelido           = trim((string) ($body['name'] ?? '')) ?: null;
 
 $challenge = webauthn_take_challenge();
+
 if ($challenge === null || $clientDataJSON === '' || $attestationObject === '') {
     json_out(['errors' => ['Cerimônia de registro inválida ou expirada. Tente de novo.']], 422);
+
     exit;
 }
 
 try {
-    $wa = webauthn_server();
+    $wa   = webauthn_server();
     $data = $wa->processCreate($clientDataJSON, $attestationObject, $challenge, true);
 } catch (WebAuthnException $e) {
-    json_out(['errors' => ['Não foi possível registrar o passkey: '.$e->getMessage()]], 422);
+    json_out(['errors' => ['Não foi possível registrar o passkey: ' . $e->getMessage()]], 422);
+
     exit;
 }
 

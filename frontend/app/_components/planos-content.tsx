@@ -56,9 +56,12 @@ export default function PlanosContent({ proPlan }: { proPlan: ProPlan }) {
         setLoading(true)
         setError("")
         try {
-            const res = await apiClient.post<CheckoutSession>("/stripe/create-checkout-session.php", {
-                plan_id: proPlan.id,
-            })
+            const res = await apiClient.post<CheckoutSession>(
+                "/stripe/create-checkout-session.php",
+                {
+                    plan_id: proPlan.id,
+                }
+            )
             window.location.href = res.data.url
         } catch {
             setError("Não foi possível iniciar o checkout. Tente novamente.")

@@ -1,19 +1,23 @@
 <?php
 
-require_once __DIR__.'/cors.php';
-require_once __DIR__.'/db.php';
-require_once __DIR__.'/config/mail.php';
+require_once __DIR__ . '/cors.php';
+
+require_once __DIR__ . '/db.php';
+
+require_once __DIR__ . '/config/mail.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['error' => 'Método não permitido'], 405);
+
     exit;
 }
 
-$body = json_decode(file_get_contents('php://input'), true);
+$body  = json_decode(file_get_contents('php://input'), true);
 $email = trim($body['email'] ?? '');
 
-if (empty($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     json_out(['errors' => ['Email inválido']], 422);
+
     exit;
 }
 
@@ -25,9 +29,9 @@ try {
     // Só gera/envia se a conta existir — mas a RESPOSTA é sempre a mesma (abaixo),
     // pra não revelar quais e-mails têm cadastro (evita enumeração de usuários).
     if ($user) {
-        $codigo = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $codigo     = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $codigoHash = password_hash($codigo, PASSWORD_DEFAULT);
-        $expiraEm = date('Y-m-d H:i:s', strtotime('+15 minutes'));
+        $expiraEm   = date('Y-m-d H:i:s', strtotime('+15 minutes'));
 
         $stmt = $pdo->prepare('UPDATE password_resets SET used = 1 WHERE user_id = ? AND used = 0');
         $stmt->execute([$user['id']]);
@@ -43,7 +47,7 @@ try {
             templateEmailCodigo($user['name'], $codigo)
         );
 
-        if (! $enviado) {
+        if (!$enviado) {
             error_log("Falha ao enviar código de recuperação para user_id={$user['id']}");
         }
     }

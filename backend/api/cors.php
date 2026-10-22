@@ -7,14 +7,14 @@
  *   2. Inicia a sessão PHP (para ler/gravar $_SESSION)
  *   3. Responde imediatamente a requisições OPTIONS (preflight do browser)
  */
-require_once __DIR__.'/env.php';
+require_once __DIR__ . '/env.php';
 
 // Duração da sessão persistente ("Manter conectado"): 30 dias.
 const SESSION_LIFETIME = 2592000;
 
 // Origem do Next.js autorizada a chamar esta API. O default cobre o
 // `npm run dev` padrão; mude APP_ORIGIN no .env se usar outra porta.
-header('Access-Control-Allow-Origin: '.env('APP_ORIGIN', 'http://localhost:3000'));
+header('Access-Control-Allow-Origin: ' . env('APP_ORIGIN', 'http://localhost:3000'));
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
@@ -52,8 +52,8 @@ session_set_cookie_params([
     'lifetime' => $remember ? SESSION_LIFETIME : 0,
     'samesite' => 'Lax',
     'httponly' => false,
-    'secure' => $https,
-    'path' => '/',
+    'secure'   => $https,
+    'path'     => '/',
 ]);
 
 session_start();
@@ -84,10 +84,11 @@ function request_is_https(): bool
  */
 function client_ip(): string
 {
-    if (! empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
         return $_SERVER['HTTP_CF_CONNECTING_IP'];
     }
-    if (! empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
         return trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
     }
 
@@ -104,9 +105,9 @@ function client_ip(): string
 function aplicar_remember(bool $remember): void
 {
     $base = [
-        'path' => '/',
+        'path'     => '/',
         'samesite' => 'Lax',
-        'secure' => request_is_https(),
+        'secure'   => request_is_https(),
         'httponly' => false,
     ];
 

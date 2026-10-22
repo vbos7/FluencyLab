@@ -1,11 +1,13 @@
 <?php
 
-require_once __DIR__.'/cors.php';
-require_once __DIR__.'/db.php';
+require_once __DIR__ . '/cors.php';
+
+require_once __DIR__ . '/db.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     json_out(['error' => 'Método não permitido'], 405);
+
     exit;
 }
 
@@ -43,6 +45,7 @@ try {
          ORDER BY c.order_num'
         );
         json_out($stmt->fetchAll());
+
         exit;
     }
 
@@ -55,8 +58,9 @@ try {
     $stmt->execute([$slug]);
     $course = $stmt->fetch();
 
-    if (! $course) {
+    if (!$course) {
         json_out(['error' => 'Curso não encontrado'], 404);
+
         exit;
     }
 
@@ -72,7 +76,7 @@ try {
     // Remove o youtube_id de aulas bloqueadas, pra ninguém "roubar" o vídeo pelo Network
     foreach ($lessons as &$lesson) {
         $lesson['is_free'] = (bool) $lesson['is_free'];
-        $lesson['locked'] = ! $lesson['is_free'] && ! $temPremium;
+        $lesson['locked']  = !$lesson['is_free'] && !$temPremium;
 
         if ($lesson['locked']) {
             $lesson['youtube_id'] = null; // esconde o vídeo de quem não tem acesso
@@ -80,16 +84,18 @@ try {
     }
     unset($lesson);
 
-    $course['lessons'] = $lessons;
-    $course['total_lessons'] = count($lessons);
-    $course['total_duration'] = array_sum(array_column($lessons, 'duration'));
+    $course['lessons']          = $lessons;
+    $course['total_lessons']    = count($lessons);
+    $course['total_duration']   = array_sum(array_column($lessons, 'duration'));
     $course['user_has_premium'] = $temPremium;
 
     json_out($course);
+
     exit;
 
 } catch (PDOException $e) {
     error_log($e->getMessage());
     json_out(['error' => 'Erro interno no servidor'], 500);
+
     exit;
 }

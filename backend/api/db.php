@@ -15,7 +15,7 @@
  * é "access denied" na hora, e não uma conexão silenciosa num banco errado.
  */
 
-require_once __DIR__.'/env.php';
+require_once __DIR__ . '/env.php';
 
 $host = env('DB_HOST');
 $port = env('DB_PORT', '3306');
@@ -25,6 +25,7 @@ $pass = env('DB_PASS');
 
 if ($host === '' || $name === '' || $user === '') {
     http_response_code(500);
+
     exit(json_encode([
         'error' => 'Configuração do banco ausente. Copie o .env.example para .env e preencha.',
     ], JSON_UNESCAPED_UNICODE));

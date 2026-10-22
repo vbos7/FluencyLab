@@ -1,7 +1,8 @@
 <?php
 
-require_once __DIR__.'/cors.php';
-require_once __DIR__.'/db.php';
+require_once __DIR__ . '/cors.php';
+
+require_once __DIR__ . '/db.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 try {
@@ -9,6 +10,7 @@ try {
         // GET /api/comentarios.php?lesson_id=1
         if (empty($_GET['lesson_id'])) {
             json_out(['error' => 'lesson_id é obrigatório'], 400);
+
             exit;
         }
 
@@ -22,6 +24,7 @@ try {
         );
         $stmt->execute([$_GET['lesson_id']]);
         json_out($stmt->fetchAll());
+
         exit;
     }
 
@@ -29,6 +32,7 @@ try {
         // Precisa estar logado — user_id vem da sessão, não do body
         if (empty($_SESSION['user_id'])) {
             json_out(['error' => 'Você precisa estar logado para comentar'], 401);
+
             exit;
         }
 
@@ -37,6 +41,7 @@ try {
 
         if (empty($input['lesson_id']) || empty($input['content'])) {
             json_out(['error' => 'lesson_id e content são obrigatórios'], 400);
+
             exit;
         }
 
@@ -52,6 +57,7 @@ try {
         ]);
 
         json_out(['success' => true, 'id' => $pdo->lastInsertId()], 201);
+
         exit;
     }
 

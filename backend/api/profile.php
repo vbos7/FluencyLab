@@ -1,13 +1,15 @@
 <?php
 
-require_once __DIR__.'/cors.php';
-require_once __DIR__.'/db.php';
+require_once __DIR__ . '/cors.php';
+
+require_once __DIR__ . '/db.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
-require_once __DIR__.'/lib/url.php';
+require_once __DIR__ . '/lib/url.php';
 
-if (! isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
+
     exit;
 }
 
@@ -18,17 +20,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $stmt = $pdo->prepare('SELECT id, name, email, phone, role, avatar, created_at FROM users WHERE id = ?');
     $stmt->execute([$userId]);
     $perfil = $stmt->fetch();
+
     if ($perfil) {
         $perfil['avatar'] = avatar_url($perfil['avatar']); // caminho → URL absoluta
     }
     json_out($perfil);
+
     exit;
 }
 
 // ─── PUT: atualiza nome, email, telefone e (opcionalmente) a senha ──────────
 if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
-    $body = json_decode(file_get_contents('php://input'), true);
-    $name = trim($body['name'] ?? '');
+    $body  = json_decode(file_get_contents('php://input'), true);
+    $name  = trim($body['name'] ?? '');
     $email = trim($body['email'] ?? '');
     $phone = trim($body['phone'] ?? '');
 
@@ -37,13 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     if (empty($name)) {
         $errors[] = 'Nome é obrigatório';
     }
-    if (empty($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+
+    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'Email inválido';
     }
 
     // Telefone é opcional; se vier, tem que ter 10 (fixo) ou 11 (celular) dígitos.
     // Validamos pela contagem de dígitos, tolerando a máscara "(11) 99999-9999".
     $phoneDigits = preg_replace('/\D/', '', $phone);
+
     if ($phone !== '' && (strlen($phoneDigits) < 10 || strlen($phoneDigits) > 11)) {
         $errors[] = 'Telefone inválido';
     }
@@ -51,36 +57,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     // Email precisa ser único — mas o próprio usuário pode manter o dele (id != ?)
     $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ? AND id != ?');
     $stmt->execute([$email, $userId]);
+
     if ($stmt->fetch()) {
         $errors[] = 'Este email já está em uso';
     }
 
     // Troca de senha é OPCIONAL: só entra no fluxo se "new_password" veio preenchido.
-    $newPassword = $body['new_password'] ?? '';
+    $newPassword      = $body['new_password'] ?? '';
     $changingPassword = $newPassword !== '';
 
     if ($changingPassword) {
         $currentPassword = $body['current_password'] ?? '';
-        $confirm = $body['new_password_confirmation'] ?? '';
+        $confirm         = $body['new_password_confirmation'] ?? '';
 
         // Confere a senha ATUAL antes de deixar trocar (segurança básica)
         $stmt = $pdo->prepare('SELECT password_hash FROM users WHERE id = ?');
         $stmt->execute([$userId]);
         $row = $stmt->fetch();
 
-        if (! password_verify($currentPassword, $row['password_hash'])) {
+        if (!password_verify($currentPassword, $row['password_hash'])) {
             $errors[] = 'Senha atual incorreta';
         }
+
         if (strlen($newPassword) < 6) {
             $errors[] = 'A nova senha precisa ter pelo menos 6 caracteres';
         }
+
         if ($newPassword !== $confirm) {
             $errors[] = 'A confirmação da nova senha não coincide';
         }
     }
 
-    if (! empty($errors)) {
+    if (!empty($errors)) {
         json_out(['errors' => $errors], 422);
+
         exit;
     }
 
@@ -98,6 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     $stmt = $pdo->prepare('SELECT id, name, email, phone, role FROM users WHERE id = ?');
     $stmt->execute([$userId]);
     json_out(['success' => true, 'user' => $stmt->fetch()]);
+
     exit;
 }
 
@@ -106,10 +117,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     // Trava de segurança: não deixa sumir com o último admin (trancaria o painel).
     $stmt = $pdo->prepare('SELECT role FROM users WHERE id = ?');
     $stmt->execute([$userId]);
+
     if ($stmt->fetchColumn() === 'admin') {
         $totalAdmins = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
+
         if ($totalAdmins <= 1) {
             json_out(['error' => 'Não é possível excluir o único administrador'], 422);
+
             exit;
         }
     }
@@ -118,6 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     $pdo->prepare('DELETE FROM users WHERE id = ?')->execute([$userId]);
     session_destroy();
     json_out(null, 204);
+
     exit;
 }
 

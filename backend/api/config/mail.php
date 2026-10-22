@@ -1,10 +1,10 @@
 <?php
 
-use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\{Exception, PHPMailer};
 
-require_once __DIR__.'/../../vendor/autoload.php';
-require_once __DIR__.'/../env.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+require_once __DIR__ . '/../env.php';
 
 function enviarEmail(string $destinatario, string $assunto, string $corpoHtml): bool
 {
@@ -13,7 +13,7 @@ function enviarEmail(string $destinatario, string $assunto, string $corpoHtml): 
     try {
         // Config genérica de SMTP (funciona com qualquer provedor, não só Gmail).
         $mail->isSMTP();
-        $mail->Host = env('MAIL_HOST', 'smtp.gmail.com');
+        $mail->Host     = env('MAIL_HOST', 'smtp.gmail.com');
         $mail->SMTPAuth = true;
         $mail->Username = env('MAIL_USERNAME');
         $mail->Password = env('MAIL_PASSWORD');
@@ -21,7 +21,7 @@ function enviarEmail(string $destinatario, string $assunto, string $corpoHtml): 
         $mail->SMTPSecure = env('MAIL_ENCRYPTION', 'tls') === 'ssl'
             ? PHPMailer::ENCRYPTION_SMTPS
             : PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = (int) env('MAIL_PORT', '587');
+        $mail->Port    = (int) env('MAIL_PORT', '587');
         $mail->CharSet = 'UTF-8';
 
         // Remetente: MAIL_FROM_ADDRESS (ou o próprio usuário) + nome amigável.
@@ -33,13 +33,13 @@ function enviarEmail(string $destinatario, string $assunto, string $corpoHtml): 
 
         $mail->isHTML(true);
         $mail->Subject = $assunto;
-        $mail->Body = $corpoHtml;
+        $mail->Body    = $corpoHtml;
 
         $mail->send();
 
         return true;
     } catch (Exception $e) {
-        error_log('Erro ao enviar email: '.$mail->ErrorInfo);
+        error_log('Erro ao enviar email: ' . $mail->ErrorInfo);
 
         return false;
     }

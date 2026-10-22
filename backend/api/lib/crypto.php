@@ -17,19 +17,24 @@
 function app_key(): string
 {
     static $key = null;
+
     if ($key !== null) {
         return $key;
     }
 
     $raw = env('APP_KEY');
+
     if ($raw === '') {
         json_out(['error' => 'APP_KEY ausente. Gere com: php -r "echo base64_encode(random_bytes(32));" e coloque no .env'], 500);
+
         exit;
     }
 
     $decoded = base64_decode($raw, true);
+
     if ($decoded === false || strlen($decoded) !== SODIUM_CRYPTO_SECRETBOX_KEYBYTES) {
         json_out(['error' => 'APP_KEY inválida — precisa ser 32 bytes codificados em base64'], 500);
+
         exit;
     }
 
@@ -39,23 +44,24 @@ function app_key(): string
 /** Cifra um texto e devolve base64(nonce || ciphertext). */
 function app_encrypt(string $plain): string
 {
-    $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+    $nonce  = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
     $cipher = sodium_crypto_secretbox($plain, $nonce, app_key());
 
-    return base64_encode($nonce.$cipher);
+    return base64_encode($nonce . $cipher);
 }
 
 /** Decifra o que app_encrypt() gerou. Devolve null se adulterado/ilegível. */
 function app_decrypt(string $encoded): ?string
 {
     $raw = base64_decode($encoded, true);
+
     if ($raw === false || strlen($raw) <= SODIUM_CRYPTO_SECRETBOX_NONCEBYTES) {
         return null;
     }
 
-    $nonce = substr($raw, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
+    $nonce  = substr($raw, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
     $cipher = substr($raw, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-    $plain = sodium_crypto_secretbox_open($cipher, $nonce, app_key());
+    $plain  = sodium_crypto_secretbox_open($cipher, $nonce, app_key());
 
     return $plain === false ? null : $plain;
 }

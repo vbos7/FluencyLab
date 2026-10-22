@@ -1,11 +1,13 @@
 <?php
 
-require_once __DIR__.'/cors.php';
-require_once __DIR__.'/db.php';
+require_once __DIR__ . '/cors.php';
+
+require_once __DIR__ . '/db.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if (empty($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
+
     exit;
 }
 
@@ -17,6 +19,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if (empty($_GET['lesson_id'])) {
             json_out(['error' => 'lesson_id é obrigatório'], 400);
+
             exit;
         }
 
@@ -28,6 +31,7 @@ try {
 
         // Se ainda não existe nota, devolve vazio (não é erro, é estado normal)
         json_out($nota ?: ['content' => '', 'updated_at' => null]);
+
         exit;
     }
 
@@ -38,6 +42,7 @@ try {
 
         if (empty($input['lesson_id'])) {
             json_out(['error' => 'lesson_id é obrigatório'], 400);
+
             exit;
         }
 
@@ -52,6 +57,7 @@ try {
         $stmt->execute([$userId, $input['lesson_id'], $content]);
 
         json_out(['success' => true]);
+
         exit;
     }
 

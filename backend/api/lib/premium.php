@@ -2,7 +2,7 @@
 
 function hasActivePro(PDO $pdo, ?int $userId): bool
 {
-    if (! $userId) {
+    if (!$userId) {
         return false;
     }
     $stmt = $pdo->prepare("SELECT up.id FROM user_plan up
@@ -16,8 +16,9 @@ function hasActivePro(PDO $pdo, ?int $userId): bool
 
 function requirePro(PDO $pdo): void
 {
-    if (! hasActivePro($pdo, isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null)) {
+    if (!hasActivePro($pdo, isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null)) {
         json_out(['error' => 'premium_required', 'message' => 'Recurso exclusivo do plano Pro.'], 403);
+
         exit;
     }
 }

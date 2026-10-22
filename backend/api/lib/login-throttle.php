@@ -10,8 +10,8 @@
  * tentativas do 2º fator.
  */
 const LOGIN_MAX_PER_EMAIL = 8;    // falhas por e-mail na janela
-const LOGIN_MAX_PER_IP = 20;      // falhas por IP na janela (mais alto: IP compartilhado)
-const LOGIN_WINDOW_MIN = 15;      // janela, em minutos
+const LOGIN_MAX_PER_IP    = 20;      // falhas por IP na janela (mais alto: IP compartilhado)
+const LOGIN_WINDOW_MIN    = 15;      // janela, em minutos
 
 // Está bloqueado agora? (e-mail OU IP estourou o limite na janela)
 function login_bloqueado(PDO $pdo, string $email, string $ip): bool
@@ -23,7 +23,7 @@ function login_bloqueado(PDO $pdo, string $email, string $ip): bool
             COALESCE(SUM(email = ?), 0) AS por_email,
             COALESCE(SUM(ip = ?), 0)    AS por_ip
          FROM login_attempts
-         WHERE attempted_at >= (NOW() - INTERVAL '.LOGIN_WINDOW_MIN.' MINUTE)'
+         WHERE attempted_at >= (NOW() - INTERVAL ' . LOGIN_WINDOW_MIN . ' MINUTE)'
     );
     $stmt->execute([$email, $ipBin]);
     $r = $stmt->fetch();

@@ -1,9 +1,10 @@
 <?php
 
-require_once __DIR__.'/../cors.php';
+require_once __DIR__ . '/../cors.php';
 
-require_once __DIR__.'/../db.php';
-require_once __DIR__.'/../lib/settings.php';
+require_once __DIR__ . '/../db.php';
+
+require_once __DIR__ . '/../lib/settings.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -22,10 +23,10 @@ if (get_setting($pdo, 'new_registrations', '1') !== '1') {
 // O Next.js manda JSON no corpo da requisição, não $_POST
 $body = json_decode(file_get_contents('php://input'), true);
 
-$name = trim($body['name'] ?? '');
-$email = trim($body['email'] ?? '');
+$name     = trim($body['name'] ?? '');
+$email    = trim($body['email'] ?? '');
 $password = $body['password'] ?? '';
-$confirm = $body['password_confirmation'] ?? '';
+$confirm  = $body['password_confirmation'] ?? '';
 
 // Validação manual
 $errors = [];
@@ -34,7 +35,7 @@ if (empty($name)) {
     $errors[] = 'Nome é obrigatório';
 }
 
-if (empty($email) || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $errors[] = 'Email inválido';
 }
 
@@ -46,7 +47,7 @@ if ($password !== $confirm) {
     $errors[] = 'As senhas não coincidem';
 }
 
-if (! empty($errors)) {
+if (!empty($errors)) {
     json_out(['errors' => $errors], 422);
 
     exit;
@@ -75,5 +76,5 @@ $_SESSION['user_id'] = $userId;
 
 json_out([
     'success' => true,
-    'user' => ['id' => (int) $userId, 'name' => $name, 'email' => $email, 'role' => 'student'],
+    'user'    => ['id' => (int) $userId, 'name' => $name, 'email' => $email, 'role' => 'student'],
 ], 201);

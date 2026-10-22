@@ -1,11 +1,13 @@
 <?php
 
-require_once __DIR__.'/../cors.php';
-require_once __DIR__.'/../db.php';
+require_once __DIR__ . '/../cors.php';
+
+require_once __DIR__ . '/../db.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
-require_once __DIR__.'/AiService.php';
-require_once __DIR__.'/../lib/settings.php';
+require_once __DIR__ . '/AiService.php';
+
+require_once __DIR__ . '/../lib/settings.php';
 
 // Limites do modo convidado (sem login), para conter o custo da IA da OpenAI.
 const GUEST_MAX_ATTEMPTS = 5;    // por sessão do convidado
@@ -13,29 +15,33 @@ const GUEST_IP_DAILY_CAP = 20;   // por IP por dia (backstop se limparem os cook
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['error' => 'Método não permitido'], 405);
+
     exit;
 }
 
 // Convidado = sem sessão logada. Pode praticar, mas com teto (ver guardaConvidado).
-$isGuest = ! isset($_SESSION['user_id']);
+$isGuest = !isset($_SESSION['user_id']);
 
-$body = json_decode(file_get_contents('php://input'), true);
+$body     = json_decode(file_get_contents('php://input'), true);
 $phraseId = (int) ($body['phrase_id'] ?? 0);
 $resposta = trim($body['answer'] ?? '');
 // Tempo gasto no exercício (segundos). Limitado a [0, 3600] para não inflar o
 // total de estudo caso o aluno deixe a aba aberta.
 $tempoGasto = max(0, min((int) ($body['time_spent_seconds'] ?? 0), 3600));
 
-if (! $phraseId || empty($resposta)) {
+if (!$phraseId || empty($resposta)) {
     json_out(['errors' => ['phrase_id e answer obrigatórios']], 422);
+
     exit;
 }
 
 $stmt = $pdo->prepare('SELECT * FROM phrases WHERE id = ?');
 $stmt->execute([$phraseId]);
 $frase = $stmt->fetch();
-if (! $frase) {
+
+if (!$frase) {
     json_out(['error' => 'Frase não encontrada'], 404);
+
     exit;
 }
 
@@ -46,33 +52,36 @@ if ($isGuest) {
 
 // Chama a IA (pode demorar 1-3 segundos)
 try {
-    $ai = new AiService;
+    $ai       = new AiService();
     $feedback = $ai->corrigirTraducao($frase['pt'], $frase['en'], $resposta);
 } catch (Exception $e) {
-    json_out(['error' => 'Erro na IA: '.$e->getMessage()], 500);
+    json_out(['error' => 'Erro na IA: ' . $e->getMessage()], 500);
+
     exit;
 }
 
 $score = (int) ($feedback['score'] ?? 0);
 // XP base configurável no painel (Gamificação → xp_per_phrase). Default 10.
 $xpBase = max(1, (int) get_setting($pdo, 'xp_per_phrase', '10'));
-$xp = calcularXp($score, $xpBase);
+$xp     = calcularXp($score, $xpBase);
 
 // Convidado não é persistido (não tem user_id nem nível): devolve o feedback,
 // informa quantas questões ainda restam e encerra aqui.
 if ($isGuest) {
     json_out([
-        'feedback' => $feedback,
-        'xp_earned' => $xp,
-        'guest' => true,
+        'feedback'        => $feedback,
+        'xp_earned'       => $xp,
+        'guest'           => true,
         'guest_remaining' => max(0, GUEST_MAX_ATTEMPTS - (int) ($_SESSION['guest_attempts'] ?? 0)),
     ]);
+
     exit;
 }
 
 // Bônus de sequência (Gamificação → streak_bonus): se o aluno está numa streak
 // (>= 2 dias consecutivos) e acertou, o XP é multiplicado pelo bônus configurado.
 $streakBonus = (float) get_setting($pdo, 'streak_bonus', '1.5');
+
 if ($feedback['is_correct'] && $streakBonus > 1 && calcularStreak($pdo, (int) $_SESSION['user_id']) >= 2) {
     $xp = (int) round($xp * $streakBonus);
 }
@@ -94,13 +103,14 @@ try {
     ]);
     $attemptId = (int) $pdo->lastInsertId();
 
-    if (! empty($feedback['mistakes']) && is_array($feedback['mistakes'])) {
+    if (!empty($feedback['mistakes']) && is_array($feedback['mistakes'])) {
         $insMistake = $pdo->prepare(
             'INSERT INTO attempt_mistakes (attempt_id, type, original, suggestion, explanation_pt)
              VALUES (?, ?, ?, ?, ?)'
         );
+
         foreach ($feedback['mistakes'] as $m) {
-            if (! is_array($m)) {
+            if (!is_array($m)) {
                 continue;
             }
             $insMistake->execute([
@@ -113,10 +123,11 @@ try {
         }
     }
 
-    if (! empty($feedback['positive_points']) && is_array($feedback['positive_points'])) {
+    if (!empty($feedback['positive_points']) && is_array($feedback['positive_points'])) {
         $insPoint = $pdo->prepare(
             'INSERT INTO attempt_positive_points (attempt_id, point) VALUES (?, ?)'
         );
+
         foreach ($feedback['positive_points'] as $point) {
             if (is_string($point) && $point !== '') {
                 $insPoint->execute([$attemptId, $point]);
@@ -134,6 +145,7 @@ try {
 } catch (Exception $e) {
     $pdo->rollBack();
     json_out(['error' => 'Erro ao salvar a tentativa'], 500);
+
     exit;
 }
 
@@ -144,15 +156,15 @@ $stmtXp = $pdo->prepare('SELECT COALESCE(SUM(points), 0) FROM ranking_points WHE
 $stmtXp->execute([$_SESSION['user_id']]);
 $xpTotal = (int) $stmtXp->fetchColumn();
 
-$xpAntes = $feedback['is_correct'] ? $xpTotal - $xp : $xpTotal;
-$nivelAgora = nivelDoXp($xpTotal);
+$xpAntes      = $feedback['is_correct'] ? $xpTotal - $xp : $xpTotal;
+$nivelAgora   = nivelDoXp($xpTotal);
 $subiuDeNivel = $nivelAgora > nivelDoXp($xpAntes);
 
 json_out([
-    'feedback' => $feedback,
-    'xp_earned' => $xp,
-    'xp_total' => $xpTotal,
-    'level' => $nivelAgora,
+    'feedback'   => $feedback,
+    'xp_earned'  => $xp,
+    'xp_total'   => $xpTotal,
+    'level'      => $nivelAgora,
     'leveled_up' => $subiuDeNivel,
 ]);
 
@@ -160,7 +172,7 @@ json_out([
 // (ranking.ts getLevel): o nível N exige N×150 de XP acumulado.
 function nivelDoXp(int $xp): int
 {
-    $nivel = 1;
+    $nivel    = 1;
     $restante = $xp;
     while ($restante >= $nivel * 150) {
         $restante -= $nivel * 150;
@@ -185,8 +197,9 @@ function calcularStreak(PDO $pdo, int $userId): int
     }
 
     $cursor = new DateTime('today');
+
     // Se hoje ainda não pontuou, a streak vigente termina ontem.
-    if (! isset($ativos[$cursor->format('Y-m-d')])) {
+    if (!isset($ativos[$cursor->format('Y-m-d')])) {
         $cursor->modify('-1 day');
     }
 
@@ -205,24 +218,29 @@ function calcularStreak(PDO $pdo, int $userId): int
 function guardaConvidado(PDO $pdo): void
 {
     $usados = (int) ($_SESSION['guest_attempts'] ?? 0);
+
     if ($usados >= GUEST_MAX_ATTEMPTS) {
         json_out([
-            'error' => 'limite_convidado',
+            'error'   => 'limite_convidado',
             'message' => 'Você atingiu o limite de questões como convidado. Faça login para continuar praticando.',
         ], 403);
+
         exit;
     }
 
     $ipBin = @inet_pton(client_ip());
+
     if ($ipBin !== false) {
         $hoje = date('Y-m-d');
         $stmt = $pdo->prepare('SELECT count FROM guest_usage WHERE ip = ? AND day = ?');
         $stmt->execute([$ipBin, $hoje]);
+
         if ((int) ($stmt->fetchColumn() ?: 0) >= GUEST_IP_DAILY_CAP) {
             json_out([
-                'error' => 'limite_convidado',
+                'error'   => 'limite_convidado',
                 'message' => 'Limite diário de uso como convidado atingido. Faça login para continuar.',
             ], 403);
+
             exit;
         }
         $pdo->prepare(
@@ -241,9 +259,11 @@ function calcularXp(int $score, int $xpBase): int
     if ($score >= 95) {
         return (int) round($xpBase * 2.5);
     }
+
     if ($score >= 70) {
         return (int) round($xpBase * 1.5);
     }
+
     if ($score >= 40) {
         return (int) round($xpBase * 0.8);
     }

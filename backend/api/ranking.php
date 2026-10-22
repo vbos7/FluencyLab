@@ -1,12 +1,16 @@
 <?php
 
-require_once __DIR__.'/cors.php';
-require_once __DIR__.'/db.php';
-require_once __DIR__.'/lib/url.php';
-require_once __DIR__.'/lib/settings.php';
+require_once __DIR__ . '/cors.php';
+
+require_once __DIR__ . '/db.php';
+
+require_once __DIR__ . '/lib/url.php';
+
+require_once __DIR__ . '/lib/settings.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     json_out(['error' => 'Método não permitido'], 405);
+
     exit;
 }
 
@@ -14,13 +18,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 // Alunos recebem lista vazia (o front mostra "ranking indisponível").
 if (get_setting($pdo, 'ranking_public', '1') !== '1') {
     $ehAdmin = false;
+
     if (isset($_SESSION['user_id'])) {
         $st = $pdo->prepare('SELECT role FROM users WHERE id = ?');
         $st->execute([$_SESSION['user_id']]);
         $ehAdmin = $st->fetchColumn() === 'admin';
     }
-    if (! $ehAdmin) {
+
+    if (!$ehAdmin) {
         json_out([]);
+
         exit;
     }
 }
@@ -29,7 +36,7 @@ if (get_setting($pdo, 'ranking_public', '1') !== '1') {
 // subtraindo cumulativamente, não apenas comparando o bruto.
 function calcularNivel(int $xp): int
 {
-    $nivel = 1;
+    $nivel    = 1;
     $restante = $xp;
     while ($restante >= $nivel * 150) {
         $restante -= $nivel * 150;
@@ -53,11 +60,11 @@ $lista = array_map(function ($user) use ($currentUserId) {
     $xp = (int) $user['xp'];
 
     return [
-        'id' => (int) $user['id'],
-        'name' => $user['name'],
-        'xp' => $xp,
-        'level' => calcularNivel($xp),
-        'avatar' => avatar_url($user['avatar']), // null se não tiver foto
+        'id'            => (int) $user['id'],
+        'name'          => $user['name'],
+        'xp'            => $xp,
+        'level'         => calcularNivel($xp),
+        'avatar'        => avatar_url($user['avatar']), // null se não tiver foto
         'isCurrentUser' => $currentUserId === (int) $user['id'],
     ];
 }, $stmt->fetchAll());

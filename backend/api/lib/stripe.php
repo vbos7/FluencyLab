@@ -11,8 +11,9 @@
  * idempotente via UNIQUE em user_plan.stripe_session_id.
  */
 
-require_once __DIR__.'/../../vendor/autoload.php';
-require_once __DIR__.'/../env.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+require_once __DIR__ . '/../env.php';
 
 function stripe_client(): \Stripe\StripeClient
 {
@@ -36,7 +37,7 @@ function ativar_plano_da_sessao(PDO $pdo, \Stripe\Checkout\Session $session): ?a
     $userId = (int) ($session->metadata['user_id'] ?? 0);
     $planId = (int) ($session->metadata['plan_id'] ?? 0);
 
-    if (! $userId || ! $planId) {
+    if (!$userId || !$planId) {
         return null;
     }
 
@@ -44,7 +45,7 @@ function ativar_plano_da_sessao(PDO $pdo, \Stripe\Checkout\Session $session): ?a
     $stmt->execute([$planId]);
     $plan = $stmt->fetch();
 
-    if (! $plan) {
+    if (!$plan) {
         return null;
     }
 
@@ -52,6 +53,7 @@ function ativar_plano_da_sessao(PDO $pdo, \Stripe\Checkout\Session $session): ?a
     // usuário dando F5 na página de retorno) — devolve sem inserir de novo.
     $stmt = $pdo->prepare('SELECT id FROM user_plan WHERE stripe_session_id = ?');
     $stmt->execute([$session->id]);
+
     if ($stmt->fetch()) {
         return ['name' => $plan['name']];
     }

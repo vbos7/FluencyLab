@@ -13,12 +13,14 @@
  * "checkout.session.completed".
  */
 
-require_once __DIR__.'/../env.php';
-require_once __DIR__.'/../db.php';
-require_once __DIR__.'/../lib/stripe.php';
+require_once __DIR__ . '/../env.php';
 
-$payload = file_get_contents('php://input');
-$sigHeader = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
+require_once __DIR__ . '/../db.php';
+
+require_once __DIR__ . '/../lib/stripe.php';
+
+$payload       = file_get_contents('php://input');
+$sigHeader     = $_SERVER['HTTP_STRIPE_SIGNATURE'] ?? '';
 $webhookSecret = env('STRIPE_WEBHOOK_SECRET');
 
 try {
@@ -27,6 +29,7 @@ try {
         : \Stripe\Event::constructFrom(json_decode($payload, true));
 } catch (\Exception $e) {
     http_response_code(400);
+
     exit;
 }
 

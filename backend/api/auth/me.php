@@ -1,17 +1,17 @@
 <?php
 
-require_once __DIR__.'/../cors.php';
+require_once __DIR__ . '/../cors.php';
 
-require_once __DIR__.'/../db.php';
+require_once __DIR__ . '/../db.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 
-require_once __DIR__.'/../lib/url.php';
+require_once __DIR__ . '/../lib/url.php';
 
 // Não existe "quem sou eu?" sem sessão ativa.
 // o cookie PHPSESSID existe pra qualquer visitante — o que importa
 // é ter $_SESSION['user_id'], que só é gravado no login/registro.
-if (! isset($_SESSION['user_id'])) {
+if (!isset($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
 
     exit;
@@ -23,7 +23,7 @@ $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 
 // A sessão aponta pra um usuário que não existe mais (ex: conta deletada)
-if (! $user) {
+if (!$user) {
     session_destroy();
     json_out(['error' => 'Não autenticado'], 401);
 
@@ -31,9 +31,9 @@ if (! $user) {
 }
 
 json_out([
-    'id' => (int) $user['id'],
-    'name' => $user['name'],
-    'email' => $user['email'],
-    'role' => $user['role'],
+    'id'     => (int) $user['id'],
+    'name'   => $user['name'],
+    'email'  => $user['email'],
+    'role'   => $user['role'],
     'avatar' => avatar_url($user['avatar']),
 ]);

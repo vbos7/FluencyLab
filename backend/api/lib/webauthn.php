@@ -12,8 +12,9 @@
  * origem da página seja esse host (ou subdomínio dele) e, fora localhost, HTTPS.
  */
 
-require_once __DIR__.'/../../vendor/autoload.php';
-require_once __DIR__.'/../env.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+require_once __DIR__ . '/../env.php';
 
 use lbuchs\WebAuthn\WebAuthn;
 

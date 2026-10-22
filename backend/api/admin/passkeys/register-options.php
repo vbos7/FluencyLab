@@ -9,15 +9,16 @@
  * guarda o handle do usuário e o login do painel pode ser SEM digitar email.
  */
 
-require_once __DIR__.'/../guard.php';
+require_once __DIR__ . '/../guard.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
-require_once __DIR__.'/../../lib/webauthn.php';
+require_once __DIR__ . '/../../lib/webauthn.php';
 
 requireAdmin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['error' => 'Método não permitido'], 405);
+
     exit;
 }
 
@@ -35,7 +36,7 @@ $excludeIds = array_map(
     $stmt->fetchAll()
 );
 
-$wa = webauthn_server();
+$wa   = webauthn_server();
 $args = $wa->getCreateArgs(
     (string) $userId,   // user handle
     $user['email'],

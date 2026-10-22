@@ -13,6 +13,7 @@ function get_setting(PDO $pdo, string $chave, string $padrao = ''): string
 
     if ($cache === null) {
         $cache = [];
+
         foreach ($pdo->query('SELECT setting_key, setting_value FROM settings')->fetchAll() as $row) {
             $cache[$row['setting_key']] = $row['setting_value'];
         }

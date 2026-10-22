@@ -9,19 +9,25 @@
  * desafio na sessão. É público de propósito: é a porta de entrada do painel.
  */
 
-require_once __DIR__.'/../../cors.php';
-require_once __DIR__.'/../../lib/webauthn.php';
+require_once __DIR__ . '/../../cors.php';
+
+require_once __DIR__ . '/../../lib/webauthn.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['error' => 'Método não permitido'], 405);
+
     exit;
 }
 
-$wa = webauthn_server();
+$wa   = webauthn_server();
 $args = $wa->getGetArgs(
     [],     // vazio → credenciais descobríveis (resident keys)
     60,     // timeout (s)
-    true, true, true, true, true, // usb, nfc, ble, hybrid, internal
+    true,
+    true,
+    true,
+    true,
+    true, // usb, nfc, ble, hybrid, internal
     true    // requireUserVerification (biometria/PIN)
 );
 
