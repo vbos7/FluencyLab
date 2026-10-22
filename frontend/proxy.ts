@@ -13,7 +13,7 @@ const ROTAS_PUBLICAS = [
     "/admin/login",
 ]
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     const sessao = request.cookies.get("PHPSESSID")?.value
     const { pathname } = request.nextUrl
 

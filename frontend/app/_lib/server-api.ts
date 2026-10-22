@@ -25,7 +25,7 @@ export async function fetchFromApi<T>(path: string): Promise<T> {
         },
     })
 
-    // 401 = sessão ausente/expirada. O middleware só checa a PRESENÇA do cookie
+    // 401 = sessão ausente/expirada. O proxy (proxy.ts) só checa a PRESENÇA do cookie
     // PHPSESSID, então um cookie velho passa por ele e só aqui descobrimos que a
     // sessão do backend não vale mais. Como todas as chamadas de fetchFromApi
     // vêm de páginas protegidas (Server Components), o certo é mandar pro login
