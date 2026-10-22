@@ -19,6 +19,10 @@
 -- relativas a NOW(), então a "janela" de dados acompanha o dia em que for rodado.
 --
 -- Login de qualquer usuário do seed: <email> / senha: 123456
+--
+-- NUNCA aplique este arquivo num banco de produção: a senha acima é pública.
+-- Por isso nenhum usuário do seed é admin — o painel só deve ser acessível por
+-- contas reais, com senha própria (e 2FA/passkey).
 
 SET NAMES utf8mb4;
 
@@ -30,7 +34,7 @@ SET NAMES utf8mb4;
 INSERT INTO users (name, email, password_hash, role, created_at) VALUES
 ('Ana Beatriz Ramos',    'ana.ramos@seed.fluencylab.com',      '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'student', DATE_SUB(NOW(), INTERVAL 410 DAY)),
 ('Bruno Carvalho',       'bruno.carvalho@seed.fluencylab.com',  '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'student', DATE_SUB(NOW(), INTERVAL 395 DAY)),
-('Carla Mendes',         'carla.mendes@seed.fluencylab.com',    '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'admin',   DATE_SUB(NOW(), INTERVAL 380 DAY)),
+('Carla Mendes',         'carla.mendes@seed.fluencylab.com',    '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'student', DATE_SUB(NOW(), INTERVAL 380 DAY)),
 ('Diego Fernandes',      'diego.fernandes@seed.fluencylab.com',  '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'student', DATE_SUB(NOW(), INTERVAL 360 DAY)),
 ('Eduarda Lima',         'eduarda.lima@seed.fluencylab.com',    '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'student', DATE_SUB(NOW(), INTERVAL 345 DAY)),
 ('Felipe Souza',         'felipe.souza@seed.fluencylab.com',    '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'student', DATE_SUB(NOW(), INTERVAL 325 DAY)),
@@ -46,7 +50,7 @@ INSERT INTO users (name, email, password_hash, role, created_at) VALUES
 ('Pedro Henrique Dias',  'pedro.dias@seed.fluencylab.com',      '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'student', DATE_SUB(NOW(), INTERVAL 160 DAY)),
 ('Queila Barbosa',       'queila.barbosa@seed.fluencylab.com',  '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'student', DATE_SUB(NOW(), INTERVAL 148 DAY)),
 ('Rafael Gomes',         'rafael.gomes@seed.fluencylab.com',    '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'student', DATE_SUB(NOW(), INTERVAL 136 DAY)),
-('Sofia Ribeiro',        'sofia.ribeiro@seed.fluencylab.com',   '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'admin',   DATE_SUB(NOW(), INTERVAL 124 DAY)),
+('Sofia Ribeiro',        'sofia.ribeiro@seed.fluencylab.com',   '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'student', DATE_SUB(NOW(), INTERVAL 124 DAY)),
 ('Thiago Moraes',        'thiago.moraes@seed.fluencylab.com',   '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'student', DATE_SUB(NOW(), INTERVAL 112 DAY)),
 ('Ursula Pacheco',       'ursula.pacheco@seed.fluencylab.com',  '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'student', DATE_SUB(NOW(), INTERVAL 100 DAY)),
 ('Vinícius Araújo',      'vinicius.araujo@seed.fluencylab.com', '$2y$12$Zorr4Fr.1HvhAM8zO5N/Lu7tyISYc3goHVGgIHSMHEqHwuTCqt/y2', 'student', DATE_SUB(NOW(), INTERVAL 90 DAY)),
