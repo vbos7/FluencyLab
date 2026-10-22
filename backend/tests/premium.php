@@ -1,6 +1,13 @@
 <?php
 
 // Tabelas temporárias: nenhuma assinatura persistente é alterada.
+// Só pela linha de comando (php backend/tests/premium.php), nunca pela web.
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+
+    exit;
+}
+
 require_once __DIR__ . '/../api/env.php';
 
 require_once __DIR__ . '/../api/lib/premium.php';

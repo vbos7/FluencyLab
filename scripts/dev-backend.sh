@@ -58,4 +58,4 @@ echo "PHP: ${PHP_BIN}"
 echo "Backend em http://localhost:${PORTA}  (Ctrl+C para parar)"
 echo "Teste rápido: curl http://localhost:${PORTA}/api/auth/me.php"
 
-exec "$PHP_BIN" -S "localhost:${PORTA}" -t backend
+exec "$PHP_BIN" -S "localhost:${PORTA}" -t backend scripts/php-router.php

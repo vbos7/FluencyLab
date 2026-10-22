@@ -49,4 +49,4 @@ set PHP_CLI_SERVER_WORKERS=4
 echo PHP: %PHP_BIN%
 echo Backend em http://localhost:%PORTA%  (Ctrl+C para parar)
 
-"%PHP_BIN%" -S localhost:%PORTA% -t backend
+"%PHP_BIN%" -S localhost:%PORTA% -t backend scripts\php-router.php

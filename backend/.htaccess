@@ -1,0 +1,18 @@
+# Raiz web do Docker (Apache) = backend/. Sem estas regras, tudo daqui sairia na
+# web: sql/ (com as senhas do seed), tests/ (executável), vendor/, composer.lock.
+# Lista de permissão — a mesma do scripts/php-router.php (dev) e das regras de
+# nginx de produção (docs/auditoria-2026-10.md, S3). O resto responde 404.
+
+RewriteEngine On
+
+# Health check
+RewriteRule ^(index\.php)?$ - [L]
+
+# Endpoints da API, menos os arquivos que só são incluídos
+RewriteRule ^api/(lib|config)/ - [R=404,L]
+RewriteRule ^api/.+\.php$ - [L]
+
+# Avatares enviados (só imagem)
+RewriteRule ^public/uploads/avatars/[^/]+\.(png|jpe?g|webp)$ - [NC,L]
+
+RewriteRule ^ - [R=404,L]
