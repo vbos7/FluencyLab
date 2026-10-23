@@ -35,8 +35,12 @@ class AiService
            40–69 parcialmente correta (falta parte do sentido ou há erro gramatical
            relevante); 0–39 errada, sem relação ou incompleta. Com is_correct false,
            o score é no máximo 69.
-        5. overall_comment, explanation_pt e positive_points em português, curtos;
-           corrected_sentence em inglês. Sem erros, mistakes é uma lista vazia.
+        5. overall_comment, explanation_pt e positive_points em português, curtos.
+        6. corrected_sentence é SEMPRE a frase inteira correta em inglês: a resposta do
+           aluno com os erros corrigidos ou, se ela não tiver relação com a frase_pt,
+           uma tradução correta completa. Nunca só um trecho.
+        7. Em mistakes, original é o trecho errado da resposta e suggestion o trecho
+           corrigido. Sem erros, mistakes é uma lista vazia.
         TXT;
 
     // Formato exigido da resposta (Structured Outputs da OpenAI). same_meaning

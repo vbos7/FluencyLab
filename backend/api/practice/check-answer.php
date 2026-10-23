@@ -93,6 +93,11 @@ try {
     exit;
 }
 
+// A tela mostra a frase correta inteira; se a IA não a mandou, usa a referência.
+if (trim($feedback['corrected_sentence']) === '') {
+    $feedback['corrected_sentence'] = $frase['en'];
+}
+
 $score = (int) ($feedback['score'] ?? 0);
 // XP base configurável no painel (Gamificação → xp_per_phrase). Default 10.
 // Só acerto dá XP: o que aparece na tela é o que entra no ranking.

@@ -14,6 +14,9 @@ export type Feedback = {
     status: "perfect" | "good" | "partial" | "needs_work"
     title: string
     message: string
+    // Frase inteira correta em inglês (resposta corrigida ou tradução de referência)
+    correctedSentence: string
+    // Erros pontuais: trecho errado → trecho corrigido + explicação
     corrections: { wrong: string; correct: string; explanation: string }[]
     xp: number
 }

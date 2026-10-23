@@ -60,6 +60,7 @@ function adaptAiFeedback(ai: AiFeedback, xp: number): Feedback {
         status,
         title: titles[status],
         message: ai.overall_comment,
+        correctedSentence: ai.corrected_sentence,
         corrections: ai.mistakes.map((m) => ({
             wrong: m.original,
             correct: m.suggestion,
