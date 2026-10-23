@@ -39,6 +39,7 @@ export default function CursoClient({ course }: { course: CourseDetail }) {
         items: [],
     })
     const [novoComentario, setNovo] = useState("")
+    const [erroComentario, setErroComentario] = useState("")
     const [usuarioLogado, setUsuarioLogado] = useState<LoggedUser | null>(null)
 
     const [aulasConcluidas, setAulasConcluidas] = useState<number[]>([])
@@ -150,7 +151,17 @@ export default function CursoClient({ course }: { course: CourseDetail }) {
             }),
         })
 
+        if (!res.ok) {
+            // 422 (tamanho), 403 (aula Pro), 429 (muitos comentários): mostra o motivo
+            const body = await res.json().catch(() => null)
+            setErroComentario(
+                body?.errors?.[0] ?? body?.error ?? "Não foi possível enviar o comentário."
+            )
+            return
+        }
+
         if (res.ok) {
+            setErroComentario("")
             setNovo("")
             const atualizados = await fetch(`${API_URL}/comentarios.php?lesson_id=${aula.id}`).then(
                 (r) => r.json()
@@ -557,6 +568,7 @@ export default function CursoClient({ course }: { course: CourseDetail }) {
                                         <input
                                             type="text"
                                             value={novoComentario}
+                                            maxLength={1000} // mesmo limite do comentarios.php
                                             onChange={(e) => setNovo(e.target.value)}
                                             onKeyDown={(e) =>
                                                 e.key === "Enter" && enviarComentario()
@@ -577,6 +589,11 @@ export default function CursoClient({ course }: { course: CourseDetail }) {
                                             <Send size={15} />
                                         </button>
                                     </div>
+                                    {erroComentario && (
+                                        <p role="alert" className="mt-2 text-xs text-red-600">
+                                            {erroComentario}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="flex flex-col gap-4">

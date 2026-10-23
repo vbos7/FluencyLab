@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/guard.php';
 
+require_once __DIR__ . '/../lib/progress.php';
+
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     json_out(['error' => 'Método não permitido'], 405);
@@ -26,18 +28,11 @@ $rows = $pdo->query("
     LIMIT {$limit}
 ")->fetchAll();
 
-// Mesma fórmula (triangular) do ranking do aluno: o nível N exige N×150 de XP
-// ACUMULADO — por isso subtraímos a cada volta, igual ao ranking.php e ao front.
+// Nível pela regra única (lib/progress.php), a mesma do ranking do aluno.
 $saida = array_map(function ($u) {
-    $xp       = (int) $u['xp'];
-    $nivel    = 1;
-    $restante = $xp;
-    while ($restante >= $nivel * 150) {
-        $restante -= $nivel * 150;
-        $nivel++;
-    }
+    $xp = (int) $u['xp'];
 
-    return ['id' => (int) $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'xp' => $xp, 'level' => $nivel];
+    return ['id' => (int) $u['id'], 'name' => $u['name'], 'email' => $u['email'], 'xp' => $xp, 'level' => nivel_do_xp($xp)];
 }, $rows);
 
 json_out($saida);

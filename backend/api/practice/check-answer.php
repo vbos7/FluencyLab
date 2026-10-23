@@ -9,9 +9,16 @@ require_once __DIR__ . '/AiService.php';
 
 require_once __DIR__ . '/../lib/settings.php';
 
+require_once __DIR__ . '/../lib/progress.php';
+
+require_once __DIR__ . '/../lib/login-throttle.php';
+
 // Limites do modo convidado (sem login), para conter o custo da IA da OpenAI.
 const GUEST_MAX_ATTEMPTS = 5;    // por sessão do convidado
 const GUEST_IP_DAILY_CAP = 20;   // por IP por dia (backstop se limparem os cookies)
+// Logado: correções por usuário na janela do throttle (15 min). Uma pessoa leva
+// uns 15–30 s por frase; isto só barra robôs gastando crédito da IA.
+const USER_MAX_CORRECOES = 60;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['error' => 'Método não permitido'], 405);
@@ -56,6 +63,17 @@ if (!$frase) {
 // Convidado: aplica os tetos (sessão + IP) ANTES de gastar crédito da IA.
 $reservaConvidado = $isGuest ? guardaConvidado($pdo) : null;
 
+if (!$isGuest) {
+    $chaveCorrecao = 'pratica:' . (int) $_SESSION['user_id'];
+
+    if (throttle_excedido($pdo, $chaveCorrecao, client_ip(), USER_MAX_CORRECOES, PHP_INT_MAX, 'pratica:')) {
+        json_out(['errors' => ['Muitas correções em pouco tempo. Faça uma pausa e tente de novo.']], 429);
+
+        exit;
+    }
+    throttle_registrar($pdo, $chaveCorrecao, client_ip());
+}
+
 // Chama a IA (pode demorar 1-3 segundos)
 try {
     $ai       = new AiService();
@@ -65,15 +83,18 @@ try {
     if ($reservaConvidado !== null) {
         devolveConvidado($pdo, $reservaConvidado);
     }
-    json_out(['error' => 'Erro na IA: ' . $e->getMessage()], 500);
+    // O motivo (chave inválida, timeout...) fica no log; o aluno vê uma mensagem genérica.
+    error_log('[check-answer] ' . $e->getMessage());
+    json_out(['error' => 'Não foi possível corrigir agora. Tente novamente em instantes.'], 502);
 
     exit;
 }
 
 $score = (int) ($feedback['score'] ?? 0);
 // XP base configurável no painel (Gamificação → xp_per_phrase). Default 10.
+// Só acerto dá XP: o que aparece na tela é o que entra no ranking.
 $xpBase = max(1, (int) get_setting($pdo, 'xp_per_phrase', '10'));
-$xp     = calcularXp($score, $xpBase);
+$xp     = $feedback['is_correct'] ? calcularXp($score, $xpBase) : 0;
 
 // Convidado não é persistido (não tem user_id nem nível): devolve o feedback,
 // informa quantas questões ainda restam e encerra aqui.
@@ -88,11 +109,31 @@ if ($isGuest) {
     exit;
 }
 
+$userId = (int) $_SESSION['user_id'];
+
+// XP de uma frase só uma vez por dia: repetir a mesma frase continua corrigindo,
+// mas não sobe o ranking.
+$xpRepetido = false;
+
+if ($xp > 0) {
+    $stmt = $pdo->prepare(
+        'SELECT 1 FROM attempts
+         WHERE user_id = ? AND phrase_id = ? AND is_correct = 1 AND xp_earned > 0 AND created_at >= CURDATE()
+         LIMIT 1'
+    );
+    $stmt->execute([$userId, $phraseId]);
+    $xpRepetido = (bool) $stmt->fetchColumn();
+
+    if ($xpRepetido) {
+        $xp = 0;
+    }
+}
+
 // Bônus de sequência (Gamificação → streak_bonus): se o aluno está numa streak
 // (>= 2 dias consecutivos) e acertou, o XP é multiplicado pelo bônus configurado.
 $streakBonus = (float) get_setting($pdo, 'streak_bonus', '1.5');
 
-if ($feedback['is_correct'] && $streakBonus > 1 && calcularStreak($pdo, (int) $_SESSION['user_id']) >= 2) {
+if ($xp > 0 && $streakBonus > 1 && streak_do_usuario($pdo, $userId) >= 2) {
     $xp = (int) round($xp * $streakBonus);
 }
 
@@ -106,7 +147,7 @@ try {
         'INSERT INTO attempts (user_id, phrase_id, answer_given, overall_comment, corrected_sentence, is_correct, score, xp_earned, time_spent_seconds)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
     )->execute([
-        $_SESSION['user_id'], $phraseId, $resposta,
+        $userId, $phraseId, $resposta,
         $feedback['overall_comment'] ?? null,
         $feedback['corrected_sentence'] ?? null,
         $feedback['is_correct'] ? 1 : 0, $score, $xp, $tempoGasto,
@@ -145,10 +186,10 @@ try {
         }
     }
 
-    // Se acertou, credita pontos de ranking
-    if ($feedback['is_correct']) {
+    // Acerto que rendeu XP credita pontos de ranking
+    if ($xp > 0) {
         $pdo->prepare('INSERT INTO ranking_points (user_id, points, reason) VALUES (?, ?, ?)')
-            ->execute([$_SESSION['user_id'], $xp, 'Exercício correto']);
+            ->execute([$userId, $xp, 'Exercício correto']);
     }
 
     $pdo->commit();
@@ -160,67 +201,19 @@ try {
 }
 
 // XP total atualizado (mesma fonte do dashboard/ranking) + detecção de subida de
-// nível. Só acerto credita ranking_points, então o XP "antes" tira o ganho desta
-// tentativa quando ela foi correta; senão o nível não muda.
-$stmtXp = $pdo->prepare('SELECT COALESCE(SUM(points), 0) FROM ranking_points WHERE user_id = ?');
-$stmtXp->execute([$_SESSION['user_id']]);
-$xpTotal = (int) $stmtXp->fetchColumn();
-
-$xpAntes      = $feedback['is_correct'] ? $xpTotal - $xp : $xpTotal;
-$nivelAgora   = nivelDoXp($xpTotal);
-$subiuDeNivel = $nivelAgora > nivelDoXp($xpAntes);
+// nível: o XP "antes" é o total sem o ganho desta tentativa.
+$xpTotal      = xp_total_do_usuario($pdo, $userId);
+$nivelAgora   = nivel_do_xp($xpTotal);
+$subiuDeNivel = $nivelAgora > nivel_do_xp($xpTotal - $xp);
 
 json_out([
-    'feedback'   => $feedback,
-    'xp_earned'  => $xp,
-    'xp_total'   => $xpTotal,
-    'level'      => $nivelAgora,
-    'leveled_up' => $subiuDeNivel,
+    'feedback'    => $feedback,
+    'xp_earned'   => $xp,
+    'xp_repeated' => $xpRepetido,
+    'xp_total'    => $xpTotal,
+    'level'       => $nivelAgora,
+    'leveled_up'  => $subiuDeNivel,
 ]);
-
-// Nível a partir do XP total — mesma fórmula triangular do ranking.php e do front
-// (ranking.ts getLevel): o nível N exige N×150 de XP acumulado.
-function nivelDoXp(int $xp): int
-{
-    $nivel    = 1;
-    $restante = $xp;
-    while ($restante >= $nivel * 150) {
-        $restante -= $nivel * 150;
-        $nivel++;
-    }
-
-    return $nivel;
-}
-
-// Streak = dias consecutivos com pontos ganhos, terminando hoje (ou ontem, se hoje
-// ainda não pontuou). Mesma lógica do computeStreak do front (progress.ts).
-function calcularStreak(PDO $pdo, int $userId): int
-{
-    $stmt = $pdo->prepare(
-        'SELECT DISTINCT DATE(earned_at) AS dia FROM ranking_points WHERE user_id = ? ORDER BY dia DESC'
-    );
-    $stmt->execute([$userId]);
-    $ativos = array_flip(array_column($stmt->fetchAll(), 'dia'));
-
-    if (empty($ativos)) {
-        return 0;
-    }
-
-    $cursor = new DateTime('today');
-
-    // Se hoje ainda não pontuou, a streak vigente termina ontem.
-    if (!isset($ativos[$cursor->format('Y-m-d')])) {
-        $cursor->modify('-1 day');
-    }
-
-    $streak = 0;
-    while (isset($ativos[$cursor->format('Y-m-d')])) {
-        $streak++;
-        $cursor->modify('-1 day');
-    }
-
-    return $streak;
-}
 
 // Teto do convidado: contador na sessão (limite por convidado) + contagem diária
 // por IP (backstop caso limpem os cookies). Reserva o slot ANTES de chamar a IA,

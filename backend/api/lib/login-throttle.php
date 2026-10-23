@@ -42,6 +42,12 @@ function throttle_registrar(PDO $pdo, string $chave, string $ip): void
     $ipBin = @inet_pton($ip) ?: '';
     $pdo->prepare('INSERT INTO login_attempts (email, ip) VALUES (?, ?)')
         ->execute([$chave, $ipBin]);
+
+    // Faxina ocasional: só a última janela importa, então linhas de mais de um dia
+    // não servem para nada (a prática registra uma por correção).
+    if (random_int(1, 100) === 1) {
+        $pdo->exec('DELETE FROM login_attempts WHERE attempted_at < NOW() - INTERVAL 1 DAY');
+    }
 }
 
 function throttle_limpar(PDO $pdo, string $chave): void

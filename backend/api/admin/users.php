@@ -2,6 +2,10 @@
 
 require_once __DIR__ . '/guard.php';
 
+require_once __DIR__ . '/../lib/progress.php';
+
+require_once __DIR__ . '/../lib/avatar.php';
+
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 requireAdmin();
 
@@ -21,15 +25,8 @@ if ($method === 'GET') {
     $limite = (new DateTime())->modify('-7 days');
 
     $saida = array_map(function ($u) use ($limite) {
-        // Nível triangular: N exige N×150 ACUMULADO (subtrai a cada volta), igual
-        // ao ranking.php e ao front. Sem a subtração, os níveis saíam inflados.
-        $xp       = (int) $u['xp'];
-        $nivel    = 1;
-        $restante = $xp;
-        while ($restante >= $nivel * 150) {
-            $restante -= $nivel * 150;
-            $nivel++;
-        }
+        $xp    = (int) $u['xp'];
+        $nivel = nivel_do_xp($xp); // regra única em lib/progress.php
 
         // Ativo = teve alguma tentativa nos últimos 7 dias
         $ativo = $u['last_activity'] !== null && new DateTime($u['last_activity']) >= $limite;
@@ -173,6 +170,7 @@ if ($method === 'DELETE') {
 
         exit;
     }
+    avatar_apagar_arquivo(avatar_atual($pdo, $id));
     $pdo->prepare('DELETE FROM users WHERE id = ?')->execute([$id]);
     json_out(null, 204);
 

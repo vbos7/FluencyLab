@@ -7,6 +7,8 @@ require_once __DIR__ . '/db.php';
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 require_once __DIR__ . '/lib/url.php';
 
+require_once __DIR__ . '/lib/avatar.php';
+
 if (!isset($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
 
@@ -135,7 +137,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
         }
     }
 
-    // ON DELETE CASCADE limpa attempts, ranking_points, user_plan etc. do usuário.
+    // ON DELETE CASCADE limpa attempts, ranking_points, user_plan etc. do usuário;
+    // a foto fica no disco, então sai antes.
+    avatar_apagar_arquivo(avatar_atual($pdo, (int) $userId));
     $pdo->prepare('DELETE FROM users WHERE id = ?')->execute([$userId]);
     session_destroy();
     json_out(null, 204);

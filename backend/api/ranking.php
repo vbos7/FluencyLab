@@ -8,6 +8,8 @@ require_once __DIR__ . '/lib/url.php';
 
 require_once __DIR__ . '/lib/settings.php';
 
+require_once __DIR__ . '/lib/progress.php';
+
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     json_out(['error' => 'Método não permitido'], 405);
 
@@ -32,20 +34,6 @@ if (get_setting($pdo, 'ranking_public', '1') !== '1') {
     }
 }
 
-// Mesma lógica de nível usada no front (ranking.ts: getLevel) — nível N exige N×150,
-// subtraindo cumulativamente, não apenas comparando o bruto.
-function calcularNivel(int $xp): int
-{
-    $nivel    = 1;
-    $restante = $xp;
-    while ($restante >= $nivel * 150) {
-        $restante -= $nivel * 150;
-        $nivel++;
-    }
-
-    return $nivel;
-}
-
 $stmt = $pdo->query('
     SELECT u.id, u.name, u.avatar, COALESCE(SUM(rp.points), 0) AS xp
     FROM users u
@@ -63,7 +51,7 @@ $lista = array_map(function ($user) use ($currentUserId) {
         'id'            => (int) $user['id'],
         'name'          => $user['name'],
         'xp'            => $xp,
-        'level'         => calcularNivel($xp),
+        'level'         => nivel_do_xp($xp),
         'avatar'        => avatar_url($user['avatar']), // null se não tiver foto
         'isCurrentUser' => $currentUserId === (int) $user['id'],
     ];

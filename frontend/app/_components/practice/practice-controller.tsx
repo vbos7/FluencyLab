@@ -190,12 +190,18 @@ export function PracticeController({ phrases, isPremium, isGuest }: Props) {
                 time_spent_seconds: timeSpent,
             })
             const fb = adaptAiFeedback(response.data.feedback, response.data.xp_earned)
+            // XP só no primeiro acerto da frase no dia: avisa em vez de mostrar "+0"
+            if (response.data.xp_repeated) {
+                fb.message = `${fb.message} Você já ganhou XP com esta frase hoje.`
+            }
             setFeedback(fb)
             // Anuncia o resultado para leitores de tela (a região aria-live já está no DOM)
             setSrAnnouncement(`${fb.title} ${fb.message}`)
-            setEarnedXp(fb.xp)
-            setShowXpToast(true)
-            setTimeout(() => setShowXpToast(false), 2000)
+            if (fb.xp > 0) {
+                setEarnedXp(fb.xp)
+                setShowXpToast(true)
+                setTimeout(() => setShowXpToast(false), 2000)
+            }
             // Subiu de nível nesta tentativa → dispara a comemoração
             if (response.data.leveled_up) {
                 setLevelUp(response.data.level)
