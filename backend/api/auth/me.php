@@ -22,9 +22,9 @@ $stmt = $pdo->prepare('SELECT id, name, email, role, avatar FROM users WHERE id 
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 
-// A sessão aponta pra um usuário que não existe mais (ex: conta deletada)
+// A sessão aponta pra um usuário que não existe mais (ex: conta deletada).
+// db.php já esvaziou essa sessão (validar_sessao_logada).
 if (!$user) {
-    session_destroy();
     json_out(['error' => 'Não autenticado'], 401);
 
     exit;

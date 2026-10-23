@@ -9,6 +9,9 @@
  * desafio da sessão, confirma que o dono é ADMIN e então abre a sessão logada.
  */
 
+// Grava na sessão: não deixa o db.php liberá-la cedo (ver db.php).
+const MANTER_SESSAO = true;
+
 require_once __DIR__ . '/../../cors.php';
 
 require_once __DIR__ . '/../../db.php';

@@ -33,8 +33,7 @@ const MEDAL_CONFIG = [
 ]
 
 export async function RankingTop3() {
-    const leaderboard = await fetchFromApi<LeaderboardUser[]>("/ranking.php")
-    const top3 = leaderboard.slice(0, 3)
+    const top3 = await fetchFromApi<LeaderboardUser[]>("/ranking.php?limit=3")
 
     if (top3.length === 0) {
         return null // sem participantes ainda, não mostra a seção

@@ -1,38 +1,15 @@
-import { type LeaderboardUser } from "@/app/_lib/ranking"
+import { type RankingPageData } from "@/app/_lib/ranking"
 import { fetchFromApi } from "@/app/_lib/server-api"
 import { Podium } from "@/app/_components/ranking/podium"
 import { LeaderboardList } from "@/app/_components/ranking/leaderboard-list"
 import { PositionFooter } from "@/app/_components/ranking/position-footer"
 import NavLayout from "@/app/_layouts/nav-layout"
 
-// Quantidade de linhas exibidas na lista abaixo do pódio
-const LIST_SIZE = 10
-// Quantas posições acima do usuário a janela começa (centraliza o usuário na lista)
-const OFFSET = 4
-
 export default async function RankingPage() {
-    const leaderboard = await fetchFromApi<LeaderboardUser[]>("/ranking.php")
-
-    // Posição real do usuário atual no ranking (1-indexed)
-    const myPosition = leaderboard.findIndex((u) => u.isCurrentUser) + 1
-    // Total de itens na lista abaixo do pódio (posições 4+)
-    const totalList = leaderboard.length - 3
-
-    // Índice inicial da janela dentro de leaderboard.slice(3)
-    let startIdx = 0
-    if (myPosition > 3) {
-        const userIdxInList = myPosition - 4
-        startIdx = Math.max(0, userIdxInList - OFFSET)
-        // Impede que a janela ultrapasse o fim da lista
-        if (startIdx + LIST_SIZE > totalList) {
-            startIdx = Math.max(0, totalList - LIST_SIZE)
-        }
-    }
-
-    // Os 3 primeiros para o pódio
-    const top3 = leaderboard.slice(0, 3)
-    // Fatia visível da lista (máximo LIST_SIZE itens)
-    const visibleRows = leaderboard.slice(3).slice(startIdx, startIdx + LIST_SIZE)
+    // O backend já devolve o pódio e a janela de 10 linhas em volta do aluno
+    // (antes vinha a lista inteira de usuários e a página recortava aqui).
+    const { top3, rows: visibleRows, startIdx, myPosition } =
+        await fetchFromApi<RankingPageData>("/ranking.php")
 
     return (
         <NavLayout>
@@ -53,7 +30,7 @@ export default async function RankingPage() {
                     </p>
                 </div>
 
-                {leaderboard.length === 0 ? (
+                {top3.length === 0 ? (
                     <p className="py-16 text-center text-sm text-slate-400">
                         O ranking não está disponível no momento.
                     </p>

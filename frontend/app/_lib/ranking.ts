@@ -8,6 +8,18 @@ export type LeaderboardUser = {
     isCurrentUser?: boolean
 }
 
+// Resposta padrão de GET /ranking.php: pódio + janela de linhas em volta do aluno
+export type RankingPageData = {
+    top3: LeaderboardUser[]
+    rows: LeaderboardUser[]
+    startIdx: number // posição da 1ª linha na lista sem o pódio (posição 4 = 0)
+    myPosition: number
+    total: number
+}
+
+// GET /ranking.php?me=1
+export type MyRankingPosition = { position: number | null; total: number }
+
 // XP necessário para completar um nível específico (nível N exige N×150)
 export function xpForLevel(lvl: number): number {
     return lvl * 150

@@ -53,3 +53,12 @@ $pdo->exec("SET time_zone = '" . (new DateTime())->format('P') . "'");
 require_once __DIR__ . '/lib/auth.php';
 
 validar_sessao_logada($pdo);
+
+// Libera a trava da sessão assim que ela foi lida. O PHP mantém o arquivo de
+// sessão travado até o fim do script, então as chamadas paralelas de uma mesma
+// página (Home: me + status + profile + dashboard) ficavam em fila. $_SESSION
+// continua legível; só as rotas que GRAVAM na sessão (login, 2FA, passkey,
+// convidado, perfil) definem MANTER_SESSAO antes de incluir este arquivo.
+if (!defined('MANTER_SESSAO') && session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}

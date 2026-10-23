@@ -467,6 +467,28 @@ SET @ddl := IF(
     'SELECT 1');
 PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
 
+-- Índices para as consultas por aluno + período (dashboard, calendário, progresso
+-- semanal, sequência, XP) e para a lista de comentários de uma aula. O índice da
+-- FK só cobre user_id/lesson_id; com a data junto o MySQL não lê o histórico todo.
+SET @ddl := IF(
+    (SELECT COUNT(*) FROM information_schema.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'attempts' AND INDEX_NAME = 'idx_attempts_user_created') = 0,
+    'ALTER TABLE attempts ADD INDEX idx_attempts_user_created (user_id, created_at)',
+    'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+SET @ddl := IF(
+    (SELECT COUNT(*) FROM information_schema.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ranking_points' AND INDEX_NAME = 'idx_ranking_points_user_earned') = 0,
+    'ALTER TABLE ranking_points ADD INDEX idx_ranking_points_user_earned (user_id, earned_at)',
+    'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+SET @ddl := IF(
+    (SELECT COUNT(*) FROM information_schema.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'comments' AND INDEX_NAME = 'idx_comments_lesson_created') = 0,
+    'ALTER TABLE comments ADD INDEX idx_comments_lesson_created (lesson_id, is_approved, created_at)',
+    'SELECT 1');
+PREPARE s FROM @ddl; EXECUTE s; DEALLOCATE PREPARE s;
+
 -- ─── Dados iniciais ───────────────────────────────────────────────────────────
 
 -- Nada de TRUNCATE: o MySQL recusa truncar tabela referenciada por foreign key

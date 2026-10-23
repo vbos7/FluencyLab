@@ -10,7 +10,7 @@ import { LogoutButton } from "@/app/_components/profile/logout-button"
 import { WeeklyReport } from "@/app/_components/profile/weekly-report"
 import { ProLockCard } from "@/app/_components/pro-lock-card"
 import { fetchFromApi } from "@/app/_lib/server-api"
-import { getLevel, levelLabel, type LeaderboardUser } from "@/app/_lib/ranking"
+import { getLevel, levelLabel, type MyRankingPosition } from "@/app/_lib/ranking"
 import { type DashboardData } from "@/app/_lib/progress"
 
 import NavLayout from "@/app/_layouts/nav-layout"
@@ -26,16 +26,16 @@ type User = {
 }
 
 export default async function ProfilePage() {
-    const [user, dashboardData, leaderboard, planStatus] = await Promise.all([
+    const [user, dashboardData, ranking, planStatus] = await Promise.all([
         fetchFromApi<User>("/profile.php"),
         fetchFromApi<DashboardData>("/dashboard.php"),
-        fetchFromApi<LeaderboardUser[]>("/ranking.php"),
+        fetchFromApi<MyRankingPosition>("/ranking.php?me=1"),
         fetchFromApi<{ active: boolean }>("/my-plan.php").catch(() => ({ active: false })),
     ])
 
     const { level, currentXp, needed } = getLevel(dashboardData.xp_total)
     const levelLabelText = levelLabel(level)
-    const posicao = leaderboard.findIndex((u) => u.id === user.id) + 1
+    const posicao = ranking.position ?? 0
 
     const stats = [
         {

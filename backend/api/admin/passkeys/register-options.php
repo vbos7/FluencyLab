@@ -9,6 +9,9 @@
  * guarda o handle do usuário e o login do painel pode ser SEM digitar email.
  */
 
+// Grava na sessão: não deixa o db.php liberá-la cedo (ver db.php).
+const MANTER_SESSAO = true;
+
 require_once __DIR__ . '/../guard.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
