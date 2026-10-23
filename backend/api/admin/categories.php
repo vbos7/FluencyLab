@@ -66,6 +66,8 @@ if ($method === 'PUT') {
         exit;
     }
 
+    exigirExistente('categories', $id, 'Categoria não encontrada');
+
     $name = validarNome(json_decode(file_get_contents('php://input'), true), $errors);
 
     if (!empty($errors)) {
@@ -100,6 +102,8 @@ if ($method === 'DELETE') {
 
         exit;
     }
+
+    exigirExistente('categories', $id, 'Categoria não encontrada');
 
     $stmt = $pdo->prepare('SELECT COUNT(*) FROM phrases WHERE category_id = ?');
     $stmt->execute([$id]);

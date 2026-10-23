@@ -17,13 +17,19 @@ try {
     if (empty($_GET['slug'])) {
         $stmt = $pdo->query(
             'SELECT c.id, c.slug, c.title, c.description, c.level, c.order_num,
-                COUNT(l.id) AS total_lessons
+                COUNT(l.id) AS total_lessons, COALESCE(SUM(l.duration), 0) AS total_duration
          FROM courses c
          LEFT JOIN lessons l ON l.course_id = c.id
          GROUP BY c.id
-         ORDER BY c.order_num'
+         ORDER BY c.order_num, c.id'
         );
-        json_out($stmt->fetchAll());
+        json_out(array_map(fn ($c) => [
+            ...$c,
+            'id'             => (int) $c['id'],
+            'order_num'      => (int) $c['order_num'],
+            'total_lessons'  => (int) $c['total_lessons'],
+            'total_duration' => (int) $c['total_duration'], // segundos
+        ], $stmt->fetchAll()));
 
         exit;
     }

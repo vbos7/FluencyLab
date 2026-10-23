@@ -14,19 +14,8 @@ type Toggle = {
     defaultOn: boolean
 }
 
+// Só preferências que de fato mudam o app (as de som e lembrete não tinham efeito).
 const SETTINGS: Toggle[] = [
-    {
-        key: "sound",
-        label: "Sons de feedback",
-        description: "Toca um som ao verificar respostas certas ou erradas.",
-        defaultOn: true,
-    },
-    {
-        key: "notifications",
-        label: "Lembretes diários",
-        description: "Receba notificações para manter sua sequência de estudos.",
-        defaultOn: true,
-    },
     {
         key: "colorBlind",
         label: "Modo daltônico",
@@ -110,32 +99,13 @@ export function SettingsDialog() {
     // Tamanho de fonte — persistido no localStorage e aplicado globalmente
     const { fontSize, toggle: toggleFontSize } = useFontSize()
 
-    // Demais toggles — in-memory por enquanto (sem efeito funcional ainda)
-    const [values, setValues] = useState<Record<string, boolean>>(
-        Object.fromEntries(
-            SETTINGS.filter((s) => !["colorBlind", "reduceMotion"].includes(s.key)).map((s) => [
-                s.key,
-                s.defaultOn,
-            ])
-        )
-    )
-
     function handleToggle(key: string, val: boolean) {
-        if (key === "colorBlind") {
-            toggleColorBlind(val)
-            return
-        }
-        if (key === "reduceMotion") {
-            toggleReduceMotion(val)
-            return
-        }
-        setValues((prev) => ({ ...prev, [key]: val }))
+        if (key === "colorBlind") toggleColorBlind(val)
+        if (key === "reduceMotion") toggleReduceMotion(val)
     }
 
     function getValue(key: string): boolean {
-        if (key === "colorBlind") return colorBlind
-        if (key === "reduceMotion") return reduceMotion
-        return values[key] ?? false
+        return key === "colorBlind" ? colorBlind : reduceMotion
     }
 
     return (

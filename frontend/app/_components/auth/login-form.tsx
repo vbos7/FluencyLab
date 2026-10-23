@@ -156,13 +156,18 @@ export function LoginForm({ showPasskey = false, next }: { showPasskey?: boolean
                 <form onSubmit={handleLogin} className="flex flex-col gap-4">
                     {/* E-mail */}
                     <div className={fadeUp(100)}>
-                        <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
+                        <label
+                            htmlFor="login-email"
+                            className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase"
+                        >
                             E-mail
                         </label>
                         <div className={fieldClass("email")}>
                             <EmailIcon active={focused === "email"} />
                             <input
+                                id="login-email"
                                 type="email"
+                                autoComplete="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 onFocus={() => setFocused("email")}
@@ -176,7 +181,10 @@ export function LoginForm({ showPasskey = false, next }: { showPasskey?: boolean
                     {/* Senha */}
                     <div className={fadeUp(150)}>
                         <div className="mb-2 flex items-center justify-between">
-                            <label className="block text-xs font-semibold tracking-wider text-slate-600 uppercase">
+                            <label
+                                htmlFor="login-password"
+                                className="block text-xs font-semibold tracking-wider text-slate-600 uppercase"
+                            >
                                 Senha
                             </label>
                             <button
@@ -190,7 +198,9 @@ export function LoginForm({ showPasskey = false, next }: { showPasskey?: boolean
                         <div className={fieldClass("password")}>
                             <LockIcon active={focused === "password"} />
                             <input
+                                id="login-password"
                                 type={showPass ? "text" : "password"}
+                                autoComplete="current-password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 onFocus={() => setFocused("password")}

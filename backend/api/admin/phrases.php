@@ -52,6 +52,8 @@ if ($method === 'PUT') {
         exit;
     }
 
+    exigirExistente('phrases', $id, 'Frase não encontrada');
+
     [$pt, $en, $difficulty, $categoryId, $errors] = validarFrase($pdo, json_decode(file_get_contents('php://input'), true));
 
     if (!empty($errors)) {
@@ -77,6 +79,8 @@ if ($method === 'DELETE') {
 
         exit;
     }
+
+    exigirExistente('phrases', $id, 'Frase não encontrada');
     $pdo->prepare('DELETE FROM phrases WHERE id = ?')->execute([$id]);
     json_out(null, 204);
 

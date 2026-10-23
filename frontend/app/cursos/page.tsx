@@ -1,7 +1,6 @@
 import Link from "next/link"
 import NavLayout from "../_layouts/nav-layout"
-import { Languages, LibraryBig, Timer } from "lucide-react"
-import { Icon } from "../_components/admin/icon"
+import { LibraryBig, Timer } from "lucide-react"
 import { fetchFromApi } from "@/app/_lib/server-api"
 
 type Course = {
@@ -11,6 +10,14 @@ type Course = {
     description: string
     level: string
     total_lessons: number
+    total_duration: number // segundos
+}
+
+// 3725 s → "1h 2min"; 540 s → "9 min"
+function formatarDuracao(segundos: number): string {
+    const minutos = Math.round(segundos / 60)
+    if (minutos < 60) return `${minutos} min`
+    return `${Math.floor(minutos / 60)}h ${minutos % 60}min`
 }
 
 export default async function CursosPage() {
@@ -18,7 +25,7 @@ export default async function CursosPage() {
 
     return (
         <NavLayout>
-            <main className="min-h-screen bg-gradient-to-b from-gray-50 to-white px-4 py-20">
+            <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white px-4 py-20">
                 <div className="mx-auto max-w-5xl">
                     {/* Header */}
                     <div className="mb-10 text-center">
@@ -46,14 +53,14 @@ export default async function CursosPage() {
 
                     {/* Cards HORIZONTAIS empilhados */}
                     <div className="mx-auto max-w-5xl space-y-8">
-                        {courses.map((course) => (
+                        {courses.map((course, i) => (
                             <Link
                                 key={course.slug}
                                 href={`/cursos/${course.slug}`}
                                 className="group block"
                             >
                                 <div
-                                    className={`rounded-3xl border bg-white p-8 hover:bg-blue-50 ${course.level} ${course.level} relative overflow-hidden transition-all duration-500 hover:-translate-y-3 hover:border-blue-300 ${course.level} backdrop-blur-sm`}
+                                    className="relative overflow-hidden rounded-3xl border bg-white p-8 backdrop-blur-sm transition-all duration-500 hover:-translate-y-3 hover:border-blue-300 hover:bg-blue-50"
                                 >
                                     {/* Background gradient animado */}
                                     <div className="absolute inset-0 bg-gradient-to-r opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-5"></div>
@@ -63,7 +70,8 @@ export default async function CursosPage() {
                                         <div
                                             className={`flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-white/50 bg-gradient-to-br text-4xl text-black shadow-2xl transition-transform duration-500 group-hover:scale-110`}
                                         >
-                                            <span>{course.id}</span>
+                                            {/* Posição do curso na trilha (1, 2, 3...), não o id do banco */}
+                                            <span aria-hidden="true">{i + 1}</span>
                                         </div>
 
                                         {/* Conteúdo */}
@@ -91,7 +99,10 @@ export default async function CursosPage() {
                                                     <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gray-100 text-xs font-bold">
                                                         <Timer size={16} />
                                                     </div>
-                                                    <span>2-4 semanas</span>
+                                                    <span>
+                                                        {formatarDuracao(course.total_duration)}{" "}
+                                                        de aula
+                                                    </span>
                                                 </div>
                                             </div>
                                         </div>
@@ -118,7 +129,7 @@ export default async function CursosPage() {
                         ))}
                     </div>
                 </div>
-            </main>
+            </div>
         </NavLayout>
     )
 }

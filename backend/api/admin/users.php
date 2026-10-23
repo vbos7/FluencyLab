@@ -130,6 +130,7 @@ if ($method === 'PUT') {
 
         exit;
     }
+    exigirExistente('users', $id, 'Usuário não encontrado');
 
     // Rebaixar o último admin trancaria o painel (mesma trava do profile.php).
     if ($role === 'student') {
@@ -163,6 +164,8 @@ if ($method === 'DELETE') {
 
         exit;
     }
+
+    exigirExistente('users', $id, 'Usuário não encontrado');
 
     // Um admin não pode excluir a própria conta por aqui (evita se trancar pra fora).
     if ($id === (int) $_SESSION['user_id']) {

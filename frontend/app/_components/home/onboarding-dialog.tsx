@@ -1,20 +1,19 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent } from "@/app/_components/ui/dialog"
-import { CheckCircle, Volume2, Bell, Eye, Zap, Type, ChevronRight, Sparkles } from "lucide-react"
+import { Dialog, DialogContent, DialogTitle } from "@/app/_components/ui/dialog"
+import { CheckCircle, Eye, Zap, Type, ChevronRight, Sparkles } from "lucide-react"
 
 type FontSize = "normal" | "large"
 
 type Prefs = {
     fontSize: FontSize
-    sound: boolean
-    notifications: boolean
     colorBlind: boolean
     reduceMotion: boolean
 }
 
-const FIRST_LOGIN_KEY = "fluency-lab:firstLogin"
+// Gravada pelo cadastro (register-form): o onboarding abre no primeiro acesso.
+export const FIRST_LOGIN_KEY = "fluency-lab:firstLogin"
 
 function applyFontSize(size: FontSize) {
     document.documentElement.classList.toggle("font-large", size === "large")
@@ -30,8 +29,6 @@ function applyReduceMotion(enabled: boolean) {
 
 function saveAllPrefs(prefs: Prefs) {
     localStorage.setItem("fluency-lab:fontSize", prefs.fontSize)
-    localStorage.setItem("fluency-lab:sound", String(prefs.sound))
-    localStorage.setItem("fluency-lab:notifications", String(prefs.notifications))
     localStorage.setItem("fluency-lab:colorBlind", String(prefs.colorBlind))
     localStorage.setItem("fluency-lab:reduceMotion", String(prefs.reduceMotion))
 }
@@ -234,8 +231,8 @@ function MotionPreview({ enabled }: { enabled: boolean }) {
 
 // ── Etapas ──────────────────────────────────────────────────────────────────
 
-type Step = "welcome" | "fontSize" | "sound" | "colorBlind" | "reduceMotion" | "done"
-const PROGRESS_STEPS: Step[] = ["fontSize", "sound", "colorBlind", "reduceMotion"]
+type Step = "welcome" | "fontSize" | "colorBlind" | "reduceMotion" | "done"
+const PROGRESS_STEPS: Step[] = ["fontSize", "colorBlind", "reduceMotion"]
 
 // ── Dialog principal ────────────────────────────────────────────────────────
 
@@ -243,18 +240,16 @@ export function OnboardingDialog() {
     const [step, setStep] = useState<Step>("welcome")
     const [prefs, setPrefs] = useState<Prefs>({
         fontSize: "normal",
-        sound: true,
-        notifications: true,
         colorBlind: false,
         reduceMotion: false,
     })
 
-    // Lazy initializer evita setState síncrono em useEffect
+    // Só LÊ a marca aqui: o React pode descartar uma renderização e rodar o
+    // inicializador de novo, então apagar aqui fazia o diálogo nunca abrir.
+    // A marca sai em finish().
     const [open, setOpen] = useState<boolean>(() => {
         if (typeof window === "undefined") return false
-        const isFirst = localStorage.getItem(FIRST_LOGIN_KEY) === "true"
-        if (isFirst) localStorage.removeItem(FIRST_LOGIN_KEY)
-        return isFirst
+        return localStorage.getItem(FIRST_LOGIN_KEY) === "true"
     })
 
     function set<K extends keyof Prefs>(key: K, value: Prefs[K]) {
@@ -267,6 +262,7 @@ export function OnboardingDialog() {
 
     function finish() {
         saveAllPrefs(prefs)
+        localStorage.removeItem(FIRST_LOGIN_KEY)
         setOpen(false)
     }
 
@@ -279,6 +275,8 @@ export function OnboardingDialog() {
                 onPointerDownOutside={(e) => e.preventDefault()}
                 onEscapeKeyDown={(e) => e.preventDefault()}
             >
+                {/* Título para leitores de tela (o visual muda a cada etapa) */}
+                <DialogTitle className="sr-only">Configuração inicial do FluencyLab</DialogTitle>
                 {/* Barra de progresso */}
                 {progressIndex >= 0 && (
                     <div className="flex gap-1.5 px-6 pt-6">
@@ -325,7 +323,7 @@ export function OnboardingDialog() {
                                     <Type className="h-4 w-4 text-blue-600" />
                                 </div>
                                 <span className="text-xs font-bold tracking-widest text-blue-600 uppercase">
-                                    Etapa 1 de 4
+                                    Etapa 1 de 3
                                 </span>
                             </div>
                             <h2 className="mb-1 text-xl font-extrabold text-slate-900">
@@ -388,69 +386,12 @@ export function OnboardingDialog() {
                             </div>
 
                             <button
-                                onClick={() => setStep("sound")}
+                                onClick={() => setStep("colorBlind")}
                                 className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-[0_4px_16px_rgba(37,99,235,0.3)] transition-colors hover:bg-blue-700 active:scale-95"
                             >
                                 Próximo
                                 <ChevronRight className="h-4 w-4" />
                             </button>
-                        </div>
-                    )}
-
-                    {/* ── Som e notificações ── */}
-                    {step === "sound" && (
-                        <div>
-                            <div className="mb-1 flex items-center gap-2">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100">
-                                    <Volume2 className="h-4 w-4 text-blue-600" />
-                                </div>
-                                <span className="text-xs font-bold tracking-widest text-blue-600 uppercase">
-                                    Etapa 2 de 4
-                                </span>
-                            </div>
-                            <h2 className="mb-1 text-xl font-extrabold text-slate-900">
-                                Som e notificações
-                            </h2>
-                            <p className="mb-5 text-sm text-slate-500">
-                                Como você quer ser avisado durante a prática?
-                            </p>
-
-                            <div className="flex flex-col gap-3">
-                                <ToggleRow
-                                    icon={Volume2}
-                                    iconBg="bg-blue-50"
-                                    iconColor="text-blue-600"
-                                    label="Sons de feedback"
-                                    description="Toca um som ao verificar respostas certas ou erradas."
-                                    value={prefs.sound}
-                                    onChange={(v) => set("sound", v)}
-                                />
-                                <ToggleRow
-                                    icon={Bell}
-                                    iconBg="bg-violet-50"
-                                    iconColor="text-violet-600"
-                                    label="Lembretes diários"
-                                    description="Receba notificações para manter sua sequência de estudos."
-                                    value={prefs.notifications}
-                                    onChange={(v) => set("notifications", v)}
-                                />
-                            </div>
-
-                            <div className="mt-6 flex gap-3">
-                                <button
-                                    onClick={() => setStep("fontSize")}
-                                    className="flex-1 rounded-2xl border border-slate-200 py-3.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50 active:scale-95"
-                                >
-                                    Voltar
-                                </button>
-                                <button
-                                    onClick={() => setStep("colorBlind")}
-                                    className="flex flex-[2] items-center justify-center gap-2 rounded-2xl bg-blue-600 py-3.5 text-sm font-bold text-white shadow-[0_4px_16px_rgba(37,99,235,0.3)] transition-colors hover:bg-blue-700 active:scale-95"
-                                >
-                                    Próximo
-                                    <ChevronRight className="h-4 w-4" />
-                                </button>
-                            </div>
                         </div>
                     )}
 
@@ -462,7 +403,7 @@ export function OnboardingDialog() {
                                     <Eye className="h-4 w-4 text-cyan-600" />
                                 </div>
                                 <span className="text-xs font-bold tracking-widest text-cyan-600 uppercase">
-                                    Etapa 3 de 4
+                                    Etapa 2 de 3
                                 </span>
                             </div>
                             <h2 className="mb-1 text-xl font-extrabold text-slate-900">
@@ -489,7 +430,7 @@ export function OnboardingDialog() {
 
                             <div className="mt-5 flex gap-3">
                                 <button
-                                    onClick={() => setStep("sound")}
+                                    onClick={() => setStep("fontSize")}
                                     className="flex-1 rounded-2xl border border-slate-200 py-3.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50 active:scale-95"
                                 >
                                     Voltar
@@ -513,7 +454,7 @@ export function OnboardingDialog() {
                                     <Zap className="h-4 w-4 text-amber-500" />
                                 </div>
                                 <span className="text-xs font-bold tracking-widest text-amber-500 uppercase">
-                                    Etapa 4 de 4
+                                    Etapa 3 de 3
                                 </span>
                             </div>
                             <h2 className="mb-1 text-xl font-extrabold text-slate-900">
@@ -582,14 +523,6 @@ export function OnboardingDialog() {
                                         {
                                             label: "Tamanho da fonte",
                                             value: prefs.fontSize === "large" ? "Grande" : "Normal",
-                                        },
-                                        {
-                                            label: "Sons de feedback",
-                                            value: prefs.sound ? "Ativado" : "Desativado",
-                                        },
-                                        {
-                                            label: "Lembretes diários",
-                                            value: prefs.notifications ? "Ativado" : "Desativado",
                                         },
                                         {
                                             label: "Modo daltônico",

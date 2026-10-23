@@ -35,3 +35,19 @@ function requireAdmin(): void
         exit;
     }
 }
+
+// PUT/DELETE de um id que não existe respondia sucesso. $tabela vem sempre do
+// código (nunca do request), por isso pode ir direto no SQL.
+function exigirExistente(string $tabela, int $id, string $mensagem): void
+{
+    global $pdo;
+
+    $stmt = $pdo->prepare("SELECT 1 FROM {$tabela} WHERE id = ?");
+    $stmt->execute([$id]);
+
+    if (!$stmt->fetchColumn()) {
+        json_out(['error' => $mensagem], 404);
+
+        exit;
+    }
+}

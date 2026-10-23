@@ -102,6 +102,8 @@ if ($method === 'PUT') {
 
         exit;
     }
+
+    exigirExistente('courses', $id, 'Curso não encontrado');
     $body   = json_decode(file_get_contents('php://input'), true) ?? [];
     $errors = validarCurso($body);
 
@@ -147,6 +149,8 @@ if ($method === 'DELETE') {
 
         exit;
     }
+
+    exigirExistente('courses', $id, 'Curso não encontrado');
     $pdo->prepare('DELETE FROM courses WHERE id = ?')->execute([$id]);
     json_out(null, 204);
 

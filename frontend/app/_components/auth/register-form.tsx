@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { AuthLogo } from "./auth-logo"
 import { EmailIcon, LockIcon, UserIcon, EyeIcon, EyeOffIcon } from "./auth-icons"
 import { apiClient } from "@/app/_lib/api"
+import { apiErrorMessage } from "@/app/_lib/admin-api"
+import { FIRST_LOGIN_KEY } from "@/app/_components/home/onboarding-dialog"
 
 export function RegisterForm() {
     const router = useRouter()
@@ -59,9 +61,12 @@ export function RegisterForm() {
                 password,
                 password_confirmation: confirmPassword, // nome que o PHP espera
             })
+            // Conta nova: a Home abre o onboarding (preferências de acessibilidade)
+            localStorage.setItem(FIRST_LOGIN_KEY, "true")
             router.push("/home")
-        } catch {
-            setError("Não foi possível criar a conta. Confira os dados.")
+        } catch (err) {
+            // O backend explica o motivo (e-mail em uso, cadastros desativados...)
+            setError(apiErrorMessage(err, "Não foi possível criar a conta. Confira os dados."))
         } finally {
             setLoading(false)
         }
@@ -78,13 +83,18 @@ export function RegisterForm() {
             <div className="flex flex-col gap-3">
                 {/* Nome */}
                 <div className={fadeUp(100)}>
-                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
+                    <label
+                        htmlFor="register-name"
+                        className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase"
+                    >
                         Nome
                     </label>
                     <div className={fieldClass("nome")}>
                         <UserIcon active={focused === "nome"} />
                         <input
                             type="text"
+                            id="register-name"
+                            autoComplete="name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             onFocus={() => setFocused("nome")}
@@ -97,13 +107,18 @@ export function RegisterForm() {
 
                 {/* E-mail */}
                 <div className={fadeUp(125)}>
-                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
+                    <label
+                        htmlFor="register-email"
+                        className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase"
+                    >
                         E-mail
                     </label>
                     <div className={fieldClass("email")}>
                         <EmailIcon active={focused === "email"} />
                         <input
                             type="email"
+                            id="register-email"
+                            autoComplete="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             onFocus={() => setFocused("email")}
@@ -116,13 +131,18 @@ export function RegisterForm() {
 
                 {/* Senha */}
                 <div className={fadeUp(150)}>
-                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
+                    <label
+                        htmlFor="register-password"
+                        className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase"
+                    >
                         Senha
                     </label>
                     <div className={fieldClass("password")}>
                         <LockIcon active={focused === "password"} />
                         <input
                             type={showPass ? "text" : "password"}
+                            id="register-password"
+                            autoComplete="new-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             onFocus={() => setFocused("password")}
@@ -143,13 +163,18 @@ export function RegisterForm() {
 
                 {/* Confirmar senha — mesmo botão de olho, mesmo aria-label dinâmico */}
                 <div className={fadeUp(175)}>
-                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
+                    <label
+                        htmlFor="register-password-confirmation"
+                        className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase"
+                    >
                         Confirmar senha
                     </label>
                     <div className={fieldClass("confirmPassword")}>
                         <LockIcon active={focused === "confirmPassword"} />
                         <input
                             type={showPass ? "text" : "password"}
+                            id="register-password-confirmation"
+                            autoComplete="new-password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             onFocus={() => setFocused("confirmPassword")}

@@ -4,6 +4,14 @@ import { apiClient } from "@/app/_lib/api"
 import { Sparkles } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { type Phrase, type Feedback } from "@/app/_lib/practice"
+import {
+    PREF_CATEGORY,
+    PREF_DIFFICULTY,
+    PREF_GUEST_USED,
+    clearPref,
+    setPref,
+    sortearIndice,
+} from "@/app/_lib/prefs"
 import { XpToast } from "./xp-toast"
 import { LevelUpModal } from "./level-up-modal"
 import { PracticeHeader } from "./practice-header"
@@ -17,6 +25,11 @@ type Props = {
     isPremium: boolean
     // Sem sessão no backend (decidido no servidor, em page.tsx)
     isGuest: boolean
+    // Estado inicial calculado no servidor (preferências em cookie + frase sorteada)
+    initialDifficulty: string
+    initialCategory: string
+    initialIndex: number
+    initialGuestUsed: number
 }
 
 type AiFeedback = {
@@ -60,22 +73,22 @@ function adaptAiFeedback(ai: AiFeedback, xp: number): Feedback {
 // GUEST_MAX_ATTEMPTS no backend (check-answer.php), que é o teto real e informa o
 // saldo em cada resposta (guest_remaining).
 const GUEST_LIMIT = 5
-const GUEST_COUNT_KEY = "fluency-lab:guest-count"
 
-export function PracticeController({ phrases, isPremium, isGuest }: Props) {
+export function PracticeController({
+    phrases,
+    isPremium,
+    isGuest,
+    initialDifficulty,
+    initialCategory,
+    initialIndex,
+    initialGuestUsed,
+}: Props) {
     const [loading, setLoading] = useState(false)
     // Mensagem de erro exibida quando a correção pela IA falha (null = sem erro)
     const [error, setError] = useState<string | null>(null)
-    // Dificuldade ativa — lida do localStorage na inicialização (padrão: "medium")
-    const [difficulty, setDifficulty] = useState<string>(() => {
-        if (typeof window === "undefined") return "medium"
-        return localStorage.getItem("fluency-lab:difficulty") ?? "medium"
-    })
-
-    const [category, setCategory] = useState<string>(() => {
-        if (typeof window === "undefined") return "all"
-        return localStorage.getItem("fluency-lab:category") ?? "all"
-    })
+    // Dificuldade e categoria ativas (vêm do cookie, lido no servidor)
+    const [difficulty, setDifficulty] = useState(initialDifficulty)
+    const [category, setCategory] = useState(initialCategory)
 
     const categories = Array.from(new Set(phrases.map((p) => p.category))).sort()
 
@@ -90,34 +103,18 @@ export function PracticeController({ phrases, isPremium, isGuest }: Props) {
 
     const handleChangeCategory = (newCategory: string) => {
         if (!isPremium) return // trava extra de segurança, mesmo que o seletor já esteja escondido
-        localStorage.setItem("fluency-lab:category", newCategory)
+        setPref(PREF_CATEGORY, newCategory)
         setCategory(newCategory)
         const newFiltered = phrases.filter(
             (p) =>
                 p.difficulty === difficulty && (newCategory === "all" || p.category === newCategory)
         )
-        setCurrentIndex(Math.floor(Math.random() * newFiltered.length))
-        setAnswer("")
-        setFeedback(null)
-        setError(null)
-        phraseStartRef.current = Date.now()
+        setCurrentIndex(sortearIndice(newFiltered.length))
+        resetarFrase()
     }
 
-    // Índice da frase atual dentro de filteredPhrases — inicializado aleatoriamente
-    // (mesmo filtro de dificuldade + categoria que filteredPhrases, senão o índice
-    // sorteado pode cair fora do range da lista realmente exibida)
-    const [currentIndex, setCurrentIndex] = useState(() => {
-        const saved =
-            typeof window !== "undefined"
-                ? (localStorage.getItem("fluency-lab:difficulty") ?? "medium")
-                : "medium"
-        const initial = phrases.filter(
-            (p) =>
-                p.difficulty === saved &&
-                (effectiveCategory === "all" || p.category === effectiveCategory)
-        )
-        return Math.floor(Math.random() * initial.length)
-    })
+    // Índice da frase atual dentro de filteredPhrases (sorteado no servidor, em page.tsx)
+    const [currentIndex, setCurrentIndex] = useState(initialIndex)
 
     // Texto digitado pelo usuário no textarea
     const [answer, setAnswer] = useState("")
@@ -134,10 +131,7 @@ export function PracticeController({ phrases, isPremium, isGuest }: Props) {
     const [levelUp, setLevelUp] = useState<number | null>(null)
     // Questões já corrigidas para o convidado (persistido p/ não zerar ao recarregar;
     // a cada resposta é substituído pelo saldo que o backend informa).
-    const [guestUsed, setGuestUsed] = useState<number>(() => {
-        if (typeof window === "undefined" || !isGuest) return 0
-        return Number(localStorage.getItem(GUEST_COUNT_KEY) ?? 0)
-    })
+    const [guestUsed, setGuestUsed] = useState(initialGuestUsed)
 
     // Favoritos vêm do banco (por usuário), não mais do localStorage.
     // Começa vazio e é preenchido assim que a API responder (convidado não busca).
@@ -147,8 +141,21 @@ export function PracticeController({ phrases, isPremium, isGuest }: Props) {
     // Referência direta ao textarea para dar foco programaticamente
     const inputRef = useRef<HTMLTextAreaElement>(null)
     // Momento em que a frase atual foi apresentada — usado para medir o tempo
-    // gasto no exercício (enviado ao backend e somado no "tempo total de estudo")
-    const phraseStartRef = useRef(Date.now())
+    // gasto no exercício (enviado ao backend e somado no "tempo total de estudo").
+    // Marcado ao montar e a cada troca de frase.
+    const phraseStartRef = useRef(0)
+
+    useEffect(() => {
+        phraseStartRef.current = Date.now()
+    }, [])
+
+    // Limpa a frase atual para mostrar outra (troca de dificuldade, categoria, próxima)
+    function resetarFrase() {
+        setAnswer("")
+        setFeedback(null)
+        setError(null)
+        phraseStartRef.current = Date.now()
+    }
 
     // Busca os favoritos reais do usuário logado assim que o componente monta
     useEffect(() => {
@@ -163,8 +170,8 @@ export function PracticeController({ phrases, isPremium, isGuest }: Props) {
     // Logado: descarta a contagem antiga, senão um próximo uso como convidado
     // (nova sessão, com saldo cheio no backend) começaria bloqueado na tela.
     useEffect(() => {
-        if (isGuest) localStorage.setItem(GUEST_COUNT_KEY, String(guestUsed))
-        else localStorage.removeItem(GUEST_COUNT_KEY)
+        if (isGuest) setPref(PREF_GUEST_USED, String(guestUsed))
+        else clearPref(PREF_GUEST_USED)
     }, [isGuest, guestUsed])
 
     // Atalhos derivados do state atual
@@ -228,35 +235,25 @@ export function PracticeController({ phrases, isPremium, isGuest }: Props) {
         // Pular não consome questão do convidado: o limite existe para conter o custo
         // da IA, e só a correção chama a IA (é o que o backend conta).
 
-        let next
-        // Garante que a próxima frase seja diferente da atual (só se houver mais de uma)
-        do {
-            next = Math.floor(Math.random() * filteredPhrases.length)
-        } while (next === currentIndex && filteredPhrases.length > 1)
-        setCurrentIndex(next)
-        setAnswer("")
-        setFeedback(null)
-        setError(null)
-        phraseStartRef.current = Date.now() // reinicia o cronômetro para a nova frase
+        // Próxima frase sempre diferente da atual (quando há mais de uma)
+        setCurrentIndex(sortearIndice(filteredPhrases.length, currentIndex))
+        resetarFrase()
         // Pequeno delay para o textarea já estar visível antes de focar
         setTimeout(() => inputRef.current?.focus(), 100)
     }
 
-    // Troca a dificuldade ativa, persiste no localStorage e sorteia nova frase
+    // Troca a dificuldade ativa, guarda no cookie de preferência e sorteia nova frase
     const handleChangeDifficulty = (newDifficulty: string) => {
         if (loading) return
-        localStorage.setItem("fluency-lab:difficulty", newDifficulty)
+        setPref(PREF_DIFFICULTY, newDifficulty)
         setDifficulty(newDifficulty)
         const newFiltered = phrases.filter(
             (p) =>
                 p.difficulty === newDifficulty &&
                 (effectiveCategory === "all" || p.category === effectiveCategory)
         )
-        setCurrentIndex(Math.floor(Math.random() * newFiltered.length))
-        setAnswer("")
-        setFeedback(null)
-        setError(null)
-        phraseStartRef.current = Date.now()
+        setCurrentIndex(sortearIndice(newFiltered.length))
+        resetarFrase()
     }
 
     // Alterna o favorito no banco — atualização otimista (muda a tela antes
@@ -316,7 +313,7 @@ export function PracticeController({ phrases, isPremium, isGuest }: Props) {
         )
     }
 
-    // Sem frases nessa dificuldade (ex: localStorage com valor antigo que não bate
+    // Sem frases nessa dificuldade (ex: cookie com valor antigo que não bate
     // com nenhuma frase retornada pelo servidor) — evita crash acessando phrase.id
     if (!phrase) {
         return (

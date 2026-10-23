@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation"
 import { fetchFromApi } from "@/app/_lib/server-api"
 import {
     buildCalendarMapFromApi,
@@ -15,21 +14,14 @@ import { ProLockCard } from "@/app/_components/pro-lock-card"
 import NavLayout from "@/app/_layouts/nav-layout"
 
 export default async function ProgressPage() {
-    let statsData: StatsData
-    let weeklyData: WeeklyPoint[]
-    let calendarData: CalendarData[]
-    let planStatus: { active: boolean }
-
-    try {
-        ;[statsData, weeklyData, calendarData, planStatus] = await Promise.all([
-            fetchFromApi<StatsData>("/user/stats.php"),
-            fetchFromApi<WeeklyPoint[]>("/user/progress-weekly.php"),
-            fetchFromApi<CalendarData[]>("/user/calendar.php"),
-            fetchFromApi<{ active: boolean }>("/my-plan.php").catch(() => ({ active: false })),
-        ])
-    } catch {
-        redirect("/login") // sem sessão válida, manda pro login
-    }
+    // Sessão expirada (401) já vira redirect para /login dentro do fetchFromApi;
+    // outros erros sobem para a página de erro em vez de mandar para o login.
+    const [statsData, weeklyData, calendarData, planStatus] = await Promise.all([
+        fetchFromApi<StatsData>("/user/stats.php"),
+        fetchFromApi<WeeklyPoint[]>("/user/progress-weekly.php"),
+        fetchFromApi<CalendarData[]>("/user/calendar.php"),
+        fetchFromApi<{ active: boolean }>("/my-plan.php").catch(() => ({ active: false })),
+    ])
 
     const stats = computeStatsFromApi(statsData)
     const calendarMap = buildCalendarMapFromApi(calendarData)
@@ -37,7 +29,7 @@ export default async function ProgressPage() {
 
     return (
         <NavLayout>
-            <main className="min-h-screen bg-gray-50 px-4 py-10">
+            <div className="min-h-screen bg-gray-50 px-4 py-10">
                 <div className="mx-auto max-w-3xl space-y-6">
                     <div className="mb-8 text-center">
                         <div className="mb-2 flex items-center justify-center gap-2">
@@ -68,7 +60,7 @@ export default async function ProgressPage() {
                         />
                     )}
                 </div>
-            </main>
+            </div>
         </NavLayout>
     )
 }

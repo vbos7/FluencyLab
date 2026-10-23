@@ -23,8 +23,9 @@ if (isset($_GET['category']) || isset($_GET['category_id'])) {
 }
 
 // JOIN com categories para devolver o nome da categoria (o front espera `category`).
-// 1=1 é sempre verdadeiro, então não filtra nada por padrão.
-$sql = 'SELECT p.id, p.pt, p.en, p.difficulty, p.category_id, c.name AS category
+// Sem p.en: a tradução de referência é a resposta do exercício e fica no backend
+// (check-answer.php a usa na correção). 1=1 é sempre verdadeiro.
+$sql = 'SELECT p.id, p.pt, p.difficulty, p.category_id, c.name AS category
         FROM phrases p
         JOIN categories c ON c.id = p.category_id
         WHERE 1=1';

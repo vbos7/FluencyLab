@@ -1,9 +1,10 @@
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
+// Frase da prática. A tradução de referência (en) não vem para o navegador:
+// ela é a resposta do exercício e só a IA a usa, no backend.
 export type Phrase = {
     id: number
     pt: string
-    en: string
     difficulty: string
     category: string
 }

@@ -42,7 +42,7 @@ export default async function ProfilePage() {
             icon: Star,
             iconColor: "text-amber-500",
             iconBg: "bg-amber-50",
-            value: dashboardData.xp_total.toLocaleString(),
+            value: dashboardData.xp_total.toLocaleString("pt-BR"),
             label: "Pontos",
         },
         {

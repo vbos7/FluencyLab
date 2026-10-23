@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+import Link from "next/link"
 import NavLayout from "@/app/_layouts/nav-layout"
 import { WelcomeHeader } from "@/app/_components/home/welcome-header"
 import { OnboardingDialog } from "@/app/_components/home/onboarding-dialog"
@@ -48,9 +49,9 @@ export default async function HomePage() {
                     />
 
                     <div className="mt-[8%] mb-[5%] w-full">
-                        <a href="/progress" className="cursor-default">
+                        <Link href="/progress" className="cursor-default">
                             <StatsCards stats={stats} limit={2} />
-                        </a>
+                        </Link>
                     </div>
 
                     <CoursesCard />

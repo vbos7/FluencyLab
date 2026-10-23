@@ -36,7 +36,7 @@ export default async function RankingPage() {
 
     return (
         <NavLayout>
-            <main className="page-enter mx-auto flex max-w-5xl flex-col gap-6 px-4 pt-8 pb-25">
+            <div className="page-enter mx-auto flex max-w-5xl flex-col gap-6 px-4 pt-8 pb-25">
                 <div className="mb-8 text-center">
                     <div className="mb-2 flex items-center justify-center gap-2">
                         <span className="h-2 w-2 rounded-full bg-blue-600"></span>
@@ -64,7 +64,7 @@ export default async function RankingPage() {
                         <PositionFooter position={myPosition} />
                     </>
                 )}
-            </main>
+            </div>
         </NavLayout>
     )
 }
