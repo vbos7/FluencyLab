@@ -9,8 +9,9 @@
  * Rede de segurança para o pagamento ser confirmado mesmo se o usuário fechar
  * a aba antes do redirect de volta pro front completar (nesse caso
  * confirm-session.php nunca é chamado). Configure a URL
- * https://SEU_DOMINIO/api/stripe/webhook.php no Dashboard da Stripe, evento
- * "checkout.session.completed".
+ * https://SEU_DOMINIO/api/stripe/webhook.php no Dashboard da Stripe, eventos
+ * checkout.session.completed, checkout.session.async_payment_succeeded,
+ * charge.refunded e charge.dispute.created.
  */
 
 require_once __DIR__ . '/../env.php';
@@ -41,8 +42,24 @@ try {
     exit;
 }
 
-if ($event->type === 'checkout.session.completed') {
-    ativar_plano_da_sessao($pdo, $event->data->object);
+switch ($event->type) {
+    // Pago na hora (cartão) ou confirmado depois (meios assíncronos, ex.: boleto).
+    case 'checkout.session.completed':
+    case 'checkout.session.async_payment_succeeded':
+        ativar_plano_da_sessao($pdo, $event->data->object);
+
+        break;
+
+    // Dinheiro devolvido ou contestado: o Pro comprado com ele deixa de valer.
+    case 'charge.refunded':
+    case 'charge.dispute.created':
+        $paymentIntent = $event->data->object->payment_intent ?? null;
+
+        if (is_string($paymentIntent) && $paymentIntent !== '') {
+            cancelar_plano_do_pagamento($pdo, $paymentIntent);
+        }
+
+        break;
 }
 
 http_response_code(200);

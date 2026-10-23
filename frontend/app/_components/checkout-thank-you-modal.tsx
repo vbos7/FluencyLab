@@ -13,6 +13,8 @@ export function CheckoutThankYouModal() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [planName, setPlanName] = useState<string | null>(null)
+    // 202 = a Stripe ainda não confirmou (ex.: pagamento em análise); o webhook ativa depois.
+    const [pending, setPending] = useState(false)
 
     useEffect(() => {
         const checkout = searchParams.get("checkout")
@@ -30,6 +32,8 @@ export function CheckoutThankYouModal() {
             .then((res) => {
                 if (res.data.success) {
                     setPlanName(res.data.plan ?? "Pro")
+                } else {
+                    setPending(true)
                 }
             })
             .catch(() => {
@@ -38,7 +42,7 @@ export function CheckoutThankYouModal() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    if (!planName) return null
+    if (!planName && !pending) return null
 
     return (
         <div
@@ -52,13 +56,19 @@ export function CheckoutThankYouModal() {
                 <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
                     <CheckCircle size={32} className="text-green-600" />
                 </div>
-                <h2 className="mb-2 text-xl font-semibold text-gray-900">Pagamento confirmado!</h2>
+                <h2 className="mb-2 text-xl font-semibold text-gray-900">
+                    {planName ? "Pagamento confirmado!" : "Pagamento em processamento"}
+                </h2>
                 <p className="mb-6 text-sm leading-relaxed text-gray-500">
-                    Seu plano {planName} já está ativo. Aproveite tudo que o FluencyLab tem de
-                    melhor!
+                    {planName
+                        ? `Seu plano ${planName} já está ativo. Aproveite tudo que o FluencyLab tem de melhor!`
+                        : "Assim que a Stripe confirmar o pagamento, o plano Pro é ativado automaticamente."}
                 </p>
                 <button
-                    onClick={() => setPlanName(null)}
+                    onClick={() => {
+                        setPlanName(null)
+                        setPending(false)
+                    }}
                     className="w-full rounded-xl bg-blue-700 py-3 text-sm font-medium text-white transition hover:bg-blue-800"
                 >
                     Continuar

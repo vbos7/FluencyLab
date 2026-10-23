@@ -14,7 +14,7 @@ import { getLevel, levelLabel, type LeaderboardUser } from "@/app/_lib/ranking"
 import { type DashboardData } from "@/app/_lib/progress"
 
 import NavLayout from "@/app/_layouts/nav-layout"
-import PremiumCard from "../_components/pricing/PremiumCard"
+import PremiumCard from "@/app/_components/pricing/premium-card"
 
 type User = {
     id: number

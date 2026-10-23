@@ -7,7 +7,6 @@ import Image from "next/image"
 import { Button } from "@/app/_components/ui/button"
 import { cn } from "@/app/_lib/utils"
 import { type LoggedUser } from "@/app/_lib/user"
-import ProModal from "@/app/_components/pro-modal"
 
 const items = [
     { href: "/home", icon: Home, label: "Início" },
@@ -67,7 +66,6 @@ export function TopNav({ user }: { user: LoggedUser | null }) {
                 {isGuest ? (
                     /* Modo convidado: apenas botões de login e registro */
                     <div className="flex items-center gap-2">
-                        <ProModal />
                         <Button
                             variant="ghost"
                             size="sm"

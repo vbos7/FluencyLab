@@ -6,6 +6,8 @@ require_once __DIR__ . '/../db.php';
 
 require_once __DIR__ . '/../lib/stripe.php';
 
+require_once __DIR__ . '/../lib/premium.php';
+
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -45,31 +47,39 @@ if ((float) $plan['price'] <= 0) {
     exit;
 }
 
+// Só existe compra única (vitalícia). Assinatura mensal exigiria renovar o plano a
+// cada invoice.paid, cancelar e oferecer o portal do cliente — nada disso existe.
+if ($plan['billing_period'] !== 'lifetime') {
+    json_out(['error' => 'Este plano ainda não pode ser assinado.'], 422);
+
+    exit;
+}
+
+// Quem já tem plano pago ativo não paga de novo.
+if (hasActivePro($pdo, (int) $_SESSION['user_id'])) {
+    json_out(['error' => 'Você já tem o plano Pro ativo.'], 409);
+
+    exit;
+}
+
 $stmt = $pdo->prepare('SELECT email FROM users WHERE id = ?');
 $stmt->execute([$_SESSION['user_id']]);
 $email = $stmt->fetchColumn();
 
 // Origem do front (mesma variável usada no CORS) — é pra lá que a Stripe
 // redireciona o usuário depois do pagamento.
-$frontOrigin    = rtrim(env('APP_ORIGIN', 'http://localhost:3000'), '/');
-$isSubscription = $plan['billing_period'] === 'monthly';
-
-$priceData = [
-    'currency'     => 'brl',
-    'product_data' => ['name' => "Plano {$plan['name']} — FluencyLab"],
-    'unit_amount'  => (int) round(((float) $plan['price']) * 100),
-];
-
-if ($isSubscription) {
-    $priceData['recurring'] = ['interval' => 'month'];
-}
+$frontOrigin = rtrim(env('APP_ORIGIN', 'http://localhost:3000'), '/');
 
 try {
     $session = stripe_client()->checkout->sessions->create([
-        'mode'       => $isSubscription ? 'subscription' : 'payment',
+        'mode'       => 'payment',
         'line_items' => [[
-            'price_data' => $priceData,
-            'quantity'   => 1,
+            'price_data' => [
+                'currency'     => 'brl',
+                'product_data' => ['name' => "Plano {$plan['name']} — FluencyLab"],
+                'unit_amount'  => (int) round(((float) $plan['price']) * 100),
+            ],
+            'quantity' => 1,
         ]],
         'customer_email'      => $email ?: null,
         'client_reference_id' => (string) $_SESSION['user_id'],

@@ -76,3 +76,18 @@ function ativar_plano_da_sessao(PDO $pdo, \Stripe\Checkout\Session $session): ?a
 
     return ['name' => $plan['name']];
 }
+
+/**
+ * Reembolso ou contestação: o plano comprado com esse pagamento deixa de valer.
+ * O evento traz o PaymentIntent; a Checkout Session (que é o que guardamos em
+ * user_plan.stripe_session_id) é buscada na Stripe a partir dele.
+ */
+function cancelar_plano_do_pagamento(PDO $pdo, string $paymentIntentId): void
+{
+    $sessoes = stripe_client()->checkout->sessions->all(['payment_intent' => $paymentIntentId, 'limit' => 1]);
+
+    foreach ($sessoes->data as $session) {
+        $pdo->prepare("UPDATE user_plan SET status = 'canceled' WHERE stripe_session_id = ?")
+            ->execute([$session->id]);
+    }
+}

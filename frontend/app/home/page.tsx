@@ -16,9 +16,10 @@ import { fetchFromApi } from "../_lib/server-api"
 type Users = { id: number; name: string; email: string; phone: string | null; role: string }
 
 export default async function HomePage() {
-    const [user, dashboardData] = await Promise.all([
+    const [user, dashboardData, planStatus] = await Promise.all([
         fetchFromApi<Users>("/profile.php"),
         fetchFromApi<DashboardData>("/dashboard.php"),
+        fetchFromApi<{ active: boolean }>("/my-plan.php").catch(() => ({ active: false })),
     ])
 
     const stats = computeStats(dashboardData)
@@ -29,7 +30,8 @@ export default async function HomePage() {
 
     return (
         <NavLayout>
-            <ProModal />
+            {/* Upsell só para quem ainda é Free */}
+            {!planStatus.active && <ProModal />}
             <OnboardingDialog />
             <Suspense fallback={null}>
                 <CheckoutThankYouModal />

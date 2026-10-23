@@ -4,34 +4,13 @@ require_once __DIR__ . '/cors.php';
 
 require_once __DIR__ . '/db.php';
 
+require_once __DIR__ . '/lib/premium.php';
+
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     json_out(['error' => 'Método não permitido'], 405);
 
     exit;
-}
-
-// Verifica se o usuário logado tem plano premium ativo (e não expirado)
-function usuarioTemPremium(PDO $pdo): bool
-{
-    if (empty($_SESSION['user_id'])) {
-        return false; // nem logado, então não é premium
-    }
-
-    $stmt = $pdo->prepare(
-        "SELECT up.id
-         FROM user_plan up
-         JOIN plans p ON p.id = up.plan_id
-         WHERE up.user_id = ?
-           AND up.status = 'active'
-           AND p.name = 'Pro'
-           AND (up.expires_at IS NULL OR up.expires_at > NOW())
-         LIMIT 1"
-    );
-
-    $stmt->execute([$_SESSION['user_id']]);
-
-    return (bool) $stmt->fetch();
 }
 
 try {
@@ -71,7 +50,7 @@ try {
     $stmt->execute([$course['id']]);
     $lessons = $stmt->fetchAll();
 
-    $temPremium = usuarioTemPremium($pdo);
+    $temPremium = hasActivePro($pdo, isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null);
 
     // Remove o youtube_id de aulas bloqueadas, pra ninguém "roubar" o vídeo pelo Network
     foreach ($lessons as &$lesson) {

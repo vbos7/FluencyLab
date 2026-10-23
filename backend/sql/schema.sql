@@ -498,18 +498,26 @@ SET @plan_free := (SELECT id FROM plans WHERE name = 'Free');
 SET @plan_pro  := (SELECT id FROM plans WHERE name = 'Pro');
 
 INSERT INTO plan_features (plan_id, label, included, highlight, order_num) VALUES
-(@plan_free, 'Traduções ilimitadas por dia', 1, 0, 1),
-(@plan_free, 'Explicação de erros com IA',   1, 0, 2),
-(@plan_free, 'XP, níveis e ranking',         1, 0, 3),
-(@plan_free, 'Escolha de categorias',        0, 0, 4),
-(@plan_free, 'Videoaulas de inglês',         0, 0, 5),
-(@plan_pro,  'Tudo do plano Free',           1, 0, 1),
-(@plan_pro,  'Favoritos ilimitados',         1, 1, 2),
-(@plan_pro,  'Escolha de categorias',        1, 1, 3),
-(@plan_pro,  'Todas as videoaulas',          1, 1, 4),
-(@plan_pro,  'Relatório semanal completo',   1, 1, 5)
+(@plan_free, 'Traduções ilimitadas por dia',   1, 0, 1),
+(@plan_free, 'Explicação de erros com IA',     1, 0, 2),
+(@plan_free, 'XP, níveis e ranking',           1, 0, 3),
+(@plan_free, 'Aulas gratuitas de cada curso',  1, 0, 4),
+(@plan_free, 'Escolha de categorias',          0, 0, 5),
+(@plan_free, 'Todas as videoaulas',            0, 0, 6),
+(@plan_free, 'Relatório semanal completo',     0, 0, 7),
+(@plan_pro,  'Tudo do plano Free',             1, 0, 1),
+(@plan_pro,  'Escolha de categorias',          1, 1, 2),
+(@plan_pro,  'Todas as videoaulas',            1, 1, 3),
+(@plan_pro,  'Relatório semanal completo',     1, 1, 4)
 ON DUPLICATE KEY UPDATE
     included = VALUES(included), highlight = VALUES(highlight), order_num = VALUES(order_num);
+
+-- Features removidas da tela por não corresponderem ao produto: favoritos já são
+-- ilimitados no Free, e o Free tem aulas gratuitas. ON DUPLICATE KEY não apaga,
+-- então as linhas antigas saem aqui.
+DELETE FROM plan_features
+WHERE (plan_id = @plan_free AND label = 'Videoaulas de inglês')
+   OR (plan_id = @plan_pro  AND label = 'Favoritos ilimitados');
 
 -- Categorias das frases. INSERT IGNORE: reaplica sem duplicar; o seed-phrases.sql
 -- resolve category_id a partir daqui, então precisa vir antes dele.
