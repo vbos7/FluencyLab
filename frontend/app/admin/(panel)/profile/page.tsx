@@ -55,10 +55,11 @@ export default function ProfilePage() {
     const [error, setError] = useState("")
 
     const load = useCallback(async () => {
-        setLoading(true)
-        setError("")
+        // Sem setState antes do await: chamado no efeito de montagem, isso
+        // renderizaria de novo à toa (loading já começa true).
         try {
             setProfile(await getProfile())
+            setError("")
         } catch (err) {
             setError(apiErrorMessage(err, "Não foi possível carregar o perfil."))
         } finally {
@@ -66,8 +67,10 @@ export default function ProfilePage() {
         }
     }, [])
 
+    // Primeira carga como callback de promessa: o estado só muda depois da
+    // resposta, nunca de forma síncrona dentro do efeito.
     useEffect(() => {
-        load()
+        void Promise.resolve().then(load)
     }, [load])
 
     const user = profile ? toUser(profile) : null

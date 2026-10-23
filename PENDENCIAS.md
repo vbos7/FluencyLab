@@ -1,7 +1,7 @@
 # ✅ Pendências do FluencyLab
 
 Lista simples pra o grupo acompanhar. Marque `[x]` quando terminar e coloque seu
-nome do lado. Última atualização: 2026-09-05.
+nome do lado. Última atualização: 2026-10-22 (ver também `docs/auditoria-2026-10.md`).
 
 > Como marcar: troque `- [ ]` por `- [x]` e adicione `— (seu nome)` no fim da linha.
 
@@ -9,20 +9,21 @@ nome do lado. Última atualização: 2026-09-05.
 
 ## 🔌 Funcionalidades ainda não ligadas na API
 
-Telas que existem no front mas ainda têm `TODO` sem backend:
-
-- [ ] **Notificações do admin** (`frontend/app/admin/(panel)/notificacoes/page.tsx:51`)
-  — falta o `PATCH /api/admin/notifications` para marcar como lida.
+- [ ] **Notificações do admin** — a tela existia sem backend (os interruptores não
+  faziam nada) e foi removida na auditoria de 2026-10. Se voltar, precisa de API +
+  envio de e-mail de verdade.
+- [ ] **Sons de feedback e lembretes diários (aluno)** — também removidos das
+  configurações por não terem efeito.
 
 ---
 
 ## 🎓 Gerenciamento de cursos e pessoas (falta praticamente inteiro)
 
-Hoje o painel só tem: usuários (lista genérica), frases, categorias, dashboard, config,
-notificações. **Não existe** gestão de cursos. Precisamos de um CRUD completo:
+O painel tem usuários (lista genérica), cursos e aulas, frases, categorias, dashboard
+e configurações.
 
-- [ ] **Cursos** — criar, editar, excluir e listar cursos no painel.
-- [ ] **Aulas** — gerenciar as aulas de cada curso (título, vídeo, duração, ordem,
+- [x] **Cursos** — criar, editar, excluir e listar cursos no painel.
+- [x] **Aulas** — gerenciar as aulas de cada curso (título, vídeo, duração, ordem,
   aula gratuita x Pro/bloqueada).
 - [ ] **Alunos** — visão dedicada de alunos (progresso, plano, atividade), separada da
   lista genérica de usuários.
@@ -58,10 +59,9 @@ notificações. **Não existe** gestão de cursos. Precisamos de um CRUD complet
 
 ## 🧹 Limpeza / opcionais (não urgente)
 
-- [ ] Remover código morto: `frontend/app/_components/pricing/plan-cards.tsx`
-  (`PlanCards`) não é usado em lugar nenhum.
-- [ ] Declarar licença no `backend/composer.json` (`"license": "proprietary"`) —
-  o `composer validate` avisa que está faltando. Cosmético.
+- [x] Remover código morto (`plan-cards.tsx`, `login-form.tsx` antigo, lista estática
+  `FRASES`, componentes de UI sem uso) — auditoria 2026-10.
+- [x] Declarar licença no `backend/composer.json` (`"license": "proprietary"`).
 
 ---
 

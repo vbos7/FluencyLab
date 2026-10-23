@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useSyncExternalStore } from "react"
 import { toast } from "sonner"
 import { KeyRound, Trash2 } from "lucide-react"
 import { Button } from "@/app/_components/ui/button"
@@ -16,6 +16,9 @@ import {
 import { apiErrorMessage, deletePasskey, listPasskeys, type Passkey } from "@/app/_lib/admin-api"
 import { browserSupportsPasskeys, registerPasskey } from "@/app/_lib/webauthn-client"
 
+// Suporte a passkey não muda durante a sessão: nada para assinar.
+const semInscricao = () => () => {}
+
 function fmtDate(dt: string | null) {
     if (!dt) return "nunca usada"
     const d = new Date(dt.replace(" ", "T"))
@@ -26,7 +29,8 @@ function fmtDate(dt: string | null) {
 export function PasskeysRow() {
     const [passkeys, setPasskeys] = useState<Passkey[]>([])
     const [error, setError] = useState("")
-    const [supported, setSupported] = useState(true)
+    // Suporte do navegador lido sem efeito (no servidor assume que sim)
+    const supported = useSyncExternalStore(semInscricao, browserSupportsPasskeys, () => true)
 
     const [addOpen, setAddOpen] = useState(false)
     const [nickname, setNickname] = useState("")
@@ -40,9 +44,9 @@ export function PasskeysRow() {
         }
     }
 
+    // Primeira carga como callback de promessa (estado muda só após a resposta).
     useEffect(() => {
-        setSupported(browserSupportsPasskeys())
-        load()
+        void Promise.resolve().then(load)
     }, [])
 
     async function handleAdd(e: React.FormEvent) {

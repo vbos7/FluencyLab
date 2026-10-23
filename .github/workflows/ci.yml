@@ -1,0 +1,70 @@
+# Verificações automáticas em todo PR e em push na develop.
+# Não usa segredos nem chama serviços pagos (OpenAI, Stripe): a avaliação de notas
+# fica em backend/tests/manual/ e roda só na mão.
+name: CI
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Tipos
+        run: npx tsc --noEmit
+      - name: ESLint
+        run: npx eslint .
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000/api
+
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: fluency_lab
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: fluency_lab
+      DB_USER: root
+      DB_PASS: root
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: pdo_mysql, sodium, gd, fileinfo, mbstring, curl
+      - run: composer install --no-interaction --no-progress
+      - name: Sintaxe PHP
+        run: find api tests index.php ../scripts -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
+      - name: Schema (aplicado duas vezes para garantir que é idempotente)
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot --default-character-set=utf8mb4 fluency_lab < sql/schema.sql
+          mysql -h 127.0.0.1 -uroot -proot --default-character-set=utf8mb4 fluency_lab < sql/schema.sql
+      - name: Testes
+        run: composer test

@@ -3,17 +3,17 @@
 // Avaliação da correção por IA com casos fixos: traduções certas, sinônimos,
 // respostas sem relação com a frase, incompletas e tentativas de injeção.
 // Chama a OpenAI de verdade (custa alguns centavos), então só pela linha de comando:
-//   php backend/tests/grading-eval.php            (1 rodada)
-//   php backend/tests/grading-eval.php 3          (3 rodadas, para ver variação)
+//   php backend/tests/manual/grading-eval.php            (1 rodada)
+//   php backend/tests/manual/grading-eval.php 3          (3 rodadas, para ver variação)
 if (PHP_SAPI !== 'cli') {
     http_response_code(404);
 
     exit;
 }
 
-require_once __DIR__ . '/../api/env.php';
+require_once __DIR__ . '/../../api/env.php';
 
-require_once __DIR__ . '/../api/practice/AiService.php';
+require_once __DIR__ . '/../../api/practice/AiService.php';
 
 // [português, referência, resposta do aluno, esperado]
 // esperado: true = aceita; false = recusada (nota < 70);

@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/guard.php';
 
+require_once __DIR__ . '/../lib/settings.php';
+
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 requireAdmin();
 
@@ -15,7 +17,7 @@ $permitidas = [
 
 // GET — devolve todas as configurações como um objeto { chave: valor }
 if ($method === 'GET') {
-    json_out(lerSettings($pdo));
+    json_out(todas_as_settings($pdo));
 
     exit;
 }
@@ -64,7 +66,7 @@ if ($method === 'PUT' || $method === 'PATCH') {
         $stmt->execute([$key, $value]);
     }
 
-    json_out(['success' => true, 'settings' => lerSettings($pdo)]);
+    json_out(['success' => true, 'settings' => todas_as_settings($pdo)]);
 
     exit;
 }
@@ -115,16 +117,4 @@ function validarSetting(string $key, mixed $value): array
                 ? [$texto, null]
                 : ['', 'A descrição pode ter no máximo 300 caracteres'];
     }
-}
-
-// Lê todas as configurações e devolve como mapa chave => valor.
-function lerSettings(PDO $pdo): array
-{
-    $out = [];
-
-    foreach ($pdo->query('SELECT setting_key, setting_value FROM settings')->fetchAll() as $row) {
-        $out[$row['setting_key']] = $row['setting_value'];
-    }
-
-    return $out;
 }

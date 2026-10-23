@@ -1,6 +1,7 @@
 {
     "name": "fluencylab/backend",
     "description": "Backend PHP/PDO da FluencyLab",
+    "license": "proprietary",
     "scripts": {
         "test": "for f in tests/*.php; do php \"$f\" || exit 1; done"
     },

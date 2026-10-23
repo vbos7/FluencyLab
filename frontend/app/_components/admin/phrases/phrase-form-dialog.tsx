@@ -49,20 +49,31 @@ export function PhraseFormDialog({
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
 
+    // Ao abrir (ou trocar o item em edição) os campos são recarregados. Ajuste
+    // feito durante o render — padrão do React para "resetar estado quando a prop
+    // muda" — em vez de um efeito que renderiza duas vezes.
+    const chaveAberta = open ? (editing?.id ?? "novo") : null
+    const [chaveAnterior, setChaveAnterior] = useState<typeof chaveAberta>(null)
+    if (chaveAberta !== chaveAnterior) {
+        setChaveAnterior(chaveAberta)
+        if (open) {
+            setEn(editing?.en ?? "")
+            setPt(editing?.pt ?? "")
+            setDifficulty(editing?.difficulty ?? "easy")
+            setCategoryId(editing?.category_id ? String(editing.category_id) : "")
+            setError("")
+        }
+    }
+
+    // Carrega as categorias disponíveis para o select toda vez que abre.
     useEffect(() => {
         if (!open) return
-        setEn(editing?.en ?? "")
-        setPt(editing?.pt ?? "")
-        setDifficulty(editing?.difficulty ?? "easy")
-        setCategoryId(editing?.category_id ? String(editing.category_id) : "")
-        setError("")
-        // Carrega as categorias disponíveis para o select toda vez que abre.
         listCategories()
             .then(setCategories)
             .catch((err) =>
                 setError(apiErrorMessage(err, "Não foi possível carregar as categorias."))
             )
-    }, [open, editing])
+    }, [open])
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()

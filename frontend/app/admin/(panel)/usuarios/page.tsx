@@ -41,10 +41,11 @@ export default function UsuariosPage() {
     const [toDelete, setToDelete] = useState<AdminUser | null>(null)
 
     const load = useCallback(async () => {
-        setLoading(true)
-        setError("")
+        // Sem setState antes do await: chamado no efeito de montagem, isso
+        // renderizaria de novo à toa (loading já começa true).
         try {
             setUsers(await listUsers())
+            setError("")
         } catch (err) {
             setError(apiErrorMessage(err, "Não foi possível carregar os usuários."))
         } finally {
@@ -52,8 +53,10 @@ export default function UsuariosPage() {
         }
     }, [])
 
+    // Primeira carga como callback de promessa: o estado só muda depois da
+    // resposta, nunca de forma síncrona dentro do efeito.
     useEffect(() => {
-        load()
+        void Promise.resolve().then(load)
     }, [load])
 
     function openCreate() {

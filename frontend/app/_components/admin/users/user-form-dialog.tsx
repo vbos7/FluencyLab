@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
@@ -45,15 +45,21 @@ export function UserFormDialog({
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
 
-    // Sempre que abrir, sincroniza os campos com o usuário em edição (ou limpa).
-    useEffect(() => {
-        if (!open) return
+    // Ao abrir (ou trocar o item em edição) os campos são recarregados. Ajuste
+    // feito durante o render — padrão do React para "resetar estado quando a prop
+    // muda" — em vez de um efeito que renderiza duas vezes.
+    const chaveAberta = open ? (editing?.id ?? "novo") : null
+    const [chaveAnterior, setChaveAnterior] = useState<typeof chaveAberta>(null)
+    if (chaveAberta !== chaveAnterior) {
+        setChaveAnterior(chaveAberta)
+        if (open) {
         setName(editing?.name ?? "")
         setEmail(editing?.email ?? "")
         setRole(editing?.role ?? "student")
         setPassword("")
         setError("")
-    }, [open, editing])
+        }
+    }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
