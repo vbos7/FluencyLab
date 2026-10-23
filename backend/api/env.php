@@ -84,3 +84,11 @@ function env(string $chave, string $padrao = ''): string
 
     return env_arquivo()[$chave] ?? $padrao;
 }
+
+// Fuso único da aplicação. O PHP usa UTC por padrão e o MySQL usa o fuso do
+// servidor (-03): sem alinhar os dois, datas geradas no PHP (validade do código
+// de senha, "hoje" da sequência, semanas do progresso) não batiam com NOW() e
+// CURDATE(). db.php aplica o mesmo fuso na conexão.
+if (!@date_default_timezone_set(env('APP_TIMEZONE', 'America/Sao_Paulo'))) {
+    date_default_timezone_set('America/Sao_Paulo');
+}

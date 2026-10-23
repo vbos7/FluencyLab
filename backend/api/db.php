@@ -42,3 +42,8 @@ $pdo = new PDO(
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]
 );
+
+// Mesmo fuso do PHP (env.php) para NOW(), CURDATE() e CURRENT_TIMESTAMP. Usa o
+// deslocamento ("-03:00") porque o banco compartilhado não tem as tabelas de
+// nomes de fuso do MySQL.
+$pdo->exec("SET time_zone = '" . (new DateTime())->format('P') . "'");
