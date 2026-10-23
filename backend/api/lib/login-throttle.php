@@ -4,10 +4,14 @@
  * login-throttle.php — limite de tentativas (anti-força-bruta).
  *
  * Usa a tabela login_attempts como registro genérico: cada linha é uma tentativa
- * de uma "chave" (coluna email) vinda de um IP. As chaves têm prefixo por tipo:
- *   <email>          falha de login com senha
- *   2fa:<user_id>    código errado no 2º fator (por usuário, não por sessão)
- *   reset:<email>    pedido de código de "Esqueci minha senha"
+ * de uma "chave" (coluna email) vinda de um IP. As chaves têm prefixo por tipo,
+ * e cada limite por IP conta só o seu tipo (senão correções da prática ou
+ * comentários bloqueariam o login daquele IP):
+ *   login:<email>       falha de login com senha
+ *   2fa:<user_id>       código errado no 2º fator (por usuário, não por sessão)
+ *   reset:<email>       pedido de código de "Esqueci minha senha"
+ *   pratica:<user_id>   correção pela IA (limite por usuário)
+ *   comentario:<id>     comentário em aula
  * Um login certo zera só as falhas daquele e-mail; as do 2FA zeram quando o
  * código certo é informado.
  */
@@ -17,9 +21,9 @@ const LOGIN_WINDOW_MIN    = 15;   // janela, em minutos
 
 /**
  * A chave ou o IP passou do limite na janela? O limite por IP conta só as linhas
- * do mesmo tipo ($prefixoIp); com prefixo vazio conta todas daquele IP.
+ * do mesmo tipo ($prefixoIp).
  */
-function throttle_excedido(PDO $pdo, string $chave, string $ip, int $maxChave, int $maxIp, string $prefixoIp = ''): bool
+function throttle_excedido(PDO $pdo, string $chave, string $ip, int $maxChave, int $maxIp, string $prefixoIp): bool
 {
     $ipBin = @inet_pton($ip) ?: '';
     // A janela é uma constante nossa (int), então é seguro embutir no SQL.
@@ -58,17 +62,17 @@ function throttle_limpar(PDO $pdo, string $chave): void
 // Está bloqueado agora? (e-mail OU IP estourou o limite na janela)
 function login_bloqueado(PDO $pdo, string $email, string $ip): bool
 {
-    return throttle_excedido($pdo, $email, $ip, LOGIN_MAX_PER_EMAIL, LOGIN_MAX_PER_IP);
+    return throttle_excedido($pdo, 'login:' . $email, $ip, LOGIN_MAX_PER_EMAIL, LOGIN_MAX_PER_IP, 'login:');
 }
 
 // Registra uma falha de login (senha errada / usuário inexistente).
 function login_registrar_falha(PDO $pdo, string $email, string $ip): void
 {
-    throttle_registrar($pdo, $email, $ip);
+    throttle_registrar($pdo, 'login:' . $email, $ip);
 }
 
 // Login bem-sucedido: zera as falhas daquele e-mail.
 function login_limpar(PDO $pdo, string $email): void
 {
-    throttle_limpar($pdo, $email);
+    throttle_limpar($pdo, 'login:' . $email);
 }
