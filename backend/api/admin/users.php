@@ -1,6 +1,10 @@
 <?php
 
-require_once __DIR__.'/guard.php';
+require_once __DIR__ . '/guard.php';
+
+require_once __DIR__ . '/../lib/progress.php';
+
+require_once __DIR__ . '/../lib/avatar.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 requireAdmin();
@@ -18,68 +22,68 @@ if ($method === 'GET') {
         ORDER BY u.created_at DESC
     ')->fetchAll();
 
-    $limite = (new DateTime)->modify('-7 days');
+    $limite = (new DateTime())->modify('-7 days');
 
     $saida = array_map(function ($u) use ($limite) {
-        // Nível triangular: N exige N×150 ACUMULADO (subtrai a cada volta), igual
-        // ao ranking.php e ao front. Sem a subtração, os níveis saíam inflados.
-        $xp = (int) $u['xp'];
-        $nivel = 1;
-        $restante = $xp;
-        while ($restante >= $nivel * 150) {
-            $restante -= $nivel * 150;
-            $nivel++;
-        }
+        $xp    = (int) $u['xp'];
+        $nivel = nivel_do_xp($xp); // regra única em lib/progress.php
 
         // Ativo = teve alguma tentativa nos últimos 7 dias
         $ativo = $u['last_activity'] !== null && new DateTime($u['last_activity']) >= $limite;
 
         return [
-            'id' => (int) $u['id'],
-            'name' => $u['name'],
-            'email' => $u['email'],
-            'role' => $u['role'],
+            'id'        => (int) $u['id'],
+            'name'      => $u['name'],
+            'email'     => $u['email'],
+            'role'      => $u['role'],
             'createdAt' => $u['created_at'],
-            'xp' => $xp,
-            'level' => $nivel,
-            'isActive' => $ativo,
+            'xp'        => $xp,
+            'level'     => $nivel,
+            'isActive'  => $ativo,
         ];
     }, $rows);
 
     json_out($saida);
+
     exit;
 }
 
 // POST — cria um novo usuário
 if ($method === 'POST') {
-    $body = json_decode(file_get_contents('php://input'), true);
-    $name = trim($body['name'] ?? '');
-    $email = trim($body['email'] ?? '');
+    $body     = json_decode(file_get_contents('php://input'), true);
+    $name     = trim($body['name'] ?? '');
+    $email    = trim($body['email'] ?? '');
     $password = $body['password'] ?? '';
-    $role = $body['role'] ?? 'student';
+    $role     = $body['role'] ?? 'student';
 
     $errors = [];
+
     if ($name === '') {
         $errors[] = 'Nome é obrigatório';
     }
-    if ($email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = 'Email inválido';
     }
-    if (strlen($password) < 6) {
-        $errors[] = 'A senha precisa ter pelo menos 6 caracteres';
+
+    if (strlen($password) < 8) {
+        $errors[] = 'A senha precisa ter pelo menos 8 caracteres';
     }
-    if (! in_array($role, ['student', 'admin'], true)) {
+
+    if (!in_array($role, ['student', 'admin'], true)) {
         $errors[] = 'Papel inválido (student ou admin)';
     }
 
     $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ?');
     $stmt->execute([$email]);
+
     if ($stmt->fetch()) {
         $errors[] = 'Este email já está em uso';
     }
 
-    if (! empty($errors)) {
+    if (!empty($errors)) {
         json_out(['errors' => $errors], 422);
+
         exit;
     }
 
@@ -91,59 +95,88 @@ if ($method === 'POST') {
     $stmt = $pdo->prepare('SELECT id, name, email, role, created_at FROM users WHERE id = ?');
     $stmt->execute([$id]);
     json_out(['success' => true, 'user' => $stmt->fetch()], 201);
+
     exit;
 }
 
 // PUT ?id=5 — edita role ou nome
 if ($method === 'PUT') {
-    $id = (int) ($_GET['id'] ?? 0);
+    $id   = (int) ($_GET['id'] ?? 0);
     $body = json_decode(file_get_contents('php://input'), true);
     $role = $body['role'] ?? null;
     $name = $body['name'] ?? null;
 
-    if ($role !== null && ! in_array($role, ['student', 'admin'], true)) {
+    if ($role !== null && !in_array($role, ['student', 'admin'], true)) {
         json_out(['error' => 'Papel inválido (student ou admin)'], 422);
+
         exit;
     }
 
     $fields = [];
     $params = [];
+
     if ($name) {
         $fields[] = 'name = ?';
         $params[] = $name;
     }
+
     if ($role) {
         $fields[] = 'role = ?';
         $params[] = $role;
     }
-    if (empty($fields) || ! $id) {
+
+    if (empty($fields) || !$id) {
         json_out(['error' => 'Dados inválidos'], 422);
+
         exit;
+    }
+    exigirExistente('users', $id, 'Usuário não encontrado');
+
+    // Rebaixar o último admin trancaria o painel (mesma trava do profile.php).
+    if ($role === 'student') {
+        $stmt = $pdo->prepare('SELECT role FROM users WHERE id = ?');
+        $stmt->execute([$id]);
+        $totalAdmins = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
+
+        if ($stmt->fetchColumn() === 'admin' && $totalAdmins <= 1) {
+            json_out(['error' => 'Não é possível rebaixar o único administrador'], 422);
+
+            exit;
+        }
     }
 
     $params[] = $id;
-    $pdo->prepare('UPDATE users SET '.implode(', ', $fields).' WHERE id = ?')->execute($params);
+    $pdo->prepare('UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = ?')->execute($params);
 
     $stmt = $pdo->prepare('SELECT id, name, email, role FROM users WHERE id = ?');
     $stmt->execute([$id]);
     json_out($stmt->fetch());
+
     exit;
 }
 
 // DELETE ?id=5
 if ($method === 'DELETE') {
     $id = (int) ($_GET['id'] ?? 0);
-    if (! $id) {
+
+    if (!$id) {
         json_out(['error' => 'ID obrigatório'], 422);
+
         exit;
     }
+
+    exigirExistente('users', $id, 'Usuário não encontrado');
+
     // Um admin não pode excluir a própria conta por aqui (evita se trancar pra fora).
     if ($id === (int) $_SESSION['user_id']) {
         json_out(['error' => 'Você não pode excluir a própria conta'], 422);
+
         exit;
     }
+    avatar_apagar_arquivo(avatar_atual($pdo, $id));
     $pdo->prepare('DELETE FROM users WHERE id = ?')->execute([$id]);
     json_out(null, 204);
+
     exit;
 }
 

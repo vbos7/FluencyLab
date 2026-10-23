@@ -55,7 +55,8 @@ export function GrowthChart({ data }: { data: GrowthPoint[] }) {
                         tick={{ fontSize: 11, fill: "#94a3b8" }}
                         axisLine={false}
                         tickLine={false}
-                        domain={["dataMin - 100", "dataMax + 50"]}
+                        domain={[0, "auto"]}
+                        allowDecimals={false}
                     />
                     <Tooltip content={<CustomTooltip />} />
                     <Area

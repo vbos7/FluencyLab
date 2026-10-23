@@ -11,6 +11,7 @@ import {
 } from "@/app/_components/ui/dialog"
 import { LockIcon, EyeIcon, EyeOffIcon } from "./auth-icons"
 import { apiClient } from "@/app/_lib/api"
+import { apiErrorMessage } from "@/app/_lib/admin-api"
 
 type Step = "email" | "code" | "password" | "done"
 
@@ -100,9 +101,8 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
             await apiClient.post("/forgot-password.php", { email })
             setStep("code")
             setTimeout(() => codeRefs.current[0]?.focus(), 120)
-        } catch (err: any) {
-            const apiErrors = err.response?.data?.errors
-            setError(apiErrors?.[0] ?? "Não foi possível enviar o código. Tente novamente.")
+        } catch (err) {
+            setError(apiErrorMessage(err, "Não foi possível enviar o código. Tente novamente."))
         } finally {
             setLoading(false)
         }
@@ -121,8 +121,8 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
     }
 
     async function submitPassword() {
-        if (newPassword.length < 6) {
-            setError("A senha deve ter pelo menos 6 caracteres.")
+        if (newPassword.length < 8) {
+            setError("A senha deve ter pelo menos 8 caracteres.")
             return
         }
         if (newPassword !== confirmPassword) {
@@ -140,10 +140,9 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                 new_password_confirmation: confirmPassword,
             })
             setStep("done")
-        } catch (err: any) {
+        } catch (err) {
             // Aqui é onde um código errado/expirado é finalmente detectado
-            const apiErrors = err.response?.data?.errors
-            setError(apiErrors?.[0] ?? "Código inválido ou expirado. Volte e peça um novo.")
+            setError(apiErrorMessage(err, "Código inválido ou expirado. Volte e peça um novo."))
         } finally {
             setLoading(false)
         }
@@ -261,7 +260,7 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                         <DialogHeader>
                             <DialogTitle>Nova senha</DialogTitle>
                             <DialogDescription>
-                                Crie uma senha com pelo menos 6 caracteres.
+                                Crie uma senha com pelo menos 8 caracteres.
                             </DialogDescription>
                         </DialogHeader>
 

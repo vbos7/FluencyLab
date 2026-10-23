@@ -15,6 +15,16 @@ export type AuthUser = {
     role: string
 }
 
+// Erro de resposta da API com o status HTTP, para a página decidir (404 → notFound).
+export class ApiError extends Error {
+    constructor(
+        public readonly path: string,
+        public readonly status: number
+    ) {
+        super(`Erro ao buscar ${path}: ${status}`)
+    }
+}
+
 export async function fetchFromApi<T>(path: string): Promise<T> {
     const cookieStore = await cookies()
 
@@ -25,7 +35,7 @@ export async function fetchFromApi<T>(path: string): Promise<T> {
         },
     })
 
-    // 401 = sessão ausente/expirada. O middleware só checa a PRESENÇA do cookie
+    // 401 = sessão ausente/expirada. O proxy (proxy.ts) só checa a PRESENÇA do cookie
     // PHPSESSID, então um cookie velho passa por ele e só aqui descobrimos que a
     // sessão do backend não vale mais. Como todas as chamadas de fetchFromApi
     // vêm de páginas protegidas (Server Components), o certo é mandar pro login
@@ -35,7 +45,7 @@ export async function fetchFromApi<T>(path: string): Promise<T> {
     }
 
     if (!res.ok) {
-        throw new Error(`Erro ao buscar ${path}: ${res.status}`)
+        throw new ApiError(path, res.status)
     }
 
     return res.json()

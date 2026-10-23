@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation"
 export function CtaButtons() {
     const router = useRouter()
 
+    // Convidado é quem não tem sessão: a prática decide isso no servidor.
     function enterAsGuest() {
-        localStorage.setItem("fluency-lab:mode", "guest")
         router.push("/practice")
     }
 

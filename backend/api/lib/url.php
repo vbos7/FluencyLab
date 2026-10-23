@@ -10,25 +10,24 @@
  * de fato serve o arquivo.
  */
 
-require_once __DIR__.'/../env.php';
+require_once __DIR__ . '/../env.php';
 
+// request_is_https() vem do cors.php, sempre incluído antes pelos endpoints.
 function app_url(): string
 {
-    $https = ($_SERVER['HTTPS'] ?? '') === 'on'
-        || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
-
-    return ($https ? 'https' : 'http').'://'.($_SERVER['HTTP_HOST'] ?? 'localhost:8000');
+    return (request_is_https() ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost:8000');
 }
 
 /** Caminho relativo salvo no banco → URL absoluta (ou null se não houver avatar). */
 function avatar_url(?string $stored): ?string
 {
-    if (! $stored) {
+    if (!$stored) {
         return null;
     }
+
     if (str_starts_with($stored, 'http://') || str_starts_with($stored, 'https://')) {
         return $stored;
     }
 
-    return app_url().'/'.ltrim($stored, '/');
+    return app_url() . '/' . ltrim($stored, '/');
 }

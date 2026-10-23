@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
@@ -55,8 +55,14 @@ export function CourseFormDialog({
     const [error, setError] = useState("")
     const [loading, setLoading] = useState(false)
 
-    useEffect(() => {
-        if (!open) return
+    // Ao abrir (ou trocar o item em edição) os campos são recarregados. Ajuste
+    // feito durante o render — padrão do React para "resetar estado quando a prop
+    // muda" — em vez de um efeito que renderiza duas vezes.
+    const chaveAberta = open ? (editing?.id ?? "novo") : null
+    const [chaveAnterior, setChaveAnterior] = useState<typeof chaveAberta>(null)
+    if (chaveAberta !== chaveAnterior) {
+        setChaveAnterior(chaveAberta)
+        if (open) {
         setTitle(editing?.title ?? "")
         setSlug(editing?.slug ?? "")
         setSlugTouched(!!editing) // na edição, não sobrescreve o slug ao digitar o título
@@ -64,7 +70,8 @@ export function CourseFormDialog({
         setLevel(editing?.level ?? "basico")
         setOrderNum(String(editing?.order_num ?? 0))
         setError("")
-    }, [open, editing])
+        }
+    }
 
     // Ao criar, o slug acompanha o título até o admin editá-lo manualmente.
     function handleTitle(v: string) {

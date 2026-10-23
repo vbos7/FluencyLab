@@ -33,8 +33,7 @@ const MEDAL_CONFIG = [
 ]
 
 export async function RankingTop3() {
-    const leaderboard = await fetchFromApi<LeaderboardUser[]>("/ranking.php")
-    const top3 = leaderboard.slice(0, 3)
+    const top3 = await fetchFromApi<LeaderboardUser[]>("/ranking.php?limit=3")
 
     if (top3.length === 0) {
         return null // sem participantes ainda, não mostra a seção
@@ -66,7 +65,7 @@ export async function RankingTop3() {
                         <li key={user.id}>
                             <a
                                 href="/ranking"
-                                aria-label={`${pos}º lugar: ${user.name}, Nível ${user.level}, ${user.xp.toLocaleString()} XP`}
+                                aria-label={`${pos}º lugar: ${user.name}, Nível ${user.level}, ${user.xp.toLocaleString("pt-BR")} XP`}
                                 className={cn(
                                     "group flex items-center gap-3 px-4 py-3.5 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none focus-visible:ring-inset",
                                     config.hoverBg
@@ -133,7 +132,7 @@ export async function RankingTop3() {
                                         config.xpClass
                                     )}
                                 >
-                                    {user.xp.toLocaleString()} XP
+                                    {user.xp.toLocaleString("pt-BR")} XP
                                 </span>
                             </a>
                         </li>

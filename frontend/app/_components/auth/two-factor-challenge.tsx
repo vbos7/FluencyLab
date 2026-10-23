@@ -27,8 +27,8 @@ export function TwoFactorChallenge() {
         try {
             const payload = useRecovery ? { recovery_code: value.trim() } : { code: value.trim() }
             await apiClient.post("/auth/two-factor-challenge.php", payload)
-            localStorage.removeItem("fluency-lab:mode")
-            router.push("/home")
+            // Só admin tem 2FA: depois do código, direto para o painel.
+            router.push("/admin/dashboard")
         } catch (err) {
             setError(apiErrorMessage(err, "Código inválido."))
         } finally {

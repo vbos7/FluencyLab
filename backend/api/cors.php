@@ -7,18 +7,23 @@
  *   2. Inicia a sessão PHP (para ler/gravar $_SESSION)
  *   3. Responde imediatamente a requisições OPTIONS (preflight do browser)
  */
-require_once __DIR__.'/env.php';
+require_once __DIR__ . '/env.php';
 
 // Duração da sessão persistente ("Manter conectado"): 30 dias.
 const SESSION_LIFETIME = 2592000;
 
 // Origem do Next.js autorizada a chamar esta API. O default cobre o
 // `npm run dev` padrão; mude APP_ORIGIN no .env se usar outra porta.
-header('Access-Control-Allow-Origin: '.env('APP_ORIGIN', 'http://localhost:3000'));
+header('Access-Control-Allow-Origin: ' . env('APP_ORIGIN', 'http://localhost:3000'));
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 header('Content-Type: application/json; charset=utf-8');
+// A API só devolve JSON: não deixa o navegador "adivinhar" outro tipo nem exibir
+// a resposta dentro de frames de outros sites.
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('Referrer-Policy: no-referrer');
 
 // Preflight: o browser manda OPTIONS antes de qualquer POST/PUT/DELETE
 // para perguntar "posso fazer essa requisição?". Respondemos 200 e paramos aqui.
@@ -44,16 +49,17 @@ ini_set('session.gc_maxlifetime', (string) SESSION_LIFETIME);
 
 // Configura o cookie de sessão ANTES de chamar session_start().
 // SameSite=Lax permite que o cookie viaje entre portas do mesmo host (localhost:3000 → localhost:8000).
-// httponly=false: deixa o JavaScript do Next.js checar se o cookie existe (para o middleware).
+// httponly=true: o JavaScript da página não lê o cookie (um XSS não rouba a sessão).
+// O proxy do Next (proxy.ts) roda no servidor e lê cookies HttpOnly normalmente.
 // secure precisa acompanhar o protocolo: em http (Docker local) tem que ser
 // false, senão o browser descarta o cookie e ninguém consegue logar.
 // lifetime: 30 dias se "manter conectado"; 0 = cookie de sessão (morre ao fechar o navegador).
 session_set_cookie_params([
     'lifetime' => $remember ? SESSION_LIFETIME : 0,
     'samesite' => 'Lax',
-    'httponly' => false,
-    'secure' => $https,
-    'path' => '/',
+    'httponly' => true,
+    'secure'   => $https,
+    'path'     => '/',
 ]);
 
 session_start();
@@ -79,19 +85,69 @@ function request_is_https(): bool
 }
 
 /**
- * IP real do cliente. Atrás do Cloudflare/nginx o REMOTE_ADDR é o proxy, então
- * preferimos os cabeçalhos que carregam o IP de origem. Usado em rate limiting.
+ * IP real do cliente, usado nos limites de tentativas e no teto do convidado.
+ *
+ * Os cabeçalhos CF-Connecting-IP e X-Forwarded-For podem ser enviados por
+ * qualquer um, então só valem quando a requisição chega de um proxy listado em
+ * TRUSTED_PROXIES (IPs ou faixas CIDR, separados por vírgula — ex.: as faixas do
+ * Cloudflare, se a API estiver atrás dele). Fora disso vale o REMOTE_ADDR.
  */
 function client_ip(): string
 {
-    if (! empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+    $remoto = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+
+    if (!ip_confiavel($remoto)) {
+        return $remoto;
+    }
+
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
         return $_SERVER['HTTP_CF_CONNECTING_IP'];
     }
-    if (! empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
         return trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
     }
 
-    return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    return $remoto;
+}
+
+// O IP está em TRUSTED_PROXIES (aceita IP exato ou faixa CIDR, IPv4 e IPv6)?
+function ip_confiavel(string $ip): bool
+{
+    $ipBin = @inet_pton($ip);
+
+    if ($ipBin === false) {
+        return false;
+    }
+
+    foreach (array_filter(array_map('trim', explode(',', env('TRUSTED_PROXIES')))) as $faixa) {
+        [$rede, $bits] = array_pad(explode('/', $faixa, 2), 2, null);
+        $redeBin       = @inet_pton($rede);
+
+        if ($redeBin === false || strlen($redeBin) !== strlen($ipBin)) {
+            continue;
+        }
+
+        $bits  = $bits === null ? strlen($ipBin) * 8 : (int) $bits;
+        $bytes = intdiv($bits, 8);
+        $resto = $bits % 8;
+
+        if (substr($ipBin, 0, $bytes) !== substr($redeBin, 0, $bytes)) {
+            continue;
+        }
+
+        if ($resto === 0) {
+            return true;
+        }
+
+        $mascara = (0xFF << (8 - $resto)) & 0xFF;
+
+        if ((ord($ipBin[$bytes]) & $mascara) === (ord($redeBin[$bytes]) & $mascara)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /**
@@ -104,10 +160,10 @@ function client_ip(): string
 function aplicar_remember(bool $remember): void
 {
     $base = [
-        'path' => '/',
+        'path'     => '/',
         'samesite' => 'Lax',
-        'secure' => request_is_https(),
-        'httponly' => false,
+        'secure'   => request_is_https(),
+        'httponly' => true,
     ];
 
     if ($remember) {

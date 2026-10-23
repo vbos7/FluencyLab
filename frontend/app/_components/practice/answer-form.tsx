@@ -29,6 +29,7 @@ export function AnswerForm({ answer, loading, onChange, onVerify, onSkip, inputR
                 aria-describedby="current-phrase"
                 className="min-h-20 w-full resize-none rounded-2xl border-2 border-slate-200 bg-white px-5 py-4 text-base text-slate-800 transition-colors outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 disabled:opacity-60"
                 placeholder="Digite a tradução em inglês..."
+                maxLength={300} // mesmo limite do check-answer.php
                 value={answer}
                 onChange={(e) => onChange(e.target.value)}
                 onKeyDown={(e) => {

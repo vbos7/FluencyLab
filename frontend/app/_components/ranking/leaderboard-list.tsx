@@ -75,7 +75,7 @@ export function LeaderboardList({ rows, startIdx }: Props) {
                         </div>
 
                         <span className="shrink-0 font-mono text-[13px] font-bold text-slate-500">
-                            {user.xp.toLocaleString()}
+                            {user.xp.toLocaleString("pt-BR")}
                             <span className="ml-0.5 text-[11px] text-slate-400">XP</span>
                         </span>
                     </div>

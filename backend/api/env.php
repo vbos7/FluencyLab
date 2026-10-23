@@ -32,9 +32,9 @@ function env_arquivo(): array
     }
 
     $valores = [];
-    $caminho = __DIR__.'/../../.env';
+    $caminho = __DIR__ . '/../../.env';
 
-    if (! is_readable($caminho)) {
+    if (!is_readable($caminho)) {
         return $valores;
     }
 
@@ -56,9 +56,19 @@ function env_arquivo(): array
         $chave = trim($partes[0]);
         $valor = trim($partes[1]);
 
-        // Remove aspas envolventes, se houver: DB_PASS="a b c" → a b c
-        if (strlen($valor) >= 2 && ($valor[0] === '"' || $valor[0] === "'") && $valor[-1] === $valor[0]) {
-            $valor = substr($valor, 1, -1);
+        if ($valor !== '' && ($valor[0] === '"' || $valor[0] === "'")) {
+            // Entre aspas vale tudo até a aspa de fechamento (inclusive "#"):
+            // DB_PASS="a#b c"  # comentário → a#b c
+            $fim   = strpos($valor, $valor[0], 1);
+            $valor = $fim === false ? substr($valor, 1) : substr($valor, 1, $fim - 1);
+        } else {
+            // Sem aspas, " #" começa um comentário no fim da linha:
+            // MAIL_ENCRYPTION=tls   # tls = STARTTLS → tls. Um "#" colado ao valor
+            // (senha gerada por painel) continua fazendo parte dele.
+            // Linha só com espaço e comentário depois do "=" é valor vazio.
+            $valor = preg_match('/^\s+#/', $partes[1])
+                ? ''
+                : rtrim((string) preg_replace('/\s+#.*$/', '', $valor));
         }
 
         $valores[$chave] = $valor;
@@ -69,6 +79,7 @@ function env_arquivo(): array
 
 /**
  * Devolve uma configuração, procurando na ordem: ambiente → $_SERVER → .env → padrão.
+ * Valor vazio conta como ausente (MAIL_FROM_ADDRESS= usa o padrão).
  */
 function env(string $chave, string $padrao = ''): string
 {
@@ -78,9 +89,19 @@ function env(string $chave, string $padrao = ''): string
         return $valor;
     }
 
-    if (! empty($_SERVER[$chave])) {
+    if (!empty($_SERVER[$chave])) {
         return (string) $_SERVER[$chave];
     }
 
-    return env_arquivo()[$chave] ?? $padrao;
+    $valor = env_arquivo()[$chave] ?? '';
+
+    return $valor !== '' ? $valor : $padrao;
+}
+
+// Fuso único da aplicação. O PHP usa UTC por padrão e o MySQL usa o fuso do
+// servidor (-03): sem alinhar os dois, datas geradas no PHP (validade do código
+// de senha, "hoje" da sequência, semanas do progresso) não batiam com NOW() e
+// CURDATE(). db.php aplica o mesmo fuso na conexão.
+if (!@date_default_timezone_set(env('APP_TIMEZONE', 'America/Sao_Paulo'))) {
+    date_default_timezone_set('America/Sao_Paulo');
 }

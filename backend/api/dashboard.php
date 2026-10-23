@@ -1,15 +1,19 @@
 <?php
 
-require_once __DIR__.'/cors.php';
-require_once __DIR__.'/db.php';
+require_once __DIR__ . '/cors.php';
+
+require_once __DIR__ . '/db.php';
+
+require_once __DIR__ . '/lib/progress.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if (empty($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
+
     exit;
 }
 
-$userId = $_SESSION['user_id'];
+$userId = (int) $_SESSION['user_id'];
 
 try {
     // Treinos + taxa de acerto + tempo total
@@ -24,21 +28,6 @@ try {
     $stmt->execute([$userId]);
     $stats = $stmt->fetch();
 
-    // XP total — fonte única: ranking_points
-    $stmt = $pdo->prepare('SELECT COALESCE(SUM(points), 0) AS xp_total FROM ranking_points WHERE user_id = ?');
-    $stmt->execute([$userId]);
-    $xp = $stmt->fetch();
-
-    // Consistência: atividades por dia (usado no heatmap)
-    $stmt = $pdo->prepare(
-        'SELECT DATE(created_at) AS dia, COUNT(*) AS atividades
-         FROM attempts
-         WHERE user_id = ?
-         GROUP BY DATE(created_at)
-         ORDER BY dia'
-    );
-    $stmt->execute([$userId]);
-    $consistencia = $stmt->fetchAll();
 
     // ── Semanal: treinos por semana (últimas 12) ──
     $stmt = $pdo->prepare(
@@ -49,6 +38,7 @@ try {
     );
     $stmt->execute([$userId]);
     $treinosPorSemana = [];
+
     foreach ($stmt->fetchAll() as $row) {
         $treinosPorSemana[(int) $row['week_key']] = (int) $row['treinos'];
     }
@@ -62,6 +52,7 @@ try {
     );
     $stmt->execute([$userId]);
     $xpPorSemana = [];
+
     foreach ($stmt->fetchAll() as $row) {
         $xpPorSemana[(int) $row['week_key']] = (int) $row['xp'];
     }
@@ -69,44 +60,26 @@ try {
     // Monta as últimas 12 semanas em ordem, preenchendo com 0 onde não há dados
     $weekly = [];
     $monday = new DateTime('monday this week');
+
     for ($i = 11; $i >= 0; $i--) {
         $weekStart = (clone $monday)->modify("-{$i} week");
-        $weekKey = (int) $weekStart->format('oW'); // ano ISO + semana ISO, bate com YEARWEEK(mode 3)
-        $weekly[] = [
-            'week' => $weekStart->format('d/m'),
+        $weekKey   = (int) $weekStart->format('oW'); // ano ISO + semana ISO, bate com YEARWEEK(mode 3)
+        $weekly[]  = [
+            'week'    => $weekStart->format('d/m'),
             'treinos' => $treinosPorSemana[$weekKey] ?? 0,
-            'xp' => $xpPorSemana[$weekKey] ?? 0,
+            'xp'      => $xpPorSemana[$weekKey] ?? 0,
         ];
     }
 
-    $diasComAtividade = [];
-    foreach ($consistencia as $item) {
-        if ($item['atividades'] > 0) {
-            $diasComAtividade[$item['dia']] = true;
-        }
-    }
-
-    $hoje = new DateTime('today');
-    $cursor = clone $hoje;
-
-    if (! isset($diasComAtividade[$cursor->format('Y-m-d')])) {
-        $cursor->modify('-1 day');
-    }
-
-    $streak = 0;
-    while (isset($diasComAtividade[$cursor->format('Y-m-d')])) {
-        $streak++;
-        $cursor->modify('-1 day');
-    }
-
     json_out([
-        'total_treinos' => (int) $stats['total_treinos'],
-        'taxa_acerto' => (int) ($stats['taxa_acerto'] ?? 0),
+        'total_treinos'        => (int) $stats['total_treinos'],
+        'taxa_acerto'          => (int) ($stats['taxa_acerto'] ?? 0),
         'tempo_total_segundos' => (int) $stats['tempo_total_segundos'],
-        'xp_total' => (int) $xp['xp_total'],
-        'streak' => $streak,
-        'consistencia' => $consistencia,
-        'weekly' => $weekly,
+        // XP e sequência pelas regras únicas (lib/progress.php). O calendário de
+        // atividade tem endpoint próprio (user/calendar.php).
+        'xp_total'             => xp_total_do_usuario($pdo, $userId),
+        'streak'               => streak_do_usuario($pdo, $userId),
+        'weekly'               => $weekly,
     ]);
 
 } catch (PDOException $e) {

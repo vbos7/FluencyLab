@@ -68,7 +68,7 @@ export function Podium({ top3 }: Props) {
                         </p>
 
                         <p className="font-mono text-[12px] font-bold text-slate-400">
-                            {user.xp.toLocaleString()} XP
+                            {user.xp.toLocaleString("pt-BR")} XP
                         </p>
 
                         <div

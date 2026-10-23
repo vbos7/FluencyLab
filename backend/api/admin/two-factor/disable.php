@@ -8,26 +8,28 @@
  * sozinha. Limpa segredo, códigos de recuperação e a marca de ativação.
  */
 
-require_once __DIR__.'/../guard.php';
+require_once __DIR__ . '/../guard.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 requireAdmin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
     json_out(['error' => 'Método não permitido'], 405);
+
     exit;
 }
 
-$userId = (int) $_SESSION['user_id'];
-$body = json_decode(file_get_contents('php://input'), true) ?? [];
+$userId   = (int) $_SESSION['user_id'];
+$body     = json_decode(file_get_contents('php://input'), true) ?? [];
 $password = (string) ($body['password'] ?? '');
 
 $stmt = $pdo->prepare('SELECT password_hash FROM users WHERE id = ?');
 $stmt->execute([$userId]);
 $user = $stmt->fetch();
 
-if (! $user || ! password_verify($password, $user['password_hash'])) {
+if (!$user || !password_verify($password, $user['password_hash'])) {
     json_out(['errors' => ['Senha incorreta']], 422);
+
     exit;
 }
 

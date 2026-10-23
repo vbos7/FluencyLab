@@ -1,11 +1,13 @@
 <?php
 
-require_once __DIR__.'/cors.php';
-require_once __DIR__.'/db.php';
+require_once __DIR__ . '/cors.php';
+
+require_once __DIR__ . '/db.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if (empty($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
+
     exit;
 }
 
@@ -17,6 +19,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if (empty($_GET['course_id'])) {
             json_out(['error' => 'course_id é obrigatório'], 400);
+
             exit;
         }
 
@@ -37,10 +40,11 @@ try {
 
         json_out([
             'completed_lesson_ids' => array_map('intval', $concluidas),
-            'total_lessons' => $total,
-            'completed_count' => count($concluidas),
-            'percent' => $percentual,
+            'total_lessons'        => $total,
+            'completed_count'      => count($concluidas),
+            'percent'              => $percentual,
         ]);
+
         exit;
     }
 
@@ -51,6 +55,7 @@ try {
 
         if (empty($input['lesson_id'])) {
             json_out(['error' => 'lesson_id é obrigatório'], 400);
+
             exit;
         }
 
@@ -60,6 +65,7 @@ try {
         $stmt->execute([$userId, $input['lesson_id']]);
 
         json_out(['success' => true, 'completed' => true]);
+
         exit;
     }
 
@@ -68,6 +74,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
         if (empty($_GET['lesson_id'])) {
             json_out(['error' => 'lesson_id é obrigatório'], 400);
+
             exit;
         }
 
@@ -77,6 +84,7 @@ try {
         $stmt->execute([$userId, $_GET['lesson_id']]);
 
         json_out(['success' => true, 'completed' => false]);
+
         exit;
     }
 

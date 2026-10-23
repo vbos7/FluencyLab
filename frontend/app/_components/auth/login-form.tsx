@@ -11,9 +11,15 @@ import { apiClient } from "@/app/_lib/api"
 import { apiErrorMessage } from "@/app/_lib/admin-api"
 import { browserSupportsPasskeys, loginWithPasskey } from "@/app/_lib/webauthn-client"
 
+// Destino depois do login (?next=). Só caminhos internos: "/planos" vale,
+// "//site.com" ou "https://..." não (evita redirecionar para fora do app).
+function destinoSeguro(next?: string): string | null {
+    return next && next.startsWith("/") && !next.startsWith("//") ? next : null
+}
+
 // showPasskey: usado na tela do painel (/admin/login) — acrescenta a opção de
 // entrar com passkey ACIMA do e-mail. Fora isso, o formulário é idêntico ao público.
-export function LoginForm({ showPasskey = false }: { showPasskey?: boolean }) {
+export function LoginForm({ showPasskey = false, next }: { showPasskey?: boolean; next?: string }) {
     const router = useRouter()
     const [mounted, setMounted] = useState(false)
     const [email, setEmail] = useState("")
@@ -48,11 +54,18 @@ export function LoginForm({ showPasskey = false }: { showPasskey?: boolean }) {
                 setNeeds2fa(true)
                 return
             }
-            localStorage.removeItem("fluency-lab:mode")
-            // Admin cai direto no painel; aluno na home.
-            router.push(data?.user?.role === "admin" ? "/admin/dashboard" : "/home")
-        } catch {
-            setError("Email ou senha incorretos.")
+            // Admin cai direto no painel; aluno volta para onde estava (?next=) ou a home.
+            router.push(
+                data?.user?.role === "admin" ? "/admin/dashboard" : (destinoSeguro(next) ?? "/home")
+            )
+        } catch (err) {
+            // 401 = credenciais erradas; 429 (bloqueio) e falhas do servidor têm mensagem própria.
+            const status = (err as { response?: { status?: number } })?.response?.status
+            setError(
+                status === 401
+                    ? "E-mail ou senha incorretos."
+                    : apiErrorMessage(err, "Não foi possível entrar agora. Tente novamente.")
+            )
         } finally {
             setLoading(false)
         }
@@ -143,13 +156,18 @@ export function LoginForm({ showPasskey = false }: { showPasskey?: boolean }) {
                 <form onSubmit={handleLogin} className="flex flex-col gap-4">
                     {/* E-mail */}
                     <div className={fadeUp(100)}>
-                        <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
+                        <label
+                            htmlFor="login-email"
+                            className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase"
+                        >
                             E-mail
                         </label>
                         <div className={fieldClass("email")}>
                             <EmailIcon active={focused === "email"} />
                             <input
+                                id="login-email"
                                 type="email"
+                                autoComplete="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 onFocus={() => setFocused("email")}
@@ -163,7 +181,10 @@ export function LoginForm({ showPasskey = false }: { showPasskey?: boolean }) {
                     {/* Senha */}
                     <div className={fadeUp(150)}>
                         <div className="mb-2 flex items-center justify-between">
-                            <label className="block text-xs font-semibold tracking-wider text-slate-600 uppercase">
+                            <label
+                                htmlFor="login-password"
+                                className="block text-xs font-semibold tracking-wider text-slate-600 uppercase"
+                            >
                                 Senha
                             </label>
                             <button
@@ -177,7 +198,9 @@ export function LoginForm({ showPasskey = false }: { showPasskey?: boolean }) {
                         <div className={fieldClass("password")}>
                             <LockIcon active={focused === "password"} />
                             <input
+                                id="login-password"
                                 type={showPass ? "text" : "password"}
+                                autoComplete="current-password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 onFocus={() => setFocused("password")}

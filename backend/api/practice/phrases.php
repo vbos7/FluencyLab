@@ -1,45 +1,50 @@
 <?php
 
-require_once __DIR__.'/../cors.php';
-require_once __DIR__.'/../db.php';
-require_once __DIR__.'/../lib/premium.php';
+require_once __DIR__ . '/../cors.php';
+
+require_once __DIR__ . '/../db.php';
+
+require_once __DIR__ . '/../lib/premium.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     json_out(['error' => 'Método não permitido'], 405);
+
     exit;
 }
 
 if (isset($_GET['category']) || isset($_GET['category_id'])) {
-    if (! isset($_SESSION['user_id'])) {
+    if (!isset($_SESSION['user_id'])) {
         json_out(['error' => 'Não autenticado'], 401);
+
         exit;
     }
     requirePro($pdo);
 }
 
 // JOIN com categories para devolver o nome da categoria (o front espera `category`).
-// 1=1 é sempre verdadeiro, então não filtra nada por padrão.
-$sql = 'SELECT p.id, p.pt, p.en, p.difficulty, p.category_id, c.name AS category
+// Sem p.en: a tradução de referência é a resposta do exercício e fica no backend
+// (check-answer.php a usa na correção). 1=1 é sempre verdadeiro.
+$sql = 'SELECT p.id, p.pt, p.difficulty, p.category_id, c.name AS category
         FROM phrases p
         JOIN categories c ON c.id = p.category_id
         WHERE 1=1';
 $params = [];
 
 // ?category=Trabalho — filtra pelo nome da categoria (compatibilidade)
-if (! empty($_GET['category'])) {
+if (!empty($_GET['category'])) {
     $sql .= ' AND c.name = ?';
     $params[] = $_GET['category'];
 }
 
 // ?category_id=2 — filtra pelo id da categoria
-if (! empty($_GET['category_id'])) {
+if (!empty($_GET['category_id'])) {
     $sql .= ' AND p.category_id = ?';
     $params[] = (int) $_GET['category_id'];
 }
 
 // ?difficulty=easy — filtra por dificuldade
-if (! empty($_GET['difficulty'])) {
+if (!empty($_GET['difficulty'])) {
     $sql .= ' AND p.difficulty = ?';
     $params[] = $_GET['difficulty'];
 }

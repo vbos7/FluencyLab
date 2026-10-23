@@ -217,7 +217,36 @@ Se alguém avisar que mexeu no `schema.sql`, você não precisa fazer nada: o ba
 
 ---
 
-## 8. Caminho alternativo: tudo em Docker
+## 8. Banco local (MySQL instalado na máquina)
+
+Para testar sem tocar no banco do Forge, use um MySQL local (Homebrew, XAMPP).
+Com o MySQL rodando em `127.0.0.1:3306` e usuário `root` sem senha:
+
+```bash
+./scripts/db-local-reset.sh
+```
+
+Ele recria o banco `fluency_lab` com o `schema.sql` e os seeds (frases e ~40
+alunos fictícios, senha `123456`). Não traz dados reais do Forge e não cria
+admin. Depois aponte o `.env` da raiz para ele:
+
+```
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=fluency_lab
+DB_USER=root
+DB_PASS=
+```
+
+Para ter um admin local, crie sua conta em `/register` e promova:
+
+```bash
+mysql -uroot fluency_lab -e "UPDATE users SET role='admin' WHERE email='seu@email'"
+```
+
+---
+
+## 9. Caminho alternativo: tudo em Docker
 
 Existe uma configuração completa em Docker, com **banco local próprio** — útil
 para trabalhar sem internet ou para testar sem afetar os outros.

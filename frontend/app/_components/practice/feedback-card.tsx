@@ -26,16 +26,52 @@ export function FeedbackCard({ feedback, answer, onNext }: Props) {
                     <p className="text-[15px] text-slate-700">{answer}</p>
                 </div>
 
-                {/* Lista de correções — vazia quando o status é "perfect" */}
-                {feedback.corrections.map((c, i) => (
-                    <div key={i} className="mb-3 rounded-xl bg-white/60 p-3.5">
+                {/* Frase inteira correta — só quando a resposta não foi perfeita */}
+                {feedback.status !== "perfect" && feedback.correctedSentence && (
+                    <div className="mb-3 rounded-xl bg-white/60 p-3.5">
                         <p className="mb-1 text-xs font-semibold text-slate-500">
-                            Tradução esperada:
+                            Tradução correta:
                         </p>
-                        <p className="text-[15px] font-semibold text-green-600">{c.correct}</p>
-                        <p className="mt-2 text-[13px] text-slate-500">{c.explanation}</p>
+                        <p className="text-[15px] font-semibold text-green-600">
+                            {feedback.correctedSentence}
+                        </p>
                     </div>
-                ))}
+                )}
+
+                {/* Erros pontuais: trecho escrito → trecho corrigido, com a explicação */}
+                {feedback.corrections.length > 0 && (
+                    <div className="mb-3 rounded-xl bg-white/60 p-3.5">
+                        <p className="mb-2 text-xs font-semibold text-slate-500">O que corrigir:</p>
+                        <ul className="flex flex-col gap-2.5">
+                            {feedback.corrections.map((c, i) => (
+                                <li key={i}>
+                                    <p className="text-[15px]">
+                                        {c.wrong && (
+                                            <>
+                                                <span className="text-red-600 line-through">
+                                                    {c.wrong}
+                                                </span>
+                                                <span
+                                                    className="mx-1.5 text-slate-400"
+                                                    aria-hidden="true"
+                                                >
+                                                    →
+                                                </span>
+                                                <span className="sr-only"> corrigir para </span>
+                                            </>
+                                        )}
+                                        <span className="font-semibold text-green-600">
+                                            {c.correct}
+                                        </span>
+                                    </p>
+                                    <p className="mt-1 text-[13px] text-slate-500">
+                                        {c.explanation}
+                                    </p>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
 
                 {/* Mensagem extra exclusiva para traduções perfeitas */}
                 {feedback.status === "perfect" && (

@@ -1,3 +1,5 @@
+import { Suspense } from "react"
+import Link from "next/link"
 import NavLayout from "@/app/_layouts/nav-layout"
 import { WelcomeHeader } from "@/app/_components/home/welcome-header"
 import { OnboardingDialog } from "@/app/_components/home/onboarding-dialog"
@@ -9,14 +11,16 @@ import { computeStats, type DashboardData } from "@/app/_lib/progress"
 import { getLevel } from "@/app/_lib/ranking"
 import { CoursesCard } from "@/app/_components/home/courses-card"
 import ProModal from "@/app/_components/pro-modal"
+import { CheckoutThankYouModal } from "@/app/_components/checkout-thank-you-modal"
 import { fetchFromApi } from "../_lib/server-api"
 
 type Users = { id: number; name: string; email: string; phone: string | null; role: string }
 
 export default async function HomePage() {
-    const [user, dashboardData] = await Promise.all([
+    const [user, dashboardData, planStatus] = await Promise.all([
         fetchFromApi<Users>("/profile.php"),
         fetchFromApi<DashboardData>("/dashboard.php"),
+        fetchFromApi<{ active: boolean }>("/my-plan.php").catch(() => ({ active: false })),
     ])
 
     const stats = computeStats(dashboardData)
@@ -27,8 +31,12 @@ export default async function HomePage() {
 
     return (
         <NavLayout>
-            <ProModal />
+            {/* Upsell só para quem ainda é Free */}
+            {!planStatus.active && <ProModal />}
             <OnboardingDialog />
+            <Suspense fallback={null}>
+                <CheckoutThankYouModal />
+            </Suspense>
             <div className="page-enter relative mx-auto min-h-dvh max-w-5xl bg-white px-4 pb-24 sm:px-6 lg:px-8">
                 <WelcomeHeader name={user.name} />
 
@@ -41,9 +49,9 @@ export default async function HomePage() {
                     />
 
                     <div className="mt-[8%] mb-[5%] w-full">
-                        <a href="/progress" className="cursor-default">
+                        <Link href="/progress" className="cursor-default">
                             <StatsCards stats={stats} limit={2} />
-                        </a>
+                        </Link>
                     </div>
 
                     <CoursesCard />

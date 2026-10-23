@@ -43,7 +43,7 @@ function buildCards(stats: ComputedStats): CardConfig[] {
         {
             icon: Zap,
             color: "bg-amber-50 text-amber-500",
-            value: stats.userXp.toLocaleString(),
+            value: stats.userXp.toLocaleString("pt-BR"),
             label: "XP acumulado",
             span: "full",
         },

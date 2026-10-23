@@ -14,8 +14,9 @@
  *  - códigos de recuperação são guardados como HASH (nunca em claro).
  */
 
-require_once __DIR__.'/../../vendor/autoload.php';
-require_once __DIR__.'/crypto.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+require_once __DIR__ . '/crypto.php';
 
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
@@ -53,7 +54,8 @@ function totp_uri(string $secret, string $email): string
 function totp_verify(string $secret, string $code): bool
 {
     $code = preg_replace('/\s+/', '', $code);
-    if ($code === '' || ! ctype_digit($code)) {
+
+    if ($code === '' || !ctype_digit($code)) {
         return false;
     }
 
@@ -63,7 +65,7 @@ function totp_verify(string $secret, string $code): bool
 /** SVG do QR code a partir do otpauth URI. */
 function totp_qr_svg(string $uri): string
 {
-    $writer = new Writer(new ImageRenderer(new RendererStyle(220, 1), new SvgImageBackEnd));
+    $writer = new Writer(new ImageRenderer(new RendererStyle(220, 1), new SvgImageBackEnd()));
 
     return $writer->writeString($uri);
 }
@@ -71,7 +73,7 @@ function totp_qr_svg(string $uri): string
 /** Data URI (SVG) pronto para um <img src> no front. */
 function totp_qr_data_uri(string $uri): string
 {
-    return 'data:image/svg+xml;base64,'.base64_encode(totp_qr_svg($uri));
+    return 'data:image/svg+xml;base64,' . base64_encode(totp_qr_svg($uri));
 }
 
 /**
@@ -83,8 +85,9 @@ function totp_qr_data_uri(string $uri): string
 function recovery_codes_generate(int $n = 8): array
 {
     $codes = [];
+
     for ($i = 0; $i < $n; $i++) {
-        $codes[] = strtoupper(bin2hex(random_bytes(3)).'-'.bin2hex(random_bytes(3)));
+        $codes[] = strtoupper(bin2hex(random_bytes(3)) . '-' . bin2hex(random_bytes(3)));
     }
 
     return $codes;
@@ -105,9 +108,10 @@ function recovery_codes_hash(array $codes): string
  */
 function recovery_codes_consume(?string $storedJson, string $code, ?string &$remainingJson): bool
 {
-    $code = strtoupper(trim($code));
+    $code   = strtoupper(trim($code));
     $hashes = $storedJson ? json_decode($storedJson, true) : [];
-    if (! is_array($hashes) || $code === '') {
+
+    if (!is_array($hashes) || $code === '') {
         return false;
     }
 

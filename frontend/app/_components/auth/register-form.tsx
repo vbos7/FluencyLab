@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { AuthLogo } from "./auth-logo"
 import { EmailIcon, LockIcon, UserIcon, EyeIcon, EyeOffIcon } from "./auth-icons"
 import { apiClient } from "@/app/_lib/api"
+import { apiErrorMessage } from "@/app/_lib/admin-api"
+import { FIRST_LOGIN_KEY } from "@/app/_components/home/onboarding-dialog"
 
 export function RegisterForm() {
     const router = useRouter()
@@ -33,7 +35,9 @@ export function RegisterForm() {
             focused === name ? "border-blue-400 shadow-sm shadow-blue-100" : "border-transparent"
         }`
 
-    async function handleRegister() {
+    // Disparado pelo submit do <form>: clique no botão ou Enter em qualquer campo.
+    async function handleRegister(e: React.FormEvent) {
+        e.preventDefault()
         setError(null)
 
         if (!name || !email || !password) {
@@ -46,8 +50,8 @@ export function RegisterForm() {
             return
         }
 
-        if (password.length < 6) {
-            setError("A senha deve ter pelo menos 6 caracteres.")
+        if (password.length < 8) {
+            setError("A senha deve ter pelo menos 8 caracteres.")
             return
         }
 
@@ -59,9 +63,12 @@ export function RegisterForm() {
                 password,
                 password_confirmation: confirmPassword, // nome que o PHP espera
             })
+            // Conta nova: a Home abre o onboarding (preferências de acessibilidade)
+            localStorage.setItem(FIRST_LOGIN_KEY, "true")
             router.push("/home")
-        } catch {
-            setError("Não foi possível criar a conta. Confira os dados.")
+        } catch (err) {
+            // O backend explica o motivo (e-mail em uso, cadastros desativados...)
+            setError(apiErrorMessage(err, "Não foi possível criar a conta. Confira os dados."))
         } finally {
             setLoading(false)
         }
@@ -75,16 +82,21 @@ export function RegisterForm() {
                 <AuthLogo />
             </div>
 
-            <div className="flex flex-col gap-3">
+            <form onSubmit={handleRegister} className="flex flex-col gap-3">
                 {/* Nome */}
                 <div className={fadeUp(100)}>
-                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
+                    <label
+                        htmlFor="register-name"
+                        className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase"
+                    >
                         Nome
                     </label>
                     <div className={fieldClass("nome")}>
                         <UserIcon active={focused === "nome"} />
                         <input
                             type="text"
+                            id="register-name"
+                            autoComplete="name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             onFocus={() => setFocused("nome")}
@@ -97,13 +109,18 @@ export function RegisterForm() {
 
                 {/* E-mail */}
                 <div className={fadeUp(125)}>
-                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
+                    <label
+                        htmlFor="register-email"
+                        className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase"
+                    >
                         E-mail
                     </label>
                     <div className={fieldClass("email")}>
                         <EmailIcon active={focused === "email"} />
                         <input
                             type="email"
+                            id="register-email"
+                            autoComplete="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             onFocus={() => setFocused("email")}
@@ -116,13 +133,18 @@ export function RegisterForm() {
 
                 {/* Senha */}
                 <div className={fadeUp(150)}>
-                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
+                    <label
+                        htmlFor="register-password"
+                        className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase"
+                    >
                         Senha
                     </label>
                     <div className={fieldClass("password")}>
                         <LockIcon active={focused === "password"} />
                         <input
                             type={showPass ? "text" : "password"}
+                            id="register-password"
+                            autoComplete="new-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             onFocus={() => setFocused("password")}
@@ -143,13 +165,18 @@ export function RegisterForm() {
 
                 {/* Confirmar senha — mesmo botão de olho, mesmo aria-label dinâmico */}
                 <div className={fadeUp(175)}>
-                    <label className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase">
+                    <label
+                        htmlFor="register-password-confirmation"
+                        className="mb-2 block text-xs font-semibold tracking-wider text-slate-600 uppercase"
+                    >
                         Confirmar senha
                     </label>
                     <div className={fieldClass("confirmPassword")}>
                         <LockIcon active={focused === "confirmPassword"} />
                         <input
                             type={showPass ? "text" : "password"}
+                            id="register-password-confirmation"
+                            autoComplete="new-password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             onFocus={() => setFocused("confirmPassword")}
@@ -171,7 +198,7 @@ export function RegisterForm() {
                 {/* Submit */}
                 <div className={`mt-2 ${fadeUp(200)}`}>
                     <button
-                        onClick={handleRegister}
+                        type="submit"
                         disabled={loading}
                         className="relative h-12 w-full overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-800 text-sm font-bold text-white shadow-md shadow-blue-400/35 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-400/45 active:scale-[0.98]"
                     >
@@ -179,7 +206,7 @@ export function RegisterForm() {
                     </button>
                     {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
                 </div>
-            </div>
+            </form>
 
             <p className={`mt-6 text-center text-xs text-slate-400 ${fadeUp(320)}`}>
                 Já tem uma conta?{" "}

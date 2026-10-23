@@ -7,19 +7,22 @@
  * a credencial de outra pessoa mexendo no id.
  */
 
-require_once __DIR__.'/../guard.php';
+require_once __DIR__ . '/../guard.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 requireAdmin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
     json_out(['error' => 'Método não permitido'], 405);
+
     exit;
 }
 
 $id = (int) ($_GET['id'] ?? 0);
+
 if ($id <= 0) {
     json_out(['errors' => ['Passkey inválido.']], 422);
+
     exit;
 }
 
@@ -28,6 +31,7 @@ $stmt->execute([$id, (int) $_SESSION['user_id']]);
 
 if ($stmt->rowCount() === 0) {
     json_out(['error' => 'Passkey não encontrado'], 404);
+
     exit;
 }
 

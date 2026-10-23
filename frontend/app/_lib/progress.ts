@@ -35,7 +35,6 @@ export type DashboardData = {
     taxa_acerto: number
     tempo_total_segundos: number
     xp_total: number
-    consistencia: { dia: string; atividades: number }[]
     weekly: WeeklyPoint[]
 }
 
@@ -75,50 +74,6 @@ export function computeStatsFromApi(data: StatsData): ComputedStats {
         totalMinutes: totalMinutosCheios % 60,
         userXp: data.userXp,
     }
-}
-
-// Data local no formato YYYY-MM-DD (bate com o DATE() do MySQL, sem drift de UTC)
-function localDateKey(d: Date): string {
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, "0")
-    const day = String(d.getDate()).padStart(2, "0")
-    return `${y}-${m}-${day}`
-}
-
-// Sequência (streak) de dias consecutivos com atividade, terminando hoje.
-// Se ainda não houve prática hoje, conta a partir de ontem (não zera o streak
-// só porque o dia atual ainda não teve treino).
-export function computeStreak(consistencia: DashboardData["consistencia"]): number {
-    const ativos = new Set(consistencia.filter((c) => c.atividades > 0).map((c) => c.dia))
-    const cursor = new Date()
-    if (!ativos.has(localDateKey(cursor))) {
-        cursor.setDate(cursor.getDate() - 1)
-    }
-    let streak = 0
-    while (ativos.has(localDateKey(cursor))) {
-        streak++
-        cursor.setDate(cursor.getDate() - 1)
-    }
-    return streak
-}
-
-// Converte a contagem bruta de atividades/dia em nível de intensidade (0–3) para o heatmap
-function activityLevel(atividades: number): number {
-    if (atividades <= 0) return 0
-    if (atividades <= 2) return 1
-    if (atividades <= 5) return 2
-    return 3
-}
-
-// Transforma a lista [{dia, atividades}] da API num mapa {data: nível}, pronto pro generateWeeks
-export function buildCalendarMap(
-    consistencia: DashboardData["consistencia"]
-): Record<string, number> {
-    const map: Record<string, number> = {}
-    for (const item of consistencia) {
-        map[item.dia] = activityLevel(item.atividades)
-    }
-    return map
 }
 
 export function buildCalendarMapFromApi(calendar: CalendarData[]): Record<string, number> {

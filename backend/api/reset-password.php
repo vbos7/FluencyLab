@@ -1,32 +1,38 @@
 <?php
 
-require_once __DIR__.'/cors.php';
-require_once __DIR__.'/db.php';
+require_once __DIR__ . '/cors.php';
+
+require_once __DIR__ . '/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['error' => 'Método não permitido'], 405);
+
     exit;
 }
 
-$body = json_decode(file_get_contents('php://input'), true);
-$email = trim($body['email'] ?? '');
-$codigo = trim($body['code'] ?? '');
-$novaSenha = $body['new_password'] ?? '';
+$body        = json_decode(file_get_contents('php://input'), true);
+$email       = trim($body['email'] ?? '');
+$codigo      = trim($body['code'] ?? '');
+$novaSenha   = $body['new_password'] ?? '';
 $confirmacao = $body['new_password_confirmation'] ?? '';
 
 $errors = [];
+
 if (empty($email) || empty($codigo)) {
     $errors[] = 'Email e código são obrigatórios';
 }
-if (strlen($novaSenha) < 6) {
-    $errors[] = 'A nova senha precisa ter pelo menos 6 caracteres';
+
+if (strlen($novaSenha) < 8) {
+    $errors[] = 'A nova senha precisa ter pelo menos 8 caracteres';
 }
+
 if ($novaSenha !== $confirmacao) {
     $errors[] = 'A confirmação da senha não coincide';
 }
 
-if (! empty($errors)) {
+if (!empty($errors)) {
     json_out(['errors' => $errors], 422);
+
     exit;
 }
 
@@ -35,8 +41,9 @@ try {
     $stmt->execute([$email]);
     $user = $stmt->fetch();
 
-    if (! $user) {
+    if (!$user) {
         json_out(['errors' => ['Código inválido ou expirado']], 422);
+
         exit;
     }
 
@@ -45,25 +52,26 @@ try {
     $stmt = $pdo->prepare(
         'SELECT id, code_hash FROM password_resets
          WHERE user_id = ? AND used = 0 AND expires_at > NOW() AND attempts < 5
-         ORDER BY created_at DESC LIMIT 1'
+         ORDER BY id DESC LIMIT 1'
     );
     $stmt->execute([$user['id']]);
     $reset = $stmt->fetch();
 
-    if (! $reset || ! password_verify($codigo, $reset['code_hash'])) {
+    if (!$reset || !password_verify($codigo, $reset['code_hash'])) {
         // Conta a tentativa errada no código vigente (se houver)
         if ($reset) {
             $pdo->prepare('UPDATE password_resets SET attempts = attempts + 1 WHERE id = ?')
                 ->execute([$reset['id']]);
         }
         json_out(['errors' => ['Código inválido ou expirado']], 422);
+
         exit;
     }
 
     $pdo->beginTransaction();
 
     $novoHash = password_hash($novaSenha, PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
+    $stmt     = $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?');
     $stmt->execute([$novoHash, $user['id']]);
 
     $stmt = $pdo->prepare('UPDATE password_resets SET used = 1 WHERE id = ?');
@@ -78,6 +86,6 @@ try {
         $pdo->rollBack();
     }
     // Agora captura QUALQUER erro (não só PDOException) e registra o tipo.
-    error_log('[reset-password] '.get_class($e).': '.$e->getMessage());
+    error_log('[reset-password] ' . get_class($e) . ': ' . $e->getMessage());
     json_out(['error' => 'Erro interno no servidor'], 500);
 }

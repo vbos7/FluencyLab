@@ -127,23 +127,28 @@ export function EditProfileDialog({ initialName, initialEmail = "", initialPhone
                             />
                         </div>
 
-                        {/* Trocar senha */}
+                        {/* Senha atual (exigida para trocar e-mail ou senha) + nova senha */}
                         <div className="flex flex-col gap-2.5 border-t border-[#dce8ff] pt-3 sm:gap-3 sm:pt-4">
-                            <p className={labelClass}>Trocar Senha</p>
+                            <p className={labelClass}>Senha atual</p>
                             <input
                                 type="password"
                                 name="senhaAtual"
+                                aria-label="Senha atual"
+                                autoComplete="current-password"
                                 value={form.senhaAtual}
                                 onChange={handleChange}
-                                placeholder="Senha atual"
+                                placeholder="Obrigatória para trocar e-mail ou senha"
                                 className={inputClass}
                             />
+                            <p className={labelClass}>Trocar Senha</p>
                             <input
                                 type="password"
                                 name="novaSenha"
                                 value={form.novaSenha}
                                 onChange={handleChange}
-                                placeholder="Nova senha"
+                                aria-label="Nova senha"
+                                autoComplete="new-password"
+                                placeholder="Nova senha (mínimo 8 caracteres)"
                                 className={inputClass}
                             />
                             <input

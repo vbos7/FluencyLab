@@ -15,7 +15,7 @@
  * é "access denied" na hora, e não uma conexão silenciosa num banco errado.
  */
 
-require_once __DIR__.'/env.php';
+require_once __DIR__ . '/env.php';
 
 $host = env('DB_HOST');
 $port = env('DB_PORT', '3306');
@@ -25,6 +25,7 @@ $pass = env('DB_PASS');
 
 if ($host === '' || $name === '' || $user === '') {
     http_response_code(500);
+
     exit(json_encode([
         'error' => 'Configuração do banco ausente. Copie o .env.example para .env e preencha.',
     ], JSON_UNESCAPED_UNICODE));
@@ -41,3 +42,23 @@ $pdo = new PDO(
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]
 );
+
+// Mesmo fuso do PHP (env.php) para NOW(), CURDATE() e CURRENT_TIMESTAMP. Usa o
+// deslocamento ("-03:00") porque o banco compartilhado não tem as tabelas de
+// nomes de fuso do MySQL.
+$pdo->exec("SET time_zone = '" . (new DateTime())->format('P') . "'");
+
+// Derruba a sessão se o usuário sumiu ou trocou a senha depois do login
+// (ver lib/auth.php). Sem sessão aberta (ex.: webhook) não faz nada.
+require_once __DIR__ . '/lib/auth.php';
+
+validar_sessao_logada($pdo);
+
+// Libera a trava da sessão assim que ela foi lida. O PHP mantém o arquivo de
+// sessão travado até o fim do script, então as chamadas paralelas de uma mesma
+// página (Home: me + status + profile + dashboard) ficavam em fila. $_SESSION
+// continua legível; só as rotas que GRAVAM na sessão (login, 2FA, passkey,
+// convidado, perfil) definem MANTER_SESSAO antes de incluir este arquivo.
+if (!defined('MANTER_SESSAO') && session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
+}

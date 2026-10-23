@@ -27,10 +27,11 @@ export default function FrasesPage() {
     const [toDelete, setToDelete] = useState<AdminPhrase | null>(null)
 
     const load = useCallback(async () => {
-        setLoading(true)
-        setError("")
+        // Sem setState antes do await: chamado no efeito de montagem, isso
+        // renderizaria de novo à toa (loading já começa true).
         try {
             setPhrases(await listPhrases())
+            setError("")
         } catch (err) {
             setError(apiErrorMessage(err, "Não foi possível carregar as frases."))
         } finally {
@@ -38,8 +39,10 @@ export default function FrasesPage() {
         }
     }, [])
 
+    // Primeira carga como callback de promessa: o estado só muda depois da
+    // resposta, nunca de forma síncrona dentro do efeito.
     useEffect(() => {
-        load()
+        void Promise.resolve().then(load)
     }, [load])
 
     function openCreate() {

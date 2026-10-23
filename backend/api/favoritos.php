@@ -1,10 +1,12 @@
 <?php
 
-require_once __DIR__.'/cors.php';
-require_once __DIR__.'/db.php';
+require_once __DIR__ . '/cors.php';
+
+require_once __DIR__ . '/db.php';
 
 if (empty($_SESSION['user_id'])) {
     json_out(['error' => 'Não autenticado'], 401);
+
     exit;
 }
 
@@ -22,22 +24,26 @@ try {
         );
         $stmt->execute([$userId]);
         json_out($stmt->fetchAll());
+
         exit;
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $input = json_decode(file_get_contents('php://input'), true);
 
-        if (! isset($input['phrase_id']) || ! ctype_digit((string) $input['phrase_id'])) {
+        if (!isset($input['phrase_id']) || !ctype_digit((string) $input['phrase_id'])) {
             json_out(['error' => 'phrase_id é obrigatório e deve ser um número'], 400);
+
             exit;
         }
         $phraseId = (int) $input['phrase_id'];
 
         $existe = $pdo->prepare('SELECT 1 FROM phrases WHERE id = ?');
         $existe->execute([$phraseId]);
-        if (! $existe->fetchColumn()) {
+
+        if (!$existe->fetchColumn()) {
             json_out(['error' => 'Frase não encontrada'], 404);
+
             exit;
         }
 
@@ -47,12 +53,14 @@ try {
         $stmt->execute([$userId, $phraseId]);
 
         json_out(['success' => true, 'favorited' => true]);
+
         exit;
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-        if (! isset($_GET['phrase_id']) || ! ctype_digit((string) $_GET['phrase_id'])) {
+        if (!isset($_GET['phrase_id']) || !ctype_digit((string) $_GET['phrase_id'])) {
             json_out(['error' => 'phrase_id é obrigatório e deve ser um número'], 400);
+
             exit;
         }
 
@@ -62,6 +70,7 @@ try {
         $stmt->execute([$userId, (int) $_GET['phrase_id']]);
 
         json_out(['success' => true, 'favorited' => false]);
+
         exit;
     }
 

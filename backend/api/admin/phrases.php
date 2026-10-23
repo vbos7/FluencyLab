@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__.'/guard.php';
+require_once __DIR__ . '/guard.php';
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 requireAdmin();
@@ -19,14 +19,17 @@ if ($method === 'GET') {
         ORDER BY total_attempts DESC
     ');
     json_out($stmt->fetchAll());
+
     exit;
 }
 
 // POST — cria uma frase
 if ($method === 'POST') {
     [$pt, $en, $difficulty, $categoryId, $errors] = validarFrase($pdo, json_decode(file_get_contents('php://input'), true));
-    if (! empty($errors)) {
+
+    if (!empty($errors)) {
         json_out(['errors' => $errors], 422);
+
         exit;
     }
 
@@ -35,20 +38,27 @@ if ($method === 'POST') {
     $id = (int) $pdo->lastInsertId();
 
     json_out(['success' => true, 'phrase' => buscarFrase($pdo, $id)], 201);
+
     exit;
 }
 
 // PUT ?id=5 — edita uma frase
 if ($method === 'PUT') {
     $id = (int) ($_GET['id'] ?? 0);
-    if (! $id) {
+
+    if (!$id) {
         json_out(['error' => 'ID obrigatório'], 422);
+
         exit;
     }
 
+    exigirExistente('phrases', $id, 'Frase não encontrada');
+
     [$pt, $en, $difficulty, $categoryId, $errors] = validarFrase($pdo, json_decode(file_get_contents('php://input'), true));
-    if (! empty($errors)) {
+
+    if (!empty($errors)) {
         json_out(['errors' => $errors], 422);
+
         exit;
     }
 
@@ -56,18 +66,24 @@ if ($method === 'PUT') {
         ->execute([$pt, $en, $difficulty, $categoryId, $id]);
 
     json_out(['success' => true, 'phrase' => buscarFrase($pdo, $id)]);
+
     exit;
 }
 
 // DELETE ?id=5 (as tentativas ligadas somem junto por ON DELETE CASCADE)
 if ($method === 'DELETE') {
     $id = (int) ($_GET['id'] ?? 0);
-    if (! $id) {
+
+    if (!$id) {
         json_out(['error' => 'ID obrigatório'], 422);
+
         exit;
     }
+
+    exigirExistente('phrases', $id, 'Frase não encontrada');
     $pdo->prepare('DELETE FROM phrases WHERE id = ?')->execute([$id]);
     json_out(null, 204);
+
     exit;
 }
 
@@ -76,27 +92,32 @@ json_out(['error' => 'Método não permitido'], 405);
 // Valida e normaliza o corpo de uma frase. Retorna [pt, en, difficulty, category_id, errors].
 function validarFrase(PDO $pdo, ?array $body): array
 {
-    $pt = trim($body['pt'] ?? '');
-    $en = trim($body['en'] ?? '');
+    $pt         = trim($body['pt'] ?? '');
+    $en         = trim($body['en'] ?? '');
     $difficulty = $body['difficulty'] ?? '';
     $categoryId = (int) ($body['category_id'] ?? 0);
 
     $errors = [];
+
     if ($pt === '') {
         $errors[] = 'Frase em português é obrigatória';
     }
+
     if ($en === '') {
         $errors[] = 'Tradução em inglês é obrigatória';
     }
-    if (! in_array($difficulty, ['easy', 'medium', 'hard'], true)) {
+
+    if (!in_array($difficulty, ['easy', 'medium', 'hard'], true)) {
         $errors[] = 'Dificuldade inválida (easy, medium ou hard)';
     }
-    if (! $categoryId) {
+
+    if (!$categoryId) {
         $errors[] = 'Categoria é obrigatória';
     } else {
         $stmt = $pdo->prepare('SELECT id FROM categories WHERE id = ?');
         $stmt->execute([$categoryId]);
-        if (! $stmt->fetch()) {
+
+        if (!$stmt->fetch()) {
             $errors[] = 'Categoria inválida';
         }
     }

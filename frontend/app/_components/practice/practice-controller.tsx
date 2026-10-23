@@ -4,6 +4,14 @@ import { apiClient } from "@/app/_lib/api"
 import { Sparkles } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { type Phrase, type Feedback } from "@/app/_lib/practice"
+import {
+    PREF_CATEGORY,
+    PREF_DIFFICULTY,
+    PREF_GUEST_USED,
+    clearPref,
+    setPref,
+    sortearIndice,
+} from "@/app/_lib/prefs"
 import { XpToast } from "./xp-toast"
 import { LevelUpModal } from "./level-up-modal"
 import { PracticeHeader } from "./practice-header"
@@ -15,6 +23,13 @@ type Props = {
     // Lista de frases carregada da API pelo server component (page.tsx)
     phrases: Phrase[]
     isPremium: boolean
+    // Sem sessão no backend (decidido no servidor, em page.tsx)
+    isGuest: boolean
+    // Estado inicial calculado no servidor (preferências em cookie + frase sorteada)
+    initialDifficulty: string
+    initialCategory: string
+    initialIndex: number
+    initialGuestUsed: number
 }
 
 type AiFeedback = {
@@ -45,6 +60,7 @@ function adaptAiFeedback(ai: AiFeedback, xp: number): Feedback {
         status,
         title: titles[status],
         message: ai.overall_comment,
+        correctedSentence: ai.corrected_sentence,
         corrections: ai.mistakes.map((m) => ({
             wrong: m.original,
             correct: m.suggestion,
@@ -54,24 +70,26 @@ function adaptAiFeedback(ai: AiFeedback, xp: number): Feedback {
     }
 }
 
-// Convidado pode fazer no máx. N questões (verificar OU pular) antes de logar.
-// Deve casar com GUEST_MAX_ATTEMPTS no backend (check-answer.php), que é o teto real.
+// Convidado pode corrigir no máx. N questões antes de logar. Deve casar com
+// GUEST_MAX_ATTEMPTS no backend (check-answer.php), que é o teto real e informa o
+// saldo em cada resposta (guest_remaining).
 const GUEST_LIMIT = 5
 
-export function PracticeController({ phrases, isPremium }: Props) {
+export function PracticeController({
+    phrases,
+    isPremium,
+    isGuest,
+    initialDifficulty,
+    initialCategory,
+    initialIndex,
+    initialGuestUsed,
+}: Props) {
     const [loading, setLoading] = useState(false)
     // Mensagem de erro exibida quando a correção pela IA falha (null = sem erro)
     const [error, setError] = useState<string | null>(null)
-    // Dificuldade ativa — lida do localStorage na inicialização (padrão: "medium")
-    const [difficulty, setDifficulty] = useState<string>(() => {
-        if (typeof window === "undefined") return "medium"
-        return localStorage.getItem("fluency-lab:difficulty") ?? "medium"
-    })
-
-    const [category, setCategory] = useState<string>(() => {
-        if (typeof window === "undefined") return "all"
-        return localStorage.getItem("fluency-lab:category") ?? "all"
-    })
+    // Dificuldade e categoria ativas (vêm do cookie, lido no servidor)
+    const [difficulty, setDifficulty] = useState(initialDifficulty)
+    const [category, setCategory] = useState(initialCategory)
 
     const categories = Array.from(new Set(phrases.map((p) => p.category))).sort()
 
@@ -86,34 +104,18 @@ export function PracticeController({ phrases, isPremium }: Props) {
 
     const handleChangeCategory = (newCategory: string) => {
         if (!isPremium) return // trava extra de segurança, mesmo que o seletor já esteja escondido
-        localStorage.setItem("fluency-lab:category", newCategory)
+        setPref(PREF_CATEGORY, newCategory)
         setCategory(newCategory)
         const newFiltered = phrases.filter(
             (p) =>
                 p.difficulty === difficulty && (newCategory === "all" || p.category === newCategory)
         )
-        setCurrentIndex(Math.floor(Math.random() * newFiltered.length))
-        setAnswer("")
-        setFeedback(null)
-        setError(null)
-        phraseStartRef.current = Date.now()
+        setCurrentIndex(sortearIndice(newFiltered.length))
+        resetarFrase()
     }
 
-    // Índice da frase atual dentro de filteredPhrases — inicializado aleatoriamente
-    // (mesmo filtro de dificuldade + categoria que filteredPhrases, senão o índice
-    // sorteado pode cair fora do range da lista realmente exibida)
-    const [currentIndex, setCurrentIndex] = useState(() => {
-        const saved =
-            typeof window !== "undefined"
-                ? (localStorage.getItem("fluency-lab:difficulty") ?? "medium")
-                : "medium"
-        const initial = phrases.filter(
-            (p) =>
-                p.difficulty === saved &&
-                (effectiveCategory === "all" || p.category === effectiveCategory)
-        )
-        return Math.floor(Math.random() * initial.length)
-    })
+    // Índice da frase atual dentro de filteredPhrases (sorteado no servidor, em page.tsx)
+    const [currentIndex, setCurrentIndex] = useState(initialIndex)
 
     // Texto digitado pelo usuário no textarea
     const [answer, setAnswer] = useState("")
@@ -128,16 +130,9 @@ export function PracticeController({ phrases, isPremium }: Props) {
     // Nível recém-alcançado quando a tentativa faz o aluno subir de nível
     // (null = sem comemoração pendente). Vem do `leveled_up` do backend.
     const [levelUp, setLevelUp] = useState<number | null>(null)
-    // Modo convidado — lido do localStorage na inicialização
-    const [isGuest] = useState(() => {
-        if (typeof window === "undefined") return false
-        return localStorage.getItem("fluency-lab:mode") === "guest"
-    })
-    // Questões já consumidas pelo convidado (persistido p/ não zerar ao recarregar).
-    const [guestUsed, setGuestUsed] = useState<number>(() => {
-        if (typeof window === "undefined") return 0
-        return Number(localStorage.getItem("fluency-lab:guest-count") ?? 0)
-    })
+    // Questões já corrigidas para o convidado (persistido p/ não zerar ao recarregar;
+    // a cada resposta é substituído pelo saldo que o backend informa).
+    const [guestUsed, setGuestUsed] = useState(initialGuestUsed)
 
     // Favoritos vêm do banco (por usuário), não mais do localStorage.
     // Começa vazio e é preenchido assim que a API responder (convidado não busca).
@@ -147,8 +142,21 @@ export function PracticeController({ phrases, isPremium }: Props) {
     // Referência direta ao textarea para dar foco programaticamente
     const inputRef = useRef<HTMLTextAreaElement>(null)
     // Momento em que a frase atual foi apresentada — usado para medir o tempo
-    // gasto no exercício (enviado ao backend e somado no "tempo total de estudo")
-    const phraseStartRef = useRef(Date.now())
+    // gasto no exercício (enviado ao backend e somado no "tempo total de estudo").
+    // Marcado ao montar e a cada troca de frase.
+    const phraseStartRef = useRef(0)
+
+    useEffect(() => {
+        phraseStartRef.current = Date.now()
+    }, [])
+
+    // Limpa a frase atual para mostrar outra (troca de dificuldade, categoria, próxima)
+    function resetarFrase() {
+        setAnswer("")
+        setFeedback(null)
+        setError(null)
+        phraseStartRef.current = Date.now()
+    }
 
     // Busca os favoritos reais do usuário logado assim que o componente monta
     useEffect(() => {
@@ -159,9 +167,12 @@ export function PracticeController({ phrases, isPremium }: Props) {
             .catch(() => setFavorites([]))
     }, [isGuest])
 
-    // Persiste a contagem do convidado (o backend continua sendo o teto de verdade)
+    // Persiste a contagem do convidado (o backend continua sendo o teto de verdade).
+    // Logado: descarta a contagem antiga, senão um próximo uso como convidado
+    // (nova sessão, com saldo cheio no backend) começaria bloqueado na tela.
     useEffect(() => {
-        if (isGuest) localStorage.setItem("fluency-lab:guest-count", String(guestUsed))
+        if (isGuest) setPref(PREF_GUEST_USED, String(guestUsed))
+        else clearPref(PREF_GUEST_USED)
     }, [isGuest, guestUsed])
 
     // Atalhos derivados do state atual
@@ -187,18 +198,24 @@ export function PracticeController({ phrases, isPremium }: Props) {
                 time_spent_seconds: timeSpent,
             })
             const fb = adaptAiFeedback(response.data.feedback, response.data.xp_earned)
+            // XP só no primeiro acerto da frase no dia: avisa em vez de mostrar "+0"
+            if (response.data.xp_repeated) {
+                fb.message = `${fb.message} Você já ganhou XP com esta frase hoje.`
+            }
             setFeedback(fb)
             // Anuncia o resultado para leitores de tela (a região aria-live já está no DOM)
             setSrAnnouncement(`${fb.title} ${fb.message}`)
-            setEarnedXp(fb.xp)
-            setShowXpToast(true)
-            setTimeout(() => setShowXpToast(false), 2000)
+            if (fb.xp > 0) {
+                setEarnedXp(fb.xp)
+                setShowXpToast(true)
+                setTimeout(() => setShowXpToast(false), 2000)
+            }
             // Subiu de nível nesta tentativa → dispara a comemoração
             if (response.data.leveled_up) {
                 setLevelUp(response.data.level)
             }
-            // Convidado: cada verificação consome uma questão do limite
-            if (isGuest) setGuestUsed((n) => n + 1)
+            // Convidado: o backend devolve o saldo real (só conta correções que deram certo)
+            if (isGuest) setGuestUsed(GUEST_LIMIT - Number(response.data.guest_remaining ?? 0))
         } catch (err) {
             // Backend recusou por limite de convidado (403) → força o aviso de login
             const status = (err as { response?: { status?: number } })?.response?.status
@@ -216,39 +233,28 @@ export function PracticeController({ phrases, isPremium }: Props) {
     // Avança para uma frase aleatória diferente da atual (dentro da dificuldade ativa)
     const handleNext = () => {
         if (!phrase || loading) return
-        // "Pular" (sem feedback na tela) também consome uma questão do convidado.
-        // Já o "próxima" após responder não conta de novo (a verificação já contou).
-        if (isGuest && feedback === null) setGuestUsed((n) => n + 1)
+        // Pular não consome questão do convidado: o limite existe para conter o custo
+        // da IA, e só a correção chama a IA (é o que o backend conta).
 
-        let next
-        // Garante que a próxima frase seja diferente da atual (só se houver mais de uma)
-        do {
-            next = Math.floor(Math.random() * filteredPhrases.length)
-        } while (next === currentIndex && filteredPhrases.length > 1)
-        setCurrentIndex(next)
-        setAnswer("")
-        setFeedback(null)
-        setError(null)
-        phraseStartRef.current = Date.now() // reinicia o cronômetro para a nova frase
+        // Próxima frase sempre diferente da atual (quando há mais de uma)
+        setCurrentIndex(sortearIndice(filteredPhrases.length, currentIndex))
+        resetarFrase()
         // Pequeno delay para o textarea já estar visível antes de focar
         setTimeout(() => inputRef.current?.focus(), 100)
     }
 
-    // Troca a dificuldade ativa, persiste no localStorage e sorteia nova frase
+    // Troca a dificuldade ativa, guarda no cookie de preferência e sorteia nova frase
     const handleChangeDifficulty = (newDifficulty: string) => {
         if (loading) return
-        localStorage.setItem("fluency-lab:difficulty", newDifficulty)
+        setPref(PREF_DIFFICULTY, newDifficulty)
         setDifficulty(newDifficulty)
         const newFiltered = phrases.filter(
             (p) =>
                 p.difficulty === newDifficulty &&
                 (effectiveCategory === "all" || p.category === effectiveCategory)
         )
-        setCurrentIndex(Math.floor(Math.random() * newFiltered.length))
-        setAnswer("")
-        setFeedback(null)
-        setError(null)
-        phraseStartRef.current = Date.now()
+        setCurrentIndex(sortearIndice(newFiltered.length))
+        resetarFrase()
     }
 
     // Alterna o favorito no banco — atualização otimista (muda a tela antes
@@ -308,7 +314,7 @@ export function PracticeController({ phrases, isPremium }: Props) {
         )
     }
 
-    // Sem frases nessa dificuldade (ex: localStorage com valor antigo que não bate
+    // Sem frases nessa dificuldade (ex: cookie com valor antigo que não bate
     // com nenhuma frase retornada pelo servidor) — evita crash acessando phrase.id
     if (!phrase) {
         return (

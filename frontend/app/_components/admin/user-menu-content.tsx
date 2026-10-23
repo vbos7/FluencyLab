@@ -12,7 +12,7 @@ import { type User } from "@/app/_lib/utils"
 import { apiClient } from "@/app/_lib/api"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Bell, LogOut, UserIcon } from "lucide-react"
+import { LogOut, UserIcon } from "lucide-react"
 
 interface UserMenuContentProps {
     user: User
@@ -45,12 +45,6 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                     <Link className="block w-full" href="/admin/profile" onClick={cleanup}>
                         <UserIcon className="mr-2" />
                         Perfil
-                    </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                    <Link className="block w-full" href="/admin/notificacoes" onClick={cleanup}>
-                        <Bell className="mr-2" />
-                        Notificações
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
