@@ -15,10 +15,15 @@ require_once __DIR__ . '/../db.php';
 
 require_once __DIR__ . '/../lib/twofactor.php';
 
+require_once __DIR__ . '/../lib/login-throttle.php';
+
 // Máximo de tentativas por sessão pendente. O código TOTP tem só 6 dígitos
 // (1 milhão de combinações); sem esse limite dá pra forçá-lo. Estourou → derruba
 // a sessão pendente e obriga a refazer o login (senha de novo).
 const MAX_2FA_ATTEMPTS = 5;
+// Teto por USUÁRIO na janela do throttle (15 min), guardado no banco: relogar
+// com a senha abre uma sessão nova, mas não zera este contador.
+const MAX_2FA_ATTEMPTS_USER = 10;
 
 /** @var PDO $pdo Conexão criada em db.php (incluído acima). */
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -39,6 +44,15 @@ if (!$pendingId) {
 if (($_SESSION['2fa_attempts'] ?? 0) >= MAX_2FA_ATTEMPTS) {
     unset($_SESSION['2fa_pending_user_id'], $_SESSION['2fa_attempts'], $_SESSION['remember_pref']);
     json_out(['errors' => ['Muitas tentativas. Faça login novamente.']], 429);
+
+    exit;
+}
+
+$chave2fa = '2fa:' . (int) $pendingId;
+
+if (throttle_excedido($pdo, $chave2fa, client_ip(), MAX_2FA_ATTEMPTS_USER, PHP_INT_MAX, '2fa:')) {
+    unset($_SESSION['2fa_pending_user_id'], $_SESSION['2fa_attempts'], $_SESSION['remember_pref']);
+    json_out(['errors' => ['Muitas tentativas. Aguarde alguns minutos e faça login novamente.']], 429);
 
     exit;
 }
@@ -84,6 +98,7 @@ if ($code !== '') {
 }
 
 if (!$verified) {
+    throttle_registrar($pdo, $chave2fa, client_ip());
     $_SESSION['2fa_attempts'] = ($_SESSION['2fa_attempts'] ?? 0) + 1;
     $restantes                = max(0, MAX_2FA_ATTEMPTS - $_SESSION['2fa_attempts']);
     json_out(['errors' => ['Código inválido'], 'attempts_left' => $restantes], 401);
@@ -95,7 +110,8 @@ if (!$verified) {
 // (admin/guard.php), então não é guardado aqui.
 $remember = !empty($_SESSION['remember_pref']);
 unset($_SESSION['2fa_pending_user_id'], $_SESSION['remember_pref'], $_SESSION['2fa_attempts']);
-$_SESSION['user_id'] = (int) $user['id'];
+throttle_limpar($pdo, $chave2fa);
+iniciar_sessao_logada($pdo, (int) $user['id']);
 aplicar_remember($remember);
 
 json_out([

@@ -22,8 +22,8 @@ if (empty($email) || empty($codigo)) {
     $errors[] = 'Email e código são obrigatórios';
 }
 
-if (strlen($novaSenha) < 6) {
-    $errors[] = 'A nova senha precisa ter pelo menos 6 caracteres';
+if (strlen($novaSenha) < 8) {
+    $errors[] = 'A nova senha precisa ter pelo menos 8 caracteres';
 }
 
 if ($novaSenha !== $confirmacao) {
@@ -52,7 +52,7 @@ try {
     $stmt = $pdo->prepare(
         'SELECT id, code_hash FROM password_resets
          WHERE user_id = ? AND used = 0 AND expires_at > NOW() AND attempts < 5
-         ORDER BY created_at DESC LIMIT 1'
+         ORDER BY id DESC LIMIT 1'
     );
     $stmt->execute([$user['id']]);
     $reset = $stmt->fetch();

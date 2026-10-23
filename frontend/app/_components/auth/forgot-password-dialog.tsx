@@ -121,8 +121,8 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
     }
 
     async function submitPassword() {
-        if (newPassword.length < 6) {
-            setError("A senha deve ter pelo menos 6 caracteres.")
+        if (newPassword.length < 8) {
+            setError("A senha deve ter pelo menos 8 caracteres.")
             return
         }
         if (newPassword !== confirmPassword) {
@@ -261,7 +261,7 @@ export function ForgotPasswordDialog({ open, onClose, initialEmail = "" }: Props
                         <DialogHeader>
                             <DialogTitle>Nova senha</DialogTitle>
                             <DialogDescription>
-                                Crie uma senha com pelo menos 6 caracteres.
+                                Crie uma senha com pelo menos 8 caracteres.
                             </DialogDescription>
                         </DialogHeader>
 

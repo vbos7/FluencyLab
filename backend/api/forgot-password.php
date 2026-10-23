@@ -6,6 +6,14 @@ require_once __DIR__ . '/db.php';
 
 require_once __DIR__ . '/config/mail.php';
 
+require_once __DIR__ . '/lib/login-throttle.php';
+
+// Pedidos de código por e-mail e por IP na janela do throttle (15 min). Sem isso
+// dava para trocar o código sem parar (cada pedido traz 5 tentativas novas) e
+// lotar a caixa de entrada da vítima.
+const RESET_MAX_PER_EMAIL = 3;
+const RESET_MAX_PER_IP    = 10;
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_out(['error' => 'Método não permitido'], 405);
 
@@ -20,6 +28,17 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
     exit;
 }
+
+$chave = 'reset:' . mb_strtolower($email);
+$ip    = client_ip();
+
+if (throttle_excedido($pdo, $chave, $ip, RESET_MAX_PER_EMAIL, RESET_MAX_PER_IP, 'reset:')) {
+    json_out(['errors' => ['Muitos pedidos de código. Aguarde alguns minutos e tente de novo.']], 429);
+
+    exit;
+}
+
+throttle_registrar($pdo, $chave, $ip);
 
 try {
     $stmt = $pdo->prepare('SELECT id, name FROM users WHERE email = ?');

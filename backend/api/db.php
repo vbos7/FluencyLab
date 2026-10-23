@@ -47,3 +47,9 @@ $pdo = new PDO(
 // deslocamento ("-03:00") porque o banco compartilhado não tem as tabelas de
 // nomes de fuso do MySQL.
 $pdo->exec("SET time_zone = '" . (new DateTime())->format('P') . "'");
+
+// Derruba a sessão se o usuário sumiu ou trocou a senha depois do login
+// (ver lib/auth.php). Sem sessão aberta (ex.: webhook) não faz nada.
+require_once __DIR__ . '/lib/auth.php';
+
+validar_sessao_logada($pdo);

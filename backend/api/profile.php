@@ -66,21 +66,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     $newPassword      = $body['new_password'] ?? '';
     $changingPassword = $newPassword !== '';
 
+    $stmt = $pdo->prepare('SELECT email, password_hash FROM users WHERE id = ?');
+    $stmt->execute([$userId]);
+    $row = $stmt->fetch();
+
+    // Trocar e-mail OU senha exige a senha ATUAL: com uma sessão roubada, trocar
+    // o e-mail e pedir "Esqueci minha senha" bastaria para tomar a conta.
+    $changingEmail = strcasecmp($email, $row['email']) !== 0;
+
+    if (($changingEmail || $changingPassword)
+        && !password_verify((string) ($body['current_password'] ?? ''), $row['password_hash'])) {
+        $errors[] = $changingEmail && !$changingPassword
+            ? 'Informe sua senha atual para trocar o e-mail'
+            : 'Senha atual incorreta';
+    }
+
     if ($changingPassword) {
-        $currentPassword = $body['current_password'] ?? '';
-        $confirm         = $body['new_password_confirmation'] ?? '';
+        $confirm = $body['new_password_confirmation'] ?? '';
 
-        // Confere a senha ATUAL antes de deixar trocar (segurança básica)
-        $stmt = $pdo->prepare('SELECT password_hash FROM users WHERE id = ?');
-        $stmt->execute([$userId]);
-        $row = $stmt->fetch();
-
-        if (!password_verify($currentPassword, $row['password_hash'])) {
-            $errors[] = 'Senha atual incorreta';
-        }
-
-        if (strlen($newPassword) < 6) {
-            $errors[] = 'A nova senha precisa ter pelo menos 6 caracteres';
+        if (strlen($newPassword) < 8) {
+            $errors[] = 'A nova senha precisa ter pelo menos 8 caracteres';
         }
 
         if ($newPassword !== $confirm) {
@@ -99,6 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         $hash = password_hash($newPassword, PASSWORD_DEFAULT);
         $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, phone = ?, password_hash = ? WHERE id = ?');
         $stmt->execute([$name, $email, $phone, $hash, $userId]);
+        // As outras sessões caem (a impressão da senha mudou); esta continua.
+        $_SESSION['auth_imp'] = auth_impressao($pdo, (int) $userId);
     } else {
         $stmt = $pdo->prepare('UPDATE users SET name = ?, email = ?, phone = ? WHERE id = ?');
         $stmt->execute([$name, $email, $phone, $userId]);

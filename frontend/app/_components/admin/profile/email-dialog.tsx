@@ -20,6 +20,8 @@ import { CardRow } from "./card-row"
 export function EmailRow({ user, onUpdated }: { user: User; onUpdated?: () => void }) {
     const [open, setOpen] = useState(false)
     const [email, setEmail] = useState(user.email)
+    // Trocar o e-mail exige a senha atual (o backend confere)
+    const [password, setPassword] = useState("")
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
 
@@ -30,7 +32,7 @@ export function EmailRow({ user, onUpdated }: { user: User; onUpdated?: () => vo
         setLoading(true)
         try {
             // PUT /profile.php grava nome + email juntos; mantemos o nome atual.
-            await updateProfile({ name: user.name, email })
+            await updateProfile({ name: user.name, email, current_password: password })
             toast.success("E-mail atualizado.")
             onUpdated?.()
             setOpen(false)
@@ -57,6 +59,7 @@ export function EmailRow({ user, onUpdated }: { user: User; onUpdated?: () => vo
                 onOpenChange={(v) => {
                     if (!v) {
                         setEmail(user.email)
+                        setPassword("")
                         setError("")
                     }
                     setOpen(v)
@@ -79,6 +82,16 @@ export function EmailRow({ user, onUpdated }: { user: User; onUpdated?: () => vo
                                 onChange={(e) => setEmail(e.target.value)}
                                 autoFocus
                             />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                            <Label htmlFor="email-current-password">Senha atual</Label>
+                            <Input
+                                id="email-current-password"
+                                type="password"
+                                autoComplete="current-password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
                             {error && <p className="text-xs text-red-500">{error}</p>}
                         </div>
                         <DialogFooter>
@@ -89,7 +102,7 @@ export function EmailRow({ user, onUpdated }: { user: User; onUpdated?: () => vo
                             </DialogClose>
                             <Button
                                 type="submit"
-                                disabled={loading || email === user.email || !email}
+                                disabled={loading || email === user.email || !email || !password}
                             >
                                 {loading ? "Salvando…" : "Salvar e-mail"}
                             </Button>

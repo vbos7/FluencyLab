@@ -29,7 +29,8 @@ $body   = json_decode(file_get_contents('php://input'), true) ?? [];
 
 $clientDataJSON    = b64u_decode((string) ($body['clientDataJSON'] ?? ''));
 $attestationObject = b64u_decode((string) ($body['attestationObject'] ?? ''));
-$apelido           = trim((string) ($body['name'] ?? '')) ?: null;
+// A coluna tem 100 caracteres; nome maior virava erro 500 no INSERT.
+$apelido = mb_substr(trim((string) ($body['name'] ?? '')), 0, 100) ?: null;
 
 $challenge = webauthn_take_challenge();
 

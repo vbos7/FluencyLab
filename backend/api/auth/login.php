@@ -66,7 +66,7 @@ if ($user['role'] === 'admin' && $user['two_factor_confirmed_at'] !== null) {
 
 // O papel NÃO é guardado na sessão: a autorização de admin lê users.role do banco
 // (ver admin/guard.php e /auth/me.php), fonte única de verdade.
-$_SESSION['user_id'] = $user['id'];
+iniciar_sessao_logada($pdo, (int) $user['id']);
 aplicar_remember($remember);
 
 json_out([

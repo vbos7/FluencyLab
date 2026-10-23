@@ -47,6 +47,10 @@ function enviarEmail(string $destinatario, string $assunto, string $corpoHtml): 
 
 function templateEmailCodigo(string $nome, string $codigo): string
 {
+    // O nome é escolhido pelo usuário: escapa para não injetar HTML no e-mail.
+    $nome   = htmlspecialchars($nome, ENT_QUOTES, 'UTF-8');
+    $codigo = htmlspecialchars($codigo, ENT_QUOTES, 'UTF-8');
+
     return "
     <div style='font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 480px; margin: 0 auto; background: #f8faff;'>
         <div style='background: linear-gradient(135deg, #1d4ed8, #2563eb); padding: 32px 24px; text-align: center; border-radius: 16px 16px 0 0;'>

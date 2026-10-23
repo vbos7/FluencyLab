@@ -69,8 +69,8 @@ if ($method === 'POST') {
         $errors[] = 'Email inválido';
     }
 
-    if (strlen($password) < 6) {
-        $errors[] = 'A senha precisa ter pelo menos 6 caracteres';
+    if (strlen($password) < 8) {
+        $errors[] = 'A senha precisa ter pelo menos 8 caracteres';
     }
 
     if (!in_array($role, ['student', 'admin'], true)) {
@@ -132,6 +132,19 @@ if ($method === 'PUT') {
         json_out(['error' => 'Dados inválidos'], 422);
 
         exit;
+    }
+
+    // Rebaixar o último admin trancaria o painel (mesma trava do profile.php).
+    if ($role === 'student') {
+        $stmt = $pdo->prepare('SELECT role FROM users WHERE id = ?');
+        $stmt->execute([$id]);
+        $totalAdmins = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'")->fetchColumn();
+
+        if ($stmt->fetchColumn() === 'admin' && $totalAdmins <= 1) {
+            json_out(['error' => 'Não é possível rebaixar o único administrador'], 422);
+
+            exit;
+        }
     }
 
     $params[] = $id;
