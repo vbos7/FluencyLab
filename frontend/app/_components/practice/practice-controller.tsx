@@ -15,6 +15,8 @@ type Props = {
     // Lista de frases carregada da API pelo server component (page.tsx)
     phrases: Phrase[]
     isPremium: boolean
+    // Sem sessão no backend (decidido no servidor, em page.tsx)
+    isGuest: boolean
 }
 
 type AiFeedback = {
@@ -54,11 +56,13 @@ function adaptAiFeedback(ai: AiFeedback, xp: number): Feedback {
     }
 }
 
-// Convidado pode fazer no máx. N questões (verificar OU pular) antes de logar.
-// Deve casar com GUEST_MAX_ATTEMPTS no backend (check-answer.php), que é o teto real.
+// Convidado pode corrigir no máx. N questões antes de logar. Deve casar com
+// GUEST_MAX_ATTEMPTS no backend (check-answer.php), que é o teto real e informa o
+// saldo em cada resposta (guest_remaining).
 const GUEST_LIMIT = 5
+const GUEST_COUNT_KEY = "fluency-lab:guest-count"
 
-export function PracticeController({ phrases, isPremium }: Props) {
+export function PracticeController({ phrases, isPremium, isGuest }: Props) {
     const [loading, setLoading] = useState(false)
     // Mensagem de erro exibida quando a correção pela IA falha (null = sem erro)
     const [error, setError] = useState<string | null>(null)
@@ -128,15 +132,11 @@ export function PracticeController({ phrases, isPremium }: Props) {
     // Nível recém-alcançado quando a tentativa faz o aluno subir de nível
     // (null = sem comemoração pendente). Vem do `leveled_up` do backend.
     const [levelUp, setLevelUp] = useState<number | null>(null)
-    // Modo convidado — lido do localStorage na inicialização
-    const [isGuest] = useState(() => {
-        if (typeof window === "undefined") return false
-        return localStorage.getItem("fluency-lab:mode") === "guest"
-    })
-    // Questões já consumidas pelo convidado (persistido p/ não zerar ao recarregar).
+    // Questões já corrigidas para o convidado (persistido p/ não zerar ao recarregar;
+    // a cada resposta é substituído pelo saldo que o backend informa).
     const [guestUsed, setGuestUsed] = useState<number>(() => {
-        if (typeof window === "undefined") return 0
-        return Number(localStorage.getItem("fluency-lab:guest-count") ?? 0)
+        if (typeof window === "undefined" || !isGuest) return 0
+        return Number(localStorage.getItem(GUEST_COUNT_KEY) ?? 0)
     })
 
     // Favoritos vêm do banco (por usuário), não mais do localStorage.
@@ -159,9 +159,12 @@ export function PracticeController({ phrases, isPremium }: Props) {
             .catch(() => setFavorites([]))
     }, [isGuest])
 
-    // Persiste a contagem do convidado (o backend continua sendo o teto de verdade)
+    // Persiste a contagem do convidado (o backend continua sendo o teto de verdade).
+    // Logado: descarta a contagem antiga, senão um próximo uso como convidado
+    // (nova sessão, com saldo cheio no backend) começaria bloqueado na tela.
     useEffect(() => {
-        if (isGuest) localStorage.setItem("fluency-lab:guest-count", String(guestUsed))
+        if (isGuest) localStorage.setItem(GUEST_COUNT_KEY, String(guestUsed))
+        else localStorage.removeItem(GUEST_COUNT_KEY)
     }, [isGuest, guestUsed])
 
     // Atalhos derivados do state atual
@@ -197,8 +200,8 @@ export function PracticeController({ phrases, isPremium }: Props) {
             if (response.data.leveled_up) {
                 setLevelUp(response.data.level)
             }
-            // Convidado: cada verificação consome uma questão do limite
-            if (isGuest) setGuestUsed((n) => n + 1)
+            // Convidado: o backend devolve o saldo real (só conta correções que deram certo)
+            if (isGuest) setGuestUsed(GUEST_LIMIT - Number(response.data.guest_remaining ?? 0))
         } catch (err) {
             // Backend recusou por limite de convidado (403) → força o aviso de login
             const status = (err as { response?: { status?: number } })?.response?.status
@@ -216,9 +219,8 @@ export function PracticeController({ phrases, isPremium }: Props) {
     // Avança para uma frase aleatória diferente da atual (dentro da dificuldade ativa)
     const handleNext = () => {
         if (!phrase || loading) return
-        // "Pular" (sem feedback na tela) também consome uma questão do convidado.
-        // Já o "próxima" após responder não conta de novo (a verificação já contou).
-        if (isGuest && feedback === null) setGuestUsed((n) => n + 1)
+        // Pular não consome questão do convidado: o limite existe para conter o custo
+        // da IA, e só a correção chama a IA (é o que o backend conta).
 
         let next
         // Garante que a próxima frase seja diferente da atual (só se houver mais de uma)

@@ -46,15 +46,17 @@ if (!$frase) {
 }
 
 // Convidado: aplica os tetos (sessão + IP) ANTES de gastar crédito da IA.
-if ($isGuest) {
-    guardaConvidado($pdo);
-}
+$reservaConvidado = $isGuest ? guardaConvidado($pdo) : null;
 
 // Chama a IA (pode demorar 1-3 segundos)
 try {
     $ai       = new AiService();
     $feedback = $ai->corrigirTraducao($frase['pt'], $frase['en'], $resposta);
 } catch (Exception $e) {
+    // A correção não aconteceu: o convidado não pode perder a questão reservada.
+    if ($reservaConvidado !== null) {
+        devolveConvidado($pdo, $reservaConvidado);
+    }
     json_out(['error' => 'Erro na IA: ' . $e->getMessage()], 500);
 
     exit;
@@ -214,8 +216,11 @@ function calcularStreak(PDO $pdo, int $userId): int
 
 // Teto do convidado: contador na sessão (limite por convidado) + contagem diária
 // por IP (backstop caso limpem os cookies). Reserva o slot ANTES de chamar a IA,
-// para o crédito ficar protegido mesmo se a IA falhar. Aborta com 403 se estourar.
-function guardaConvidado(PDO $pdo): void
+// para requisições em paralelo não passarem do teto; se a IA falhar, o slot é
+// devolvido em devolveConvidado(). Aborta com 403 se estourar.
+//
+// @return array{ip: string|false, day: string} o que foi reservado
+function guardaConvidado(PDO $pdo): array
 {
     $usados = (int) ($_SESSION['guest_attempts'] ?? 0);
 
@@ -229,9 +234,9 @@ function guardaConvidado(PDO $pdo): void
     }
 
     $ipBin = @inet_pton(client_ip());
+    $hoje  = date('Y-m-d');
 
     if ($ipBin !== false) {
-        $hoje = date('Y-m-d');
         $stmt = $pdo->prepare('SELECT count FROM guest_usage WHERE ip = ? AND day = ?');
         $stmt->execute([$ipBin, $hoje]);
 
@@ -250,6 +255,19 @@ function guardaConvidado(PDO $pdo): void
     }
 
     $_SESSION['guest_attempts'] = $usados + 1;
+
+    return ['ip' => $ipBin, 'day' => $hoje];
+}
+
+// Desfaz a reserva de guardaConvidado() quando a correção falha.
+function devolveConvidado(PDO $pdo, array $reserva): void
+{
+    $_SESSION['guest_attempts'] = max(0, (int) ($_SESSION['guest_attempts'] ?? 0) - 1);
+
+    if ($reserva['ip'] !== false) {
+        $pdo->prepare('UPDATE guest_usage SET count = count - 1 WHERE ip = ? AND day = ? AND count > 0')
+            ->execute([$reserva['ip'], $reserva['day']]);
+    }
 }
 
 // XP proporcional à qualidade da resposta, escalado pelo XP base configurável.

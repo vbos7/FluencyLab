@@ -48,7 +48,6 @@ export function LoginForm({ showPasskey = false }: { showPasskey?: boolean }) {
                 setNeeds2fa(true)
                 return
             }
-            localStorage.removeItem("fluency-lab:mode")
             // Admin cai direto no painel; aluno na home.
             router.push(data?.user?.role === "admin" ? "/admin/dashboard" : "/home")
         } catch {

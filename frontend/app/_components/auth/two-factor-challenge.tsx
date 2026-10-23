@@ -27,7 +27,6 @@ export function TwoFactorChallenge() {
         try {
             const payload = useRecovery ? { recovery_code: value.trim() } : { code: value.trim() }
             await apiClient.post("/auth/two-factor-challenge.php", payload)
-            localStorage.removeItem("fluency-lab:mode")
             router.push("/home")
         } catch (err) {
             setError(apiErrorMessage(err, "Código inválido."))
