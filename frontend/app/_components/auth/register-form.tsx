@@ -35,7 +35,9 @@ export function RegisterForm() {
             focused === name ? "border-blue-400 shadow-sm shadow-blue-100" : "border-transparent"
         }`
 
-    async function handleRegister() {
+    // Disparado pelo submit do <form>: clique no botão ou Enter em qualquer campo.
+    async function handleRegister(e: React.FormEvent) {
+        e.preventDefault()
         setError(null)
 
         if (!name || !email || !password) {
@@ -80,7 +82,7 @@ export function RegisterForm() {
                 <AuthLogo />
             </div>
 
-            <div className="flex flex-col gap-3">
+            <form onSubmit={handleRegister} className="flex flex-col gap-3">
                 {/* Nome */}
                 <div className={fadeUp(100)}>
                     <label
@@ -196,7 +198,7 @@ export function RegisterForm() {
                 {/* Submit */}
                 <div className={`mt-2 ${fadeUp(200)}`}>
                     <button
-                        onClick={handleRegister}
+                        type="submit"
                         disabled={loading}
                         className="relative h-12 w-full overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-blue-800 text-sm font-bold text-white shadow-md shadow-blue-400/35 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-400/45 active:scale-[0.98]"
                     >
@@ -204,7 +206,7 @@ export function RegisterForm() {
                     </button>
                     {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
                 </div>
-            </div>
+            </form>
 
             <p className={`mt-6 text-center text-xs text-slate-400 ${fadeUp(320)}`}>
                 Já tem uma conta?{" "}
