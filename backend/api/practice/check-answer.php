@@ -35,6 +35,14 @@ if (!$phraseId || empty($resposta)) {
     exit;
 }
 
+// As frases são curtas: uma resposta longa só serve para gastar crédito da IA ou
+// esconder instruções no meio do texto.
+if (mb_strlen($resposta) > 300) {
+    json_out(['errors' => ['A resposta pode ter no máximo 300 caracteres.']], 422);
+
+    exit;
+}
+
 $stmt = $pdo->prepare('SELECT * FROM phrases WHERE id = ?');
 $stmt->execute([$phraseId]);
 $frase = $stmt->fetch();
