@@ -217,7 +217,45 @@ usuários, cursos, frases, notificações, configurações. Celular (375 px): `/
 
 ---
 
-## 7. Ordem sugerida
+## 7. Teste de ponta a ponta (22/10/2026, banco local)
+
+Depois das correções P0, no branch `fix/auditoria-p0`: banco local recriado com
+`scripts/db-local-reset.sh`, backend com `scripts/php-router.php`, frontend em build de produção
+(`next build` + `next start`, Next 16.4.2).
+
+**API (roteiro automático, 122 verificações):** 115 passaram. As 7 falhas têm uma causa só: a
+correção por IA está fora do ar (N1). O roteiro cobriu visitante, convidado, cadastro, login,
+"manter conectado", bloqueio por tentativas, perfil, avatar, favoritos, anotações, progresso das
+aulas, comentários, checkout, webhook, recuperação de senha, painel (estatísticas, usuários,
+categorias, frases, cursos, aulas, configurações), 2FA completo (ativar, login com código, código de
+recuperação de uso único, desativar), avatar do admin e exclusão de conta.
+
+**Navegador:** entrar como convidado → cadastro → prática → `/planos` → **checkout real da Stripe em
+modo teste** (cartão 4242) → volta com "Pagamento confirmado!" → Pro ativo (aulas, relatório
+detalhado e filtro de categoria liberados; upsell some; o modal não reaparece ao recarregar) →
+logout → painel (dashboard, categorias, cursos, perfil). Criar categoria e recusar remoção de
+categoria em uso funcionam pela tela.
+
+Confirmado no fluxo real (já estava na auditoria): **B1** (o log mostra `Invalid address: (From): #
+vazio = usa o MAIL_USERNAME`), **B2**, **PG2** (quem já é Pro abre um segundo checkout), **PG8**,
+**S4**, **S6**, **S8**, **S9**, **S13**, **B8** e **B10**. Hipótese descartada: na tentativa feita,
+**S10** (injeção de prompt) não teve como ser testado, por causa de N1.
+
+Achados novos:
+
+| # | Prio | O que acontece | Correção |
+|---|---|---|---|
+| N1 | **P0 (configuração)** | **A correção por IA não funciona:** a OpenAI recusa a chave do `.env` (`401 invalid_api_key`; provavelmente revogada na rotação de segredos). Toda resposta da prática vira 500, e a tela mostra só "Não foi possível corrigir sua tradução", sem pontuar. A API devolve "Resposta vazia da OpenAI", que esconde o motivo real (S15). | Gerar uma chave nova no `.env` e no Forge; tratar o status HTTP da OpenAI em `AiService.php`. |
+| N2 | **P1** | **B2 é pior do que parecia:** o aluno que entrou como convidado, criou conta e **pagou o Pro** continua com "Modo convidado — 5 de 5" na prática, sem favoritos e limitado a 5 questões. | Mesmo do B2. |
+| N3 | P2 | Quando a IA falha, o servidor consome uma questão do convidado, mas a tela continua mostrando "5 de 5 restantes". | Só contar a questão depois de uma correção bem-sucedida, ou devolver o saldo no erro. |
+| N4 | P2 | O checkout da Stripe mostra o nome da conta como "Área restrita de New business", não FluencyLab. | Ajustar nome público e marca da conta no painel da Stripe. |
+| N5 | P3 | O gráfico "Crescimento de usuários" do painel tem eixo vertical negativo (até −95), por causa de `domain={["dataMin - 100", ...]}` em `growth-chart.tsx`. | `domain={[0, "auto"]}`. |
+
+Não testado: login por passkey (precisa de um autenticador físico ou biometria), envio real de
+e-mail (bloqueado por B1) e webhook vindo da própria Stripe (precisa do `stripe listen`; a
+confirmação na volta do checkout funcionou).
+
+## 8. Ordem sugerida
 
 1. **Hoje (P0):** S1 (contas do seed e separação dos bancos), S3 (raiz web, confirmar em produção),
    PG1 (recusar webhook sem segredo), S2 (atualizar Next/axios).
