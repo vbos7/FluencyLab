@@ -47,6 +47,17 @@ todas entre 43 e 80 ms. Repeti duas vezes, com o mesmo padrão.
 
 Hoje tudo está abaixo de 100 ms porque há pouco dado. Os itens abaixo são o que cresce com o uso.
 
+## Situação após as correções (22/10/2026)
+
+Corrigidos: F-01 (sessão liberada logo após a leitura; 4 chamadas paralelas da mesma
+sessão terminam em 7–10 ms no banco local, antes ficavam em fila), F-02 (ranking com
+login, top N, posição e janela de 10 linhas — no máximo 13 usuários por resposta), F-03
+(lista de frases sem a resposta), F-04 (dashboard sem o histórico completo), F-06
+(índices compostos; `EXPLAIN` mostra varredura por intervalo coberta pelo índice), F-07
+(sequência lê só 400 dias), F-08 (hidratação da prática) e F-09 (Home sabe no servidor
+se o aluno é Pro). F-05 (paginação do painel) fica para quando houver volume.
+Falta medir em produção.
+
 ## Achados
 
 | ID | Prio | Estado | Jornada / endpoint | Causa | Correção proposta |

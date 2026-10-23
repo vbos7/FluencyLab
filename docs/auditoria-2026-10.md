@@ -33,6 +33,49 @@ comportamento.
 - **Limpeza:** ~1.000 linhas de código morto no front, regra de nível de XP copiada em 5 lugares,
   "é Pro?" calculado de 3 jeitos diferentes, dois endpoints de avatar e formato de erro misturado.
 
+## Situação após as correções (22/10/2026)
+
+Corrigido no branch `fix/auditoria-p0`. As tabelas das seções abaixo mostram o que foi
+encontrado; aqui está o estado final.
+
+**Corrigido e testado:** S1 (seed e banco compartilhado), S2–S17, PG1–PG8, B1–B11, N2,
+N3, N5–N8, F-01–F-04, F-06, F-07, F-09, as telas da seção 5 e a limpeza da seção 6
+(código morto, ESLint zerado, duplicações de nível/sequência/Pro/avatar/configurações,
+uma configuração de Prettier, licença no `composer.json`, CI no GitHub Actions).
+
+Encontrados e corrigidos durante as correções:
+
+- **N9:** o onboarding nunca abria (a marca que o abre deixou de ser gravada em julho)
+  e, ao reabilitar, ele se fechava sozinho por apagar a marca durante a renderização.
+- O card Premium do perfil exibia prova social inventada ("+1.847 alunos evoluíram") e
+  "Garantia total"; removidos junto com o PG3.
+- Regressão evitada: o primeiro limite por IP do login contava também correções da
+  prática e comentários e bloqueava o login de quem praticava. Corrigido antes do PR,
+  com teste.
+
+Testes (banco local, OpenAI real, Stripe em modo teste): roteiro de ponta a ponta com
+**126 de 126** verificações; roteiros focados de conta (16), prática (17) e desempenho
+(5); avaliação de notas da IA (`backend/tests/manual/grading-eval.php`, 0 falhas em 76);
+checkout, segunda compra bloqueada e reembolso real em modo teste; navegador no computador
+e no celular sem erro de console.
+
+**Depende de ação fora do repositório (não tenho acesso):**
+
+| Onde | O quê |
+|---|---|
+| Forge — nginx da API | Aplicar as regras da seção 1 (S3) e conferir `curl https://<api>/sql/schema.sql` → 404. |
+| Forge — variáveis | `STRIPE_WEBHOOK_SECRET` (PG1), `OPENAI_API_KEY` válida (N1), `APP_TIMEZONE`, e `TRUSTED_PROXIES` se a API estiver atrás do Cloudflare (senão todos os usuários contam como o mesmo IP nos limites). |
+| Forge — banco | Reaplicar `backend/sql/schema.sql` para criar os índices novos e atualizar `plan_features`. **Atenção:** o arquivo também recria os dados do aluno demo. |
+| Stripe | Nome público e marca da conta (N4); cadastrar no webhook os eventos `checkout.session.async_payment_succeeded`, `charge.refunded` e `charge.dispute.created`. |
+| Banco de produção | Usar um banco só para produção. As contas do seed (senha `123456`) seguem no banco compartilhado como alunos. |
+
+**Decisão de produto (deixado como está):** 2FA obrigatório para admin e senha para
+ativar 2FA/passkey (S14, parte); plano mensal (PG6 — o checkout agora recusa planos que
+não sejam vitalícios); guardar registro de pagamento após exclusão de conta (PG9);
+paginação do painel (F-05, só com mais volume); CSP completa (S11 — hoje só
+`frame-ancestors`); padronizar formato de erro e nomes da API (seção 6 — vale para
+código novo, migrar aos poucos).
+
 ## Como foi feita
 
 1. **Leitura do código inteiro do backend** (65 arquivos PHP, ~4.600 linhas), do schema e dos seeds.
